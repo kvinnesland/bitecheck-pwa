@@ -23,7 +23,7 @@ export default function App() {
         {(view: AppView) => {
           switch (view) {
             case 'logg':      return <LoggFangst user={user} />;
-            case 'kart':      return <Kart />;
+            case 'kart':      return <Kart user={user} />;
             case 'score':     return <BiteScore />;
             case 'historikk': return <Historikk />;
           }
