@@ -13,7 +13,7 @@ const DEPTH_WMS =
   'https://wms.geonorge.no/skwms1/wms.dybdedata2' +
   '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
   '&BBOX={bbox-epsg-3857}&CRS=EPSG:3857&WIDTH=256&HEIGHT=256' +
-  '&FORMAT=image/png&TRANSPARENT=TRUE&LAYERS=dybdedata2_hist';
+  '&FORMAT=image/png&TRANSPARENT=TRUE&LAYERS=dybdedata2';
 
 const SEDIMENT_WMS =
   'https://geo.ngu.no/mapserver/MarineGrunnkartWMS' +
@@ -91,7 +91,7 @@ export function Kart({ user }: Props) {
         id: 'catches-public',
         type: 'circle',
         source: 'catches',
-        filter: ['==', ['get', 'isOwn'], false],
+        filter: ['==', ['get', 'isOwn'], 'false'],
         paint: {
           'circle-radius': 7,
           'circle-color': '#888888',
@@ -106,7 +106,7 @@ export function Kart({ user }: Props) {
         id: 'catches-own',
         type: 'circle',
         source: 'catches',
-        filter: ['==', ['get', 'isOwn'], true],
+        filter: ['==', ['get', 'isOwn'], 'true'],
         paint: {
           'circle-radius': 9,
           'circle-color': '#0066CC',
@@ -146,12 +146,8 @@ export function Kart({ user }: Props) {
             .addTo(map);
         });
 
-        map.on('mouseenter', layerId, () => {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-        map.on('mouseleave', layerId, () => {
-          map.getCanvas().style.cursor = '';
-        });
+        map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
       });
 
       setMapReady(true);
@@ -183,7 +179,7 @@ export function Kart({ user }: Props) {
       .filter((c) => c.location.accuracy_m !== -1)
       .map((c) =>
         toFeature(c, {
-          isOwn: true,
+          isOwn: 'true',
           weight_kg: c.species.weight_kg,
           length_cm: c.species.length_cm,
           bite_score: c.environment.bite_score,
@@ -192,21 +188,29 @@ export function Kart({ user }: Props) {
 
     const pub = publicCatches
       .filter((c) => c.location.accuracy_m !== -1)
-      .map((c) => toFeature(c, { isOwn: false }));
+      .map((c) => toFeature(c, { isOwn: 'false' }));
 
     source.setData({ type: 'FeatureCollection', features: [...pub, ...own] });
   }, [mapReady, ownCatches, publicCatches]);
 
-  // ── Layer visibility toggles ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    mapRef.current.setLayoutProperty('depth', 'visibility', depthOn ? 'visible' : 'none');
-  }, [mapReady, depthOn]);
+  // ── Layer visibility toggles — called directly from button handlers ───────
+  function toggleDepth() {
+    const next = !depthOn;
+    setDepthOn(next);
+    const map = mapRef.current;
+    if (map?.getLayer('depth')) {
+      map.setLayoutProperty('depth', 'visibility', next ? 'visible' : 'none');
+    }
+  }
 
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    mapRef.current.setLayoutProperty('sediment', 'visibility', sedimentOn ? 'visible' : 'none');
-  }, [mapReady, sedimentOn]);
+  function toggleSediment() {
+    const next = !sedimentOn;
+    setSedimentOn(next);
+    const map = mapRef.current;
+    if (map?.getLayer('sediment')) {
+      map.setLayoutProperty('sediment', 'visibility', next ? 'visible' : 'none');
+    }
+  }
 
   // ── Locate me ────────────────────────────────────────────────────────────
   function locateMe() {
@@ -222,7 +226,7 @@ export function Kart({ user }: Props) {
       <div className={styles.layerControls}>
         <button
           className={`${styles.layerBtn} ${depthOn ? styles.layerActive : ''}`}
-          onClick={() => setDepthOn((v) => !v)}
+          onClick={toggleDepth}
           title="Dybdekonturer (Geonorge)"
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -234,7 +238,7 @@ export function Kart({ user }: Props) {
         </button>
         <button
           className={`${styles.layerBtn} ${sedimentOn ? styles.layerActive : ''}`}
-          onClick={() => setSedimentOn((v) => !v)}
+          onClick={toggleSediment}
           title="Bunnsedimenter (NGU)"
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
