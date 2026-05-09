@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { type User } from 'firebase/auth';
+import { BottomNav, type AppView } from './BottomNav';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
   user: User;
   onSignOut: () => void;
-  children: React.ReactNode;
+  children: (view: AppView) => React.ReactNode;
 }
 
 export function AppShell({ user, onSignOut, children }: AppShellProps) {
+  const [view, setView] = useState<AppView>('logg');
+
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
@@ -29,7 +33,12 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
           </button>
         </div>
       </header>
-      <main className={styles.main}>{children}</main>
+
+      <main className={styles.main}>
+        {children(view)}
+      </main>
+
+      <BottomNav active={view} onChange={setView} />
     </div>
   );
 }

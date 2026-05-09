@@ -1,29 +1,33 @@
 import { useAuth } from './hooks/useAuth';
 import { LoginPage } from './components/auth/LoginPage';
 import { AppShell } from './components/layout/AppShell';
-import { Dashboard } from './pages/Dashboard';
 import { UpdateToast } from './components/common/UpdateToast';
+import { LoggFangst } from './pages/LoggFangst';
+import { Kart } from './pages/Kart';
+import { BiteScore } from './pages/BiteScore';
+import { Historikk } from './pages/Historikk';
+import type { AppView } from './components/layout/BottomNav';
 
 export default function App() {
   const { user, loading, error, signInWithGoogle, signOutUser } = useAuth();
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  if (loading) return <LoadingScreen />;
 
   if (!user) {
-    return (
-      <LoginPage
-        onSignIn={signInWithGoogle}
-        error={error}
-      />
-    );
+    return <LoginPage onSignIn={signInWithGoogle} error={error} />;
   }
 
   return (
     <>
       <AppShell user={user} onSignOut={signOutUser}>
-        <Dashboard user={user} />
+        {(view: AppView) => {
+          switch (view) {
+            case 'logg':      return <LoggFangst />;
+            case 'kart':      return <Kart />;
+            case 'score':     return <BiteScore />;
+            case 'historikk': return <Historikk />;
+          }
+        }}
       </AppShell>
       <UpdateToast />
     </>
