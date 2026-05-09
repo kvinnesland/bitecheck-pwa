@@ -1,18 +1,241 @@
-import styles from './PageShell.module.css';
+import { useState, useMemo } from 'react';
+import { type User } from 'firebase/auth';
+import { computeAllScores, type EnvInputs, type SpeciesScore, type SolunarInfo } from '../lib/biteScore';
+import { useGeolocation } from '../hooks/useGeolocation';
+import type { PressureTrend, TidePhase } from '../types';
+import styles from './BiteScore.module.css';
 
-export function BiteScore() {
+const PRESSURE_OPTIONS: { value: PressureTrend; label: string }[] = [
+  { value: 'falling_rapidly', label: 'Faller raskt' },
+  { value: 'falling',         label: 'Faller' },
+  { value: 'stable',          label: 'Stabilt' },
+  { value: 'rising',          label: 'Stiger' },
+  { value: 'rising_rapidly',  label: 'Stiger raskt' },
+];
+
+const TIDE_OPTIONS: { value: TidePhase; label: string }[] = [
+  { value: 'rising',  label: 'Stigende' },
+  { value: 'high',    label: 'Høyvann' },
+  { value: 'falling', label: 'Fallende' },
+  { value: 'low',     label: 'Lavvann' },
+  { value: 'slack',   label: 'Strømstopp' },
+];
+
+interface Props { user: User; }
+
+export function BiteScore({ user: _user }: Props) {
+  const { position } = useGeolocation();
+
+  const [pressure, setPressure] = useState<PressureTrend>('stable');
+  const [waterTemp, setWaterTemp] = useState('8');
+  const [tide, setTide] = useState<TidePhase>('rising');
+  const [currentSpeed, setCurrentSpeed] = useState('0.5');
+
+  const { scores, solunar } = useMemo(() => {
+    const inputs: EnvInputs = {
+      pressure_trend:   pressure,
+      water_temp:       parseFloat(waterTemp) || 8,
+      tide_phase:       tide,
+      current_speed_ms: parseFloat(currentSpeed) || 0.5,
+      wind_speed_ms:    5,
+      lat:  position?.lat  ?? 60.0,
+      lng:  position?.lng  ?? 5.0,
+      date: new Date(),
+    };
+    return computeAllScores(inputs);
+  }, [pressure, waterTemp, tide, currentSpeed, position]);
+
   return (
     <div className={styles.page}>
-      <h2 className={styles.title}>Bite Score</h2>
-      <p className={styles.sub}>Artsspesifikke prediksjoner basert på miljødata</p>
-      <div className={styles.placeholder}>
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 20a8 8 0 1 0-8-8" />
-          <path d="M12 12l-4-2" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
-        </svg>
-        <p>Bite Score-algoritme kommer her</p>
+      <SolunarCard solunar={solunar} />
+
+      <section className={styles.inputs}>
+        <h3 className={styles.sectionTitle}>Miljøforhold</h3>
+
+        <div className={styles.inputGrid}>
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Lufttrykk</span>
+            <select
+              className={styles.select}
+              value={pressure}
+              onChange={(e) => setPressure(e.target.value as PressureTrend)}
+            >
+              {PRESSURE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Sjøtemperatur (°C)</span>
+            <input
+              className={styles.input}
+              type="number"
+              inputMode="decimal"
+              value={waterTemp}
+              min="-2"
+              max="30"
+              step="0.5"
+              onChange={(e) => setWaterTemp(e.target.value)}
+            />
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Tidevann</span>
+            <select
+              className={styles.select}
+              value={tide}
+              onChange={(e) => setTide(e.target.value as TidePhase)}
+            >
+              {TIDE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Strøm (m/s)</span>
+            <input
+              className={styles.input}
+              type="number"
+              inputMode="decimal"
+              value={currentSpeed}
+              min="0"
+              max="5"
+              step="0.1"
+              onChange={(e) => setCurrentSpeed(e.target.value)}
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className={styles.results}>
+        <h3 className={styles.sectionTitle}>Prediksjoner</h3>
+        <div className={styles.list}>
+          {scores.map((s, i) => (
+            <SpeciesCard key={s.name} score={s} rank={i + 1} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ─── Solunar card ────────────────────────────────────────────────────────────
+
+function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
+  const periodLabel =
+    solunar.type === 'major' ? 'Stor periode aktiv' :
+    solunar.type === 'minor' ? 'Liten periode aktiv' :
+    `Neste: ${solunar.nextType === 'major' ? 'stor' : 'liten'} om ${solunar.minutesUntilNext} min`;
+
+  const moonPct = Math.round(
+    solunar.moonPhase <= 0.5
+      ? solunar.moonPhase * 200
+      : (1 - solunar.moonPhase) * 200,
+  );
+
+  return (
+    <div className={`${styles.solunarCard} ${styles[`solunar_${solunar.type}`]}`}>
+      <div className={styles.solunarLeft}>
+        <MoonIcon phase={solunar.moonPhase} />
+        <div>
+          <div className={styles.solunarPhaseName}>{solunar.moonPhaseName}</div>
+          <div className={styles.solunarPct}>{moonPct}% belyst</div>
+        </div>
+      </div>
+
+      <div className={styles.solunarRight}>
+        <div className={styles.solunarPeriod}>{periodLabel}</div>
+        <div className={styles.solunarMult}>
+          ×{solunar.multiplier.toFixed(2)} bite-multiplikator
+        </div>
+        <LightLabel lux={solunar.lightLux} />
       </div>
     </div>
+  );
+}
+
+function LightLabel({ lux }: { lux: number }) {
+  let label = '';
+  if (lux === 0)          label = 'Natt';
+  else if (lux < 100)     label = 'Astronomisk tusmørke';
+  else if (lux < 1000)    label = 'Nautisk tusmørke';
+  else if (lux < 10_000)  label = 'Borgerlig tusmørke';
+  else if (lux < 30_000)  label = 'Soloppgang / -nedgang';
+  else if (lux < 80_000)  label = 'Dagslys';
+  else                     label = 'Fullt dagslys';
+  return <div className={styles.solunarLight}>{label}</div>;
+}
+
+// ─── Species score card ───────────────────────────────────────────────────────
+
+function SpeciesCard({ score, rank }: { score: SpeciesScore; rank: number }) {
+  const pct = Math.round(score.score * 100);
+  const color = scoreColor(score.score);
+
+  return (
+    <div className={styles.speciesCard}>
+      <div className={styles.speciesRank}>{rank}</div>
+      <div className={styles.speciesBody}>
+        <div className={styles.speciesTop}>
+          <span className={styles.speciesName}>{score.name}</span>
+          <span className={styles.speciesLabel} style={{ color }}>
+            {score.label}
+          </span>
+          <span className={styles.speciesPct} style={{ color }}>
+            {pct}%
+          </span>
+        </div>
+        <div className={styles.barTrack}>
+          <div
+            className={styles.barFill}
+            style={{ width: `${pct}%`, background: color }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function scoreColor(score: number): string {
+  if (score >= 0.75) return '#0066CC';
+  if (score >= 0.5)  return '#22c55e';
+  if (score >= 0.25) return '#f59e0b';
+  return '#ef4444';
+}
+
+// ─── Moon icon ───────────────────────────────────────────────────────────────
+
+function MoonIcon({ phase }: { phase: number }) {
+  // phase: 0=new, 0.5=full, 1=new
+  const isWaxing = phase < 0.5;
+  const pct      = isWaxing ? phase * 2 : (1 - phase) * 2; // 0–1 lit fraction
+
+  // SVG moon: clip between two circles to draw a crescent or gibbous
+  const r = 14;
+  const cx = 16;
+  const cy = 16;
+  const offset = r * (1 - pct * 2); // offset of inner circle
+
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" className={styles.moonSvg}>
+      <defs>
+        <clipPath id="moon-clip">
+          <circle cx={cx} cy={cy} r={r} />
+        </clipPath>
+      </defs>
+      {/* Dark disk */}
+      <circle cx={cx} cy={cy} r={r} fill="var(--color-border)" />
+      {/* Lit area */}
+      <ellipse
+        cx={cx + (isWaxing ? offset : -offset)}
+        cy={cy}
+        rx={Math.abs(offset) < r ? Math.sqrt(r * r - offset * offset) : r}
+        ry={r}
+        fill="var(--color-text)"
+        clipPath="url(#moon-clip)"
+      />
+    </svg>
   );
 }
