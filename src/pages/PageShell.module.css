@@ -1,17 +1,18 @@
 .page {
-  padding: 24px;
+  padding: 28px 24px;
   height: 100%;
   overflow-y: auto;
 }
 
 .title {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
+  letter-spacing: -0.3px;
   margin-bottom: 4px;
 }
 
 .sub {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
   margin-bottom: 32px;
 }
@@ -22,17 +23,20 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  height: 240px;
+  height: 260px;
   background: var(--color-bg-card);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-lg);
   color: var(--color-text-muted);
 }
 
-.placeholder span {
-  font-size: 3rem;
+.placeholder svg {
+  width: 40px;
+  height: 40px;
+  stroke: var(--color-border);
+  opacity: 0.8;
 }
 
 .placeholder p {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
