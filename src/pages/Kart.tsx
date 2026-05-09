@@ -1,4 +1,4 @@
-import maplibregl, { type GeoJSONSource, type StyleSpecification } from 'maplibre-gl';
+import maplibregl, { type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef, useState } from 'react';
 import { type User } from 'firebase/auth';
@@ -7,11 +7,7 @@ import { usePublicCatches } from '../hooks/usePublicCatches';
 import { useGeolocation } from '../hooks/useGeolocation';
 import styles from './Kart.module.css';
 
-const KARTVERKET =
-  'https://opencache.statkart.no/gatekeeper/gk/gk.open_wmts' +
-  '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0' +
-  '&LAYER=sjokartraster&STYLE=default&FORMAT=image/png' +
-  '&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+const BASE_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
 const DEPTH_WMS =
   'https://wms.geonorge.no/skwms1/wms.dybdedata2' +
@@ -24,19 +20,6 @@ const SEDIMENT_WMS =
   '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
   '&BBOX={bbox-epsg-3857}&CRS=EPSG:3857&WIDTH=256&HEIGHT=256' +
   '&FORMAT=image/png&TRANSPARENT=TRUE&LAYERS=Bunnsedimenter_kornstorrelse_detaljert';
-
-const BASE_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    sjokart: {
-      type: 'raster',
-      tiles: [KARTVERKET],
-      tileSize: 256,
-      attribution: '© Kartverket',
-    },
-  },
-  layers: [{ id: 'sjokart', type: 'raster', source: 'sjokart' }],
-};
 
 interface Props { user: User; }
 
@@ -58,8 +41,8 @@ export function Kart({ user }: Props) {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: BASE_STYLE,
-      center: [14, 65],
-      zoom: 5,
+      center: [14.5, 65],
+      zoom: 4.5,
       attributionControl: false,
     });
 
