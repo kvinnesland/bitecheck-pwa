@@ -25,7 +25,7 @@ export default function App() {
             case 'logg':      return <LoggFangst user={user} />;
             case 'kart':      return <Kart user={user} />;
             case 'score':     return <BiteScore user={user} />;
-            case 'historikk': return <Historikk />;
+            case 'historikk': return <Historikk user={user} />;
           }
         }}
       </AppShell>
