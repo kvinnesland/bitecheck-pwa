@@ -22,7 +22,7 @@ export default function App() {
       <AppShell user={user} onSignOut={signOutUser}>
         {(view: AppView) => {
           switch (view) {
-            case 'logg':      return <LoggFangst />;
+            case 'logg':      return <LoggFangst user={user} />;
             case 'kart':      return <Kart />;
             case 'score':     return <BiteScore />;
             case 'historikk': return <Historikk />;
