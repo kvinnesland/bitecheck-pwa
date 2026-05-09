@@ -29,6 +29,8 @@ export function Kart({ user }: Props) {
   const [mapReady, setMapReady] = useState(false);
   const [depthOn, setDepthOn] = useState(false);
   const [sedimentOn, setSedimentOn] = useState(false);
+  const [zoom, setZoom] = useState(4.5);
+  const SEDIMENT_MIN_ZOOM = 8;
 
   const ownCatches = useUserCatches(user.uid);
   const publicCatches = usePublicCatches(user.uid);
@@ -150,6 +152,7 @@ export function Kart({ user }: Props) {
         map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
       });
 
+      map.on('zoom', () => setZoom(map.getZoom()));
       setMapReady(true);
     });
 
@@ -248,6 +251,12 @@ export function Kart({ user }: Props) {
           Bunn
         </button>
       </div>
+
+      {sedimentOn && zoom < SEDIMENT_MIN_ZOOM && (
+        <div className={styles.zoomHint}>
+          Zoom inn for å se bunndata
+        </div>
+      )}
 
       <button
         className={`${styles.locateBtn} ${position ? '' : styles.locateDisabled}`}
