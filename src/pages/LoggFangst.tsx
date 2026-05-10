@@ -3,6 +3,7 @@ import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
 import { consumePendingSpecies } from '../lib/navigationStore';
+import { FishSvg } from '../components/species/FishSvg';
 import styles from './LoggFangst.module.css';
 
 const SPECIES_GROUPS = [
@@ -186,7 +187,8 @@ export function LoggFangst({ user }: Props) {
           <>
             {(filtered ?? []).map((name) => (
               <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
-                {name}
+                <FishSvg name={name} className={styles.speciesFish} />
+                <span>{name}</span>
               </button>
             ))}
             {(filtered ?? []).length === 0 && (
@@ -204,7 +206,8 @@ export function LoggFangst({ user }: Props) {
               <span key={group.label} className={styles.groupLabel}>{group.label}</span>
               {group.names.map((name) => (
                 <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
-                  {name}
+                  <FishSvg name={name} className={styles.speciesFish} />
+                  <span>{name}</span>
                 </button>
               ))}
             </>
