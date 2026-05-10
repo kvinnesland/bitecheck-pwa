@@ -7,11 +7,6 @@
   align-items: flex-end;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
 .sheet {
   background: var(--color-bg-card);
   border-radius: 16px 16px 0 0;
@@ -19,8 +14,8 @@
   max-height: 88dvh;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.25s ease;
   overflow: hidden;
+  will-change: transform;
 }
 
 .handle {
@@ -30,6 +25,8 @@
   border-radius: 2px;
   margin: 12px auto 4px;
   flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
 }
 
 .header {

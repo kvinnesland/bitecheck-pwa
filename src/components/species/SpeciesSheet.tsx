@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import type { SpeciesScore } from '../../lib/biteScore';
 import type { CatchRecord } from '../../types';
 import { SPECIES_INFO } from '../../lib/speciesInfo';
@@ -54,27 +55,71 @@ function TideIcon() {
 }
 
 function formatDate(isoString: string): string {
-  const d = new Date(isoString);
-  return d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(isoString).toLocaleDateString('nb-NO', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
 }
+
+const DISMISS_THRESHOLD = 80;
 
 export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: Props) {
   const info = SPECIES_INFO[score.name];
   const pct = Math.round(score.score * 100);
   const color = scoreColor(score.score);
 
+  const [visible, setVisible] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startY = useRef(0);
+  const dragging = useRef(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setVisible(true));
+  }, []);
+
+  function onHandleTouchStart(e: React.TouchEvent) {
+    startY.current = e.touches[0].clientY;
+    dragging.current = true;
+    setIsDragging(true);
+  }
+
+  function onHandleTouchMove(e: React.TouchEvent) {
+    if (!dragging.current) return;
+    const delta = e.touches[0].clientY - startY.current;
+    if (delta > 0) setDragY(delta);
+  }
+
+  function onHandleTouchEnd() {
+    dragging.current = false;
+    setIsDragging(false);
+    if (dragY > DISMISS_THRESHOLD) {
+      setDragY(window.innerHeight);
+      setTimeout(onClose, 220);
+    } else {
+      setDragY(0);
+    }
+  }
+
   const relevant = userCatches.filter(
     (c) => c.species.name.toLowerCase() === score.name.toLowerCase(),
   );
 
-  function stopPropagation(e: React.MouseEvent) {
-    e.stopPropagation();
-  }
-
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.sheet} onClick={stopPropagation}>
-        <div className={styles.handle} />
+      <div
+        className={styles.sheet}
+        style={{
+          transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
+          transition: isDragging ? 'none' : 'transform 0.25s ease',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className={styles.handle}
+          onTouchStart={onHandleTouchStart}
+          onTouchMove={onHandleTouchMove}
+          onTouchEnd={onHandleTouchEnd}
+        />
 
         <div className={styles.header}>
           <FishSvg name={score.name} className={styles.fishIllustration} />
@@ -91,18 +136,15 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
             <h3 className={styles.sectionTitle}>Score nå</h3>
             <div className={styles.scoreBlock}>
               <div className={styles.scoreTotalRow}>
-                <span className={styles.scoreTotalLabel}>Total</span>
+                <span className={styles.scoreTotalLabel}>Totalt</span>
                 <span className={styles.scoreTotalPct} style={{ color }}>{pct}%</span>
               </div>
               <div className={styles.barTrack}>
-                <div
-                  className={styles.barFill}
-                  style={{ width: `${pct}%`, background: color }}
-                />
+                <div className={styles.barFill} style={{ width: `${pct}%`, background: color }} />
               </div>
 
               <div className={styles.subScoreRow}>
-                <span>Primær</span>
+                <span>{info?.primaryDriver ?? 'Primærfaktor'}</span>
                 <span>{Math.round(score.primary * 100)}%</span>
               </div>
               <div className={styles.barTrack}>
@@ -113,7 +155,7 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
               </div>
 
               <div className={styles.subScoreRow}>
-                <span>Sekundær</span>
+                <span>{info?.secondaryDriver ?? 'Sekundærfaktor'}</span>
                 <span>{Math.round(score.secondary * 100)}%</span>
               </div>
               <div className={styles.barTrack}>
