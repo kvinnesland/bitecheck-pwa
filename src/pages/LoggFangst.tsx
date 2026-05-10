@@ -4,12 +4,19 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
 import styles from './LoggFangst.module.css';
 
-const SPECIES = [
-  'Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme',
-  'Uer', 'Steinbit', 'Makrell', 'Rødspette', 'Lomre',
-  'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye',
-  'Ørret', 'Røye',
+const SPECIES_GROUPS = [
+  {
+    label: 'Saltvann',
+    names: ['Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme',
+            'Uer', 'Steinbit', 'Makrell', 'Rødspette', 'Lomre',
+            'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye'],
+  },
+  {
+    label: 'Ferskvann',
+    names: ['Ørret', 'Røye'],
+  },
 ];
+const ALL_SPECIES = SPECIES_GROUPS.flatMap((g) => g.names);
 
 type Step = 'species' | 'details' | 'success';
 
@@ -25,9 +32,11 @@ export function LoggFangst({ user }: Props) {
   const { status: geoStatus, position } = useGeolocation();
   const weightRef = useRef<HTMLInputElement>(null);
 
-  const filtered = query.trim()
-    ? SPECIES.filter((s) => s.toLowerCase().includes(query.toLowerCase()))
-    : SPECIES;
+  const searchQuery = query.trim().toLowerCase();
+  const isSearching = searchQuery.length > 0;
+  const filtered = isSearching
+    ? ALL_SPECIES.filter((s) => s.toLowerCase().includes(searchQuery))
+    : null;
 
   function selectSpecies(name: string) {
     setSpecies(name);
@@ -163,22 +172,33 @@ export function LoggFangst({ user }: Props) {
       </div>
 
       <div className={styles.grid}>
-        {filtered.map((name) => (
-          <button
-            key={name}
-            className={styles.speciesBtn}
-            onClick={() => selectSpecies(name)}
-          >
-            {name}
-          </button>
-        ))}
-        {filtered.length === 0 && (
-          <button
-            className={`${styles.speciesBtn} ${styles.customSpecies}`}
-            onClick={() => selectSpecies(query.trim())}
-          >
-            + Legg til «{query.trim()}»
-          </button>
+        {isSearching ? (
+          <>
+            {(filtered ?? []).map((name) => (
+              <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
+                {name}
+              </button>
+            ))}
+            {(filtered ?? []).length === 0 && (
+              <button
+                className={`${styles.speciesBtn} ${styles.customSpecies}`}
+                onClick={() => selectSpecies(query.trim())}
+              >
+                + Legg til «{query.trim()}»
+              </button>
+            )}
+          </>
+        ) : (
+          SPECIES_GROUPS.map((group) => (
+            <>
+              <span key={group.label} className={styles.groupLabel}>{group.label}</span>
+              {group.names.map((name) => (
+                <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
+                  {name}
+                </button>
+              ))}
+            </>
+          ))
         )}
       </div>
     </div>

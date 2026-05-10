@@ -16,6 +16,7 @@ export interface EnvInputs {
 
 export interface SpeciesScore {
   name: string;
+  water: 'salt' | 'fresh';
   score: number;      // 0.0–1.0 clamped
   primary: number;    // normalized primary variable
   secondary: number;  // normalized secondary variable
@@ -223,98 +224,99 @@ function derive(inputs: EnvInputs): Derived {
 
 interface SpeciesDef {
   name: string;
+  water: 'salt' | 'fresh';
   primary:   (e: EnvInputs, d: Derived) => number;
   secondary: (e: EnvInputs, d: Derived) => number;
 }
 
 const SPECIES_DEFS: SpeciesDef[] = [
   {
-    name: 'Torsk',
+    name: 'Torsk', water: 'salt',
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: (e)    => normTemp(e.water_temp, 4, 8),
   },
   {
-    name: 'Kveite',
+    name: 'Kveite', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
     secondary: (_, d) => normMoonPhase(d.moonPhase),
   },
   {
-    name: 'Sei',
+    name: 'Sei', water: 'salt',
     primary:   (e)    => normCurrentSei(e.current_speed_ms),
     secondary: (_, d) => normLightTwilight(d.lightLux),
   },
   {
-    name: 'Hyse',
+    name: 'Hyse', water: 'salt',
     primary:   (e)    => normPressure(e.pressure_trend),
-    secondary: ()     => 0.5, // bottom_type unknown → neutral
+    secondary: ()     => 0.5,
   },
   {
-    name: 'Lange',
-    primary:   (e)    => normTide(e.tide_phase),
-    secondary: ()     => 0.6, // depth >150 m assumed available → neutral lean
-  },
-  {
-    name: 'Brosme',
+    name: 'Lange', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
     secondary: ()     => 0.6,
   },
   {
-    name: 'Uer',
+    name: 'Brosme', water: 'salt',
+    primary:   (e)    => normTide(e.tide_phase),
+    secondary: ()     => 0.6,
+  },
+  {
+    name: 'Uer', water: 'salt',
     primary:   (_, d) => normLightInverted(d.lightLux),
     secondary: (e)    => normPressureStable(e.pressure_trend),
   },
   {
-    name: 'Steinbit',
+    name: 'Steinbit', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 4, 10, 6),
     secondary: (e)    => normTide(e.tide_phase),
   },
   {
-    name: 'Makrell',
+    name: 'Makrell', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 12, 24, 8),
-    secondary: (e)    => Math.min(1, e.wind_speed_ms / 15), // moderate wind = better
+    secondary: (e)    => Math.min(1, e.wind_speed_ms / 15),
   },
   {
-    name: 'Rødspette',
+    name: 'Rødspette', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
-    secondary: ()     => 0.5, // bottom_type sand unknown
+    secondary: ()     => 0.5,
   },
   {
-    name: 'Lomre',
-    primary:   ()     => 0.5, // bottom_type blandet unknown
-    secondary: (e)    => normCurrentSlow(e.current_speed_ms),
-  },
-  {
-    name: 'Sandflyndre',
+    name: 'Lomre', water: 'salt',
     primary:   ()     => 0.5,
     secondary: (e)    => normCurrentSlow(e.current_speed_ms),
   },
   {
-    name: 'Sild',
+    name: 'Sandflyndre', water: 'salt',
+    primary:   ()     => 0.5,
+    secondary: (e)    => normCurrentSlow(e.current_speed_ms),
+  },
+  {
+    name: 'Sild', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 6, 14, 6),
     secondary: (_, d) => normMoonPhase(d.moonPhase),
   },
   {
-    name: 'Laks',
+    name: 'Laks', water: 'salt',
     primary:   (_, d) => normLightTwilight(d.lightLux),
     secondary: (e)    => normPressure(e.pressure_trend),
   },
   {
-    name: 'Sjøørret',
+    name: 'Sjøørret', water: 'salt',
     primary:   (_, d) => normLightTwilight(d.lightLux),
     secondary: (e)    => normPressure(e.pressure_trend),
   },
   {
-    name: 'Sjørøye',
+    name: 'Sjørøye', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 2, 14, 6),
-    secondary: ()     => 0.5, // salinity unknown
+    secondary: ()     => 0.5,
   },
   {
-    name: 'Ørret',
+    name: 'Ørret', water: 'fresh',
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: (e)    => normTemp(e.water_temp, 8, 14, 6),
   },
   {
-    name: 'Røye',
+    name: 'Røye', water: 'fresh',
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: (e)    => normTemp(e.water_temp, 4, 8, 6),
   },
@@ -342,6 +344,7 @@ export function computeAllScores(inputs: EnvInputs): {
     const score = Math.min(1, Math.max(0, raw));
     return {
       name: def.name,
+      water: def.water,
       score,
       primary: p,
       secondary: s,

@@ -30,6 +30,7 @@ export function BiteScore({ user: _user }: Props) {
   const [waterTemp, setWaterTemp] = useState('8');
   const [tide, setTide] = useState<TidePhase>('rising');
   const [currentSpeed, setCurrentSpeed] = useState('0.5');
+  const [waterFilter, setWaterFilter] = useState<'salt' | 'fresh'>('salt');
 
   const { scores, solunar } = useMemo(() => {
     const inputs: EnvInputs = {
@@ -110,11 +111,29 @@ export function BiteScore({ user: _user }: Props) {
       </section>
 
       <section className={styles.results}>
-        <h3 className={styles.sectionTitle}>Prediksjoner</h3>
+        <div className={styles.resultsHeader}>
+          <h3 className={styles.sectionTitle}>Prediksjoner</h3>
+          <div className={styles.waterToggle}>
+            <button
+              className={`${styles.waterBtn} ${waterFilter === 'salt' ? styles.waterActive : ''}`}
+              onClick={() => setWaterFilter('salt')}
+            >
+              Saltvann
+            </button>
+            <button
+              className={`${styles.waterBtn} ${waterFilter === 'fresh' ? styles.waterActive : ''}`}
+              onClick={() => setWaterFilter('fresh')}
+            >
+              Ferskvann
+            </button>
+          </div>
+        </div>
         <div className={styles.list}>
-          {scores.map((s, i) => (
-            <SpeciesCard key={s.name} score={s} rank={i + 1} />
-          ))}
+          {scores
+            .filter((s) => s.water === waterFilter)
+            .map((s, i) => (
+              <SpeciesCard key={s.name} score={s} rank={i + 1} />
+            ))}
         </div>
       </section>
     </div>
