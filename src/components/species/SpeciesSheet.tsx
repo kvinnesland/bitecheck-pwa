@@ -203,6 +203,47 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
             </section>
           )}
 
+          {info && (info.agn.length > 0 || info.sluk.length > 0) && (
+            <section>
+              <h3 className={styles.sectionTitle}>Agn &amp; sluk</h3>
+              {info.agn.length > 0 && (
+                <div className={styles.chipGroup}>
+                  <span className={styles.chipGroupLabel}>Naturlig agn</span>
+                  <div className={styles.chips}>
+                    {info.agn.map((a) => <span key={a} className={styles.chip}>{a}</span>)}
+                  </div>
+                </div>
+              )}
+              {info.sluk.length > 0 && (
+                <div className={styles.chipGroup}>
+                  <span className={styles.chipGroupLabel}>Sluk &amp; lokkemidler</span>
+                  <div className={styles.chips}>
+                    {info.sluk.map((s) => <span key={s} className={`${styles.chip} ${styles.chipSluk}`}>{s}</span>)}
+                  </div>
+                </div>
+              )}
+              <div className={styles.tipsRow}>
+                <svg className={styles.tipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="7" cy="7" r="6" />
+                  <path d="M7 5v4M7 3.5v.5" />
+                </svg>
+                <span>{info.teknikktips}</span>
+              </div>
+              {info.fargetips && (
+                <div className={styles.tipsRow}>
+                  <svg className={styles.tipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="7" cy="7" r="5" />
+                    <path d="M7 2a5 5 0 0 1 0 10" fill="currentColor" fillOpacity="0.2" stroke="none" />
+                    <circle cx="4.5" cy="5" r="1" fill="currentColor" stroke="none" />
+                    <circle cx="9.5" cy="5" r="1" fill="currentColor" stroke="none" />
+                    <circle cx="7" cy="10" r="1" fill="currentColor" stroke="none" />
+                  </svg>
+                  <span className={styles.fargetips}>{info.fargetips}</span>
+                </div>
+              )}
+            </section>
+          )}
+
           {info && (
             <section>
               <h3 className={styles.sectionTitle}>Om arten</h3>

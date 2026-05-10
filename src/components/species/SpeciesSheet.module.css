@@ -146,6 +146,72 @@
   border-top: 1px solid var(--color-border);
 }
 
+.chipGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.chipGroupLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  background: var(--color-bg);
+  white-space: nowrap;
+}
+
+.chipSluk {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(0, 102, 204, 0.06);
+}
+
+.tipsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--color-text);
+  line-height: 1.5;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.tipsIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  stroke: var(--color-text-muted);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fargetips {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 .conditionRows {
   display: flex;
   flex-direction: column;
