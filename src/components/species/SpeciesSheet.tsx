@@ -116,12 +116,14 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
       >
         <div
           className={styles.handle}
+        />
+
+        <div
+          className={styles.header}
           onTouchStart={onHandleTouchStart}
           onTouchMove={onHandleTouchMove}
           onTouchEnd={onHandleTouchEnd}
-        />
-
-        <div className={styles.header}>
+        >
           <FishSvg name={score.name} className={styles.fishIllustration} />
           <div className={styles.nameRow}>
             <h2 className={styles.speciesName}>{score.name}</h2>
