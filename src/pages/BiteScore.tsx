@@ -2,7 +2,11 @@ import { useState, useMemo } from 'react';
 import { type User } from 'firebase/auth';
 import { computeAllScores, type EnvInputs, type SpeciesScore, type SolunarInfo } from '../lib/biteScore';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useUserCatches } from '../hooks/useUserCatches';
+import { setPendingSpecies } from '../lib/navigationStore';
+import { SpeciesSheet } from '../components/species/SpeciesSheet';
 import type { PressureTrend, TidePhase } from '../types';
+import type { AppView } from '../components/layout/BottomNav';
 import styles from './BiteScore.module.css';
 
 const PRESSURE_OPTIONS: { value: PressureTrend; label: string }[] = [
@@ -21,10 +25,15 @@ const TIDE_OPTIONS: { value: TidePhase; label: string }[] = [
   { value: 'slack',   label: 'Strømstopp' },
 ];
 
-interface Props { user: User; }
+interface Props {
+  user: User;
+  navigate: (v: AppView) => void;
+}
 
-export function BiteScore({ user: _user }: Props) {
+export function BiteScore({ user, navigate }: Props) {
   const { position } = useGeolocation();
+  const userCatches = useUserCatches(user.uid);
+  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesScore | null>(null);
 
   const [pressure, setPressure] = useState<PressureTrend>('stable');
   const [waterTemp, setWaterTemp] = useState('8');
@@ -46,8 +55,28 @@ export function BiteScore({ user: _user }: Props) {
     return computeAllScores(inputs);
   }, [pressure, waterTemp, tide, currentSpeed, position]);
 
+  function handleSpeciesClick(s: SpeciesScore) {
+    setSelectedSpecies(s);
+  }
+
+  function handleNavigateToLog() {
+    if (selectedSpecies) {
+      setPendingSpecies(selectedSpecies.name);
+    }
+    setSelectedSpecies(null);
+    navigate('logg');
+  }
+
   return (
     <div className={styles.page}>
+      {selectedSpecies && (
+        <SpeciesSheet
+          score={selectedSpecies}
+          userCatches={userCatches}
+          onClose={() => setSelectedSpecies(null)}
+          onNavigateToLog={handleNavigateToLog}
+        />
+      )}
       <SolunarCard solunar={solunar} />
 
       <section className={styles.inputs}>
@@ -132,7 +161,7 @@ export function BiteScore({ user: _user }: Props) {
           {scores
             .filter((s) => s.water === waterFilter)
             .map((s, i) => (
-              <SpeciesCard key={s.name} score={s} rank={i + 1} />
+              <SpeciesCard key={s.name} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
             ))}
         </div>
       </section>
@@ -189,12 +218,12 @@ function LightLabel({ lux }: { lux: number }) {
 
 // ─── Species score card ───────────────────────────────────────────────────────
 
-function SpeciesCard({ score, rank }: { score: SpeciesScore; rank: number }) {
+function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: number; onClick: () => void }) {
   const pct = Math.round(score.score * 100);
   const color = scoreColor(score.score);
 
   return (
-    <div className={styles.speciesCard}>
+    <div className={styles.speciesCard} onClick={onClick} style={{ cursor: 'pointer' }}>
       <div className={styles.speciesRank}>{rank}</div>
       <div className={styles.speciesBody}>
         <div className={styles.speciesTop}>

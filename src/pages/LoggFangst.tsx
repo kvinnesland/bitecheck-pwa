@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
+import { consumePendingSpecies } from '../lib/navigationStore';
 import styles from './LoggFangst.module.css';
 
 const SPECIES_GROUPS = [
@@ -31,6 +32,15 @@ export function LoggFangst({ user }: Props) {
   const [query, setQuery] = useState('');
   const { status: geoStatus, position } = useGeolocation();
   const weightRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const pending = consumePendingSpecies();
+    if (pending) {
+      setSpecies(pending);
+      setStep('details');
+      setTimeout(() => weightRef.current?.focus(), 100);
+    }
+  }, []);
 
   const searchQuery = query.trim().toLowerCase();
   const isSearching = searchQuery.length > 0;

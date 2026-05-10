@@ -6,7 +6,7 @@ import styles from './AppShell.module.css';
 interface AppShellProps {
   user: User;
   onSignOut: () => void;
-  children: (view: AppView) => React.ReactNode;
+  children: (view: AppView, navigate: (v: AppView) => void) => React.ReactNode;
 }
 
 export function AppShell({ user, onSignOut, children }: AppShellProps) {
@@ -35,7 +35,7 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
       </header>
 
       <main className={styles.main}>
-        {children(view)}
+        {children(view, setView)}
       </main>
 
       <BottomNav active={view} onChange={setView} />

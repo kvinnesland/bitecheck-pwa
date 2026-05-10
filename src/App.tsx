@@ -20,11 +20,11 @@ export default function App() {
   return (
     <>
       <AppShell user={user} onSignOut={signOutUser}>
-        {(view: AppView) => {
+        {(view: AppView, navigate: (v: AppView) => void) => {
           switch (view) {
             case 'logg':      return <LoggFangst user={user} />;
             case 'kart':      return <Kart user={user} />;
-            case 'score':     return <BiteScore user={user} />;
+            case 'score':     return <BiteScore user={user} navigate={navigate} />;
             case 'historikk': return <Historikk user={user} />;
           }
         }}
