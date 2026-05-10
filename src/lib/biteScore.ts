@@ -320,6 +320,21 @@ const SPECIES_DEFS: SpeciesDef[] = [
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: (e)    => normTemp(e.water_temp, 4, 8, 6),
   },
+  {
+    name: 'Abbor', water: 'fresh',
+    primary:   (e)    => normTemp(e.water_temp, 15, 22, 6),
+    secondary: (_, d) => normLightTwilight(d.lightLux),
+  },
+  {
+    name: 'Gjedde', water: 'fresh',
+    primary:   (e)    => normTemp(e.water_temp, 10, 20, 8),
+    secondary: (_, d) => normLightInverted(d.lightLux),
+  },
+  {
+    name: 'Harr', water: 'fresh',
+    primary:   (e)    => normTemp(e.water_temp, 8, 14, 6),
+    secondary: (e)    => normPressureStable(e.pressure_trend),
+  },
 ];
 
 function scoreLabel(score: number): string {

@@ -13,7 +13,7 @@ const SPECIES_GROUPS = [
   },
   {
     label: 'Ferskvann',
-    names: ['Ørret', 'Røye'],
+    names: ['Ørret', 'Røye', 'Abbor', 'Gjedde', 'Harr'],
   },
 ];
 const ALL_SPECIES = SPECIES_GROUPS.flatMap((g) => g.names);
