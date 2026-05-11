@@ -3,6 +3,7 @@ import { type User } from 'firebase/auth';
 import { computeAllScores, type EnvInputs, type SpeciesScore, type SolunarInfo } from '../lib/biteScore';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useWeather } from '../hooks/useWeather';
+import { useTide } from '../hooks/useTide';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { setPendingSpecies } from '../lib/navigationStore';
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
@@ -50,12 +51,18 @@ export function BiteScore({ user, navigate }: Props) {
   const effectiveLng = customLocation?.lng ?? position?.lng ?? 5.0;
 
   const weather = useWeather(effectiveLat, effectiveLng, datetime);
+  const { tidePhase: autoTide, tideLoading } = useTide(effectiveLat, effectiveLng, datetime, waterFilter);
 
   // Auto-fill pressure and water temp from weather API
   useEffect(() => {
     if (weather.pressureTrend) setPressure(weather.pressureTrend);
     if (weather.waterTemp !== null) setWaterTemp(String(weather.waterTemp));
   }, [weather.pressureTrend, weather.waterTemp]);
+
+  // Auto-fill tide phase from Kartverket API
+  useEffect(() => {
+    if (autoTide) setTide(autoTide);
+  }, [autoTide]);
 
   const { scores, solunar } = useMemo(() => {
     const inputs: EnvInputs = {
@@ -137,7 +144,16 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>Tidevann</span>
+            <span className={styles.fieldLabel}>
+              Tidevann
+              {waterFilter === 'salt' && (
+                tideLoading
+                  ? <span className={styles.autoTag}>henter…</span>
+                  : autoTide
+                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
+                    : null
+              )}
+            </span>
             <select
               className={styles.select}
               value={tide}
