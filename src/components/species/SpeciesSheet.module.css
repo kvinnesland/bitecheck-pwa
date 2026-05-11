@@ -296,3 +296,51 @@
 .logBtn:active {
   opacity: 0.85;
 }
+
+.catchTipsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary);
+}
+
+.catchTipsRow + .catchTipsRow {
+  border-left-color: var(--color-text-muted);
+}
+
+.catchTipsIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  stroke: var(--color-primary);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.catchTipsRow + .catchTipsRow .catchTipsIcon {
+  stroke: var(--color-text-muted);
+}
+
+.catchTipsLabel {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  margin-bottom: 3px;
+}
+
+.catchTipsText {
+  font-size: 0.82rem;
+  color: var(--color-text);
+  line-height: 1.55;
+  margin: 0;
+}

@@ -11,6 +11,8 @@ export interface SpeciesInfo {
   sluk: string[];
   teknikktips: string;
   fargetips?: string;
+  fraLandTips: string;
+  fraBåtTips: string;
 }
 
 export const SPECIES_INFO: Record<string, SpeciesInfo> = {
@@ -22,6 +24,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Gummisild/jig', 'Pilk 40–100g', 'Sildesluker'],
     teknikktips: 'Varier innsveivingshastigheten med hyppige stopp – imiterer et skadet byttedyr og trigger huggrefleksen.',
     fargetips: 'Bunnbeiting: gul/rød · Sildebeiting: sølv/blank',
+    fraLandTips: 'Fisk i skumringstimene når torsken trekker inn mot grunnere vann. Finn marbakker eller dype renner innen 50–100 m rekkevidde. Bruk sluker under 30 g med stor overflate for å holde redskapen over tareskogen under innsveiving.',
+    fraBåtTips: 'Bruk pilk på minimum 250 g for vertikalt fiske og presis bunnkontakt. Juster vekten kontinuerlig i forhold til strøm og drift. Oppsøk banker, topper og skrenter med ekkolodd – torsken står oftest helt nede ved substratet.',
   },
   Kveite: {
     description: 'Kveita er Norges største flatfisk og kan bli over 300 kg. Den er primært et dypvannsdyr som følger tidevannets bevegelser for å jakte på annen fisk. Stor og mektig – kveite krever tålmodighet og riktig utstyr.',
@@ -30,6 +34,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Hel agnsild', 'Makrellfilet'],
     sluk: ['Store gummijigger (sei/sild-imitasjon)'],
     teknikktips: 'Vent 2–3 sekunder etter hugget – kveita smaker på agnet før den sluke det. Sirkelkrok str. 8/0 anbefales.',
+    fraLandTips: 'Kystmeite krever ekstremt robust utstyr. Bruk store kroker (7/0+) og sikre agnet med agnstrikk slik at hel sild eller makrellfilet ikke faller av under kraftige kast. Finn sund med sterk strøm eller fjordutløp. Kalibrér snellebremsen nøye – for løs brems og fisken setter seg fast i steinrøyser, for stram og snøret ryker.',
+    fraBåtTips: 'Oppsøk konsentrasjoner av byttefisk med ekkolodd – kveita følger byttet. Bruk store gummijigger eller hel sei som agn. Følg etter fisken under de eksplosive utrasene fremfor å bremsekjøre – det reduserer risikoen for snørebrudd betraktelig.',
   },
   Sei: {
     description: 'Seien er en hurtig og stimfisk som jakter aktivt i vannmassene. Den trives best i moderat strøm og er særlig aktiv i tusmørket når lyset er lavt. Sei finnes langs hele norskekysten og er en populær sportsfisk.',
@@ -39,6 +45,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Kompakte sildesluker', 'Pilk', 'Gummimakk'],
     teknikktips: 'Sveiv så raskt som mulig – fart trigger jaktinstinktet og gir fisken ikke tid til å inspisere agnet kritisk.',
     fargetips: 'Gummimakk: rød, hvit og selvlysende grønn er klassiske valg',
+    fraLandTips: 'Stimer av småsei patruljerer langs bratte svaberg og moloer midt på dagen. Bruk sneller med høy utveksling og stenger som tåler kraftige utras. Sveiv raskt – seien er en visuell jeger som responderer på hastighet, ikke agnets utseende.',
+    fraBåtTips: 'Harping og dorging er de dominerende metodene. Bruk ekkolodd for å skille mellom tette småseistimer og de mer spredte ekkoene fra storsei, som gjerne står dypere. Bruk robust stang og tykt snøre – fult harpeutstyr under opptrekk gir enorm belastning.',
   },
   Hyse: {
     description: 'Hysen er nær beslektet med torsken, men slankere og med et karakteristisk sort skulderflekkmerke. Den er mest aktiv ved fallende lufttrykk og lever nær bunnen på sandbunn og skjellsand. Hysen gir god kamp på lett utstyr.',
@@ -48,6 +56,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Takler med perler og spinnerblader'],
     teknikktips: 'Hysa er nysgjerrig på farger og lys – bruk "juggel" med perler og spinnerblader for å øke fangstraten.',
     fargetips: 'Attraktorer: rosa, hvit og gul er mest effektive · Selvlysende detaljer øker fangst',
+    fraLandTips: 'Hysa "smaker" på agnet før den svelger – bruk en følsom stangtupp for å registrere de svake nappene på 40–50 m dyp. Fisk på sandbunn og skjellsand. Hyse er oftest bifangst ved bunnmeite, men reagerer godt på attraktorer som perler og spinnerblader.',
+    fraBåtTips: 'Bruk lett havfiskestang med myk topp for å fange opp de forsiktige nappene. Presenter reke eller blåskjell like over bunnen. Hyse konsentrerer seg i spesifikke bløtbunnsområder – bruk kartplotter for å merke produktive punkter.',
   },
   Lange: {
     description: 'Langen er en langstrakt torskefisk som lever på dypt, hardt bunn. Den foretrekker stille vann med lite strøm og er særlig aktiv ved stigende tidevann. Langens lange kropp og nennsom bit krever en viss teknikk.',
@@ -56,6 +66,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Makrellfilet', 'Sildfilet (store biter)'],
     sluk: ['Tunge lodd 300–800g', 'Selvlysende slanger', 'Blekksprutimitasjoner'],
     teknikktips: 'Hold agnet 2–5 meter over bunnen og i bevegelse – lange jakter aktivt, i motsetning til den stasjonære brosma.',
+    fraLandTips: 'Landfiske er nesten umulig pga. dybdepreferanse på 100–1000 m. Unntak finnes i noen vestlandsfjorder der fjellsiden går loddrett ned til dypt vann noen meter fra land. Krever lodd på 150–200 g og ekstremt sterk takling. Fisken setter seg lett fast i steinrøyser under oppstigning.',
+    fraBåtTips: 'Søk dypkanter og bratte skråninger (400–600 m) med kartplotter og ekkolodd. Bruk snelle med stor kapasitet for braided line og blylodd over 500 g for å holde agnet vertikalt. Båtens evne til å holde posisjon i strøm er avgjørende for suksess.',
   },
   Brosme: {
     description: 'Brosmen er en dypvannsfisk med lang ryggfinne og kraftig barbel under haken. Den holder til på steinbunn og korallrev på dypt vann. Brosme er en seig fighter og smaker utmerket røkt eller saltet.',
@@ -64,6 +76,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Makrell (ferskt)', 'Sild (ferskt)'],
     sluk: ['Tunge lodd', 'Selvlysende blekksprutimitasjoner'],
     teknikktips: 'La agnet ligge helt nede ved bunnen – brosma beveger seg lite vertikalt og er svært stasjonær.',
+    fraLandTips: 'Landfiske er i praksis umulig – brosmen foretrekker stein- og fjellbunn på 100–1000 m dyp. Fiske fra land er kun aktuelt der bratte fjordvegger gir tilgang til dypt vann direkte fra fjæra.',
+    fraBåtTips: 'Finn steinbunn og bratte dypkanter med ekkolodd. La agnet (ferskt makrell eller sild) ligge helt på bunnen – brosmen er stasjonær og vil ikke jakte oppover. Bruk tunge lodd og selvlysende detaljer for å tiltrekke oppmerksomhet i mørket på dypt vann.',
   },
   Uer: {
     description: 'Ueren er en langlivende rødfisk som kan bli over 100 år gammel. Den er nattaktiv og trives i stabilt vær med lite bevegelse i vannmassene. Store uer holder til på dypt vann i fjordene og langs ytterkysten.',
@@ -72,6 +86,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Reke', 'Makrell', 'Sild'],
     sluk: ['Uersnik (lange takler, mange kroker)', 'Selvlysende kroker/detaljer'],
     teknikktips: 'Ueren står i tette stimer mange meter over bunnen – søk med lange takler (opptil 20m) gjennom hele vannsøylen.',
+    fraLandTips: 'Landfiske er i praksis umulig – ueren lever på 100–1000 m dyp og er ikke tilgjengelig fra land. Konsentrer deg om andre arter fra kaia.',
+    fraBåtTips: 'Bruk hekler med mange kroker agnet med fiskebiter, gjerne kombinert med selvlysende slanger for å tiltrekke fisk i mørket. OBS: ueren overlever ikke trykkendringen ved oppstigning (barotrauma) – dette er et rent matfiske der fangst-og-slipp ikke er mulig.',
   },
   Steinbit: {
     description: 'Steinbiten har et stort, avrundet hode med kraftige tenner som kan knuse skjell og krabber. Den holder til på steinbunn i kaldt vann og er aktiv året rundt. Steinbiten er lite sky og biter godt i stabilt vær.',
@@ -80,6 +96,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Kamskjell', 'Blåskjell', 'Fiskefilet'],
     sluk: ['Gummifisk (ekstremt sakte)', 'Bunnmeite med bom og slep'],
     teknikktips: 'Spinnerblader og tunge perler kan irritere steinbit til hugg – den er territorial og aggressiv.',
+    fraLandTips: 'Bunnmeite med knust blåskjell eller reke der dype renner går nær land. Vær forberedt på at steinbiten biter seg fast under steiner når den er kroket – bruk solid takling. Pass på tennene ved avkroking.',
+    fraBåtTips: 'Dunk et tungt lodd gjentatte ganger mot bunnen for å skape lyd og vibrasjoner – dette irriterer den territorielle steinbiten til å hugge. Bruk stiv stang og snelle med god brems. Tareskogskanter og skjellsandbanker nær strømrike sund er ideelle posisjoner.',
   },
   Makrell: {
     description: 'Makrellen er en rask, stimfisk som inntar norske kystfarvann om sommeren når vannet er varmt. Den biter best i lett til moderat bris som rører overflaten. Makrell er kjent for sine intense kamper og er utmerket til mat.',
@@ -88,6 +106,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Sild', 'Makrellbiter'],
     sluk: ['Sildesluker 15–28g', 'Makrellharpe/hekler (5–10 kroker)'],
     teknikktips: 'Hold sluken rett under overflaten med små rykk i stanga – øker huggvilligheten markant.',
+    fraLandTips: 'Finn tidspunkter der makrellen presses inn mot land av sei eller torsk. Stigende flo fører ofte stimene tettere på. Bruk lette kastesluker eller hekler og sveiv raskt – makrellen responderer på fart og bevegelse.',
+    fraBåtTips: 'Dorging i 2–3 knops fart med sluker eller wobblere er den dominerende metoden. Dekk store havflater for å lokalisere stimene. Når du finner dem, mark posisjonen og fisk intensivt – makrellen kan forsvinne like raskt som den kom.',
   },
   Rødspette: {
     description: 'Rødspetta er en fargerik flatfisk med karakteristiske oransje prikker på oversiden. Den finnes på sandbunn i grunne kystfarvann og er særlig aktiv ved stigende tidevann. Rødspette er en delikatesse og gir god sport på lettutstyr.',
@@ -97,6 +117,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Perler og spinnerblader som attraktorer'],
     teknikktips: 'Dunk loddet lett i bunnen for å virvle opp sedimenter – tiltrekker rødspettas nysgjerrighet.',
     fargetips: 'Attraktorer: hvit, perlemor, gul og rød er mest effektive',
+    fraLandTips: 'Kast ut og la agnet ligge i ro på sandbunn, avbrutt av korte innsveivinger som virvler opp sedimenter. Bruk visuelle attraktorer (hvite/røde perler og spinnerblader) for å lokke fisken til agnet. Fisk på 5–40 m dyp.',
+    fraBåtTips: 'Driv over store sandflater for å finne konsentrasjoner av fisk. Bruk lett havfiskestang (7–8 fot) med myk topp. "Slepetakkel" med lange fortommer langs bunnen er effektivt – kontroller drivhastigheten nøye, for rask drift og agnet løfter seg fra bunnen.',
   },
   Lomre: {
     description: 'Lomra er den minste av de norske flyndrefiskene og lever på sandbunn i rolige, grunne farvann. Den er lite krevende å fiske etter, men krever fint agn nær bunnen. Lomre er god på tallerkenen trass i beskjeden størrelse.',
@@ -105,6 +127,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Blåskjell (små biter)', 'Reke'],
     sluk: ['Kroker str. 4–8 (meget små)'],
     teknikktips: 'La agnet ligge helt stille – lomra suger inn byttedyr fra bunnen og responderer ikke på bevegelse.',
+    fraLandTips: 'Fisk på steinete sandbunn på 20–100 m dyp. Lomra har svært liten munn – bruk de minste krokene (str. 4–8) og del agnet (reke/blåskjell) i bittesmå biter. La agnet ligge helt i ro.',
+    fraBåtTips: 'Driv sakte over sandflater og bruk lett rigg med myk stangtopp. Lomra er ofte bifangst – marker posisjoner der du finner den, da den gjerne holder seg i samme område. Teknikken ligner rødspettefiske, men med finere utstyr.',
   },
   Sandflyndre: {
     description: 'Sandflyndra ligner lomra, men er noe mer langstrakt og foretrekker litt dypere sandbunn. Den er et byttedyr for kveite og torsk, men kan også fiskes på lett snøre med mark. Sandflyndre gir god smak fra norske kystfarvann.',
@@ -113,6 +137,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: ['Reke', 'Fiskestrimler', 'Mark'],
     sluk: ['Kroker str. 4–1'],
     teknikktips: 'Løft agnet sakte og sett det ned igjen med jevne mellomrom – sandflyndra liker agn i bevegelse.',
+    fraLandTips: 'Fisk på mudder- og sandbunn på 10–150 m dyp. Løft agnet sakte og sett det ned igjen med jevne mellomrom. Sandflyndra er utbredt og er ofte bifangst, men konsentrerer seg på bløtbunnsområder utenfor elvemunninger.',
+    fraBåtTips: 'Driv over store sandflater med lett rigg. Slepeteknikk der agnet slipes langs bunnen er effektivt. Sandflyndra er en av de mest tilgjengelige artene fra båt og gir god sport på lett havfiskeutstyr.',
   },
   Sild: {
     description: 'Silden vandrer i store stimer langs norskekysten og er en nøkkelart i havøkosystemet. Den er mest aktiv i kjølig til temperert vann og samler seg gjerne i store stimer rundt fullmåne og nymåne. Sild er en klassisk norsk matfisk.',
@@ -121,6 +147,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     agn: [],
     sluk: ['Sildehekler (reflekterende)', 'Planktonimitasjoner'],
     teknikktips: 'Bruk rig med mange små kroker og fint snøre – heklene skal imitere plankton og småfisk i stimen.',
+    fraLandTips: 'Fiske med sildehekler fra kai eller molo om natten når stimene trekker inn mot land. Bruk fint snøre og mange små kroker. Sild biter lettest i mørket – lys fra kaien kan tiltrekke plankton og dermed silden.',
+    fraBåtTips: 'Fisk dypere enn makrell med sildehekler. OBS: silda har svært myk munn – bruk jevn og forsiktig innsveiving for å unngå at kroken rives ut. Ekkolodd er uunnværlig for å finne stimene i den mørke vannsøylen.',
   },
   Laks: {
     description: 'Laksen er en legendarisk sportsfisk som returnerer til elven der den ble klekket. I sjøen biter laksen best i tusmørket ved fallende lufttrykk. Den er en kraftig fighter som krever godt utstyr og tålmodighet fra fiskeren.',
@@ -130,6 +158,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Buch Salmon (gull/kobber-rød)', 'Trønderskjea', 'Møresilda 22–55g'],
     teknikktips: 'Velg slukfarge etter elvas fargetone – matchen mellom sluken og vannets farge er avgjørende.',
     fargetips: 'Klar elv: sølv/blå · Cognac-farget: gull/kobber · Flomvann: oransje/rød',
+    fraLandTips: 'I elv: finn gode standplasser bak steiner, i strømkanter og i dype høler. Velg slukfarge etter elvens fargetone. Vær oppmerksom på fredningssoner rundt elvemunninger der fiske kan være forbudt for å beskytte gytebestanden.',
+    fraBåtTips: 'Dorging (trolling) langs land og i fjordene. Bruk dypstigger for å kontrollere agnets dybde nøyaktig – laksen vandrer i spesifikke vannlag avhengig av saltholdighet og temperatur. Naviger aktivt rundt fredningssoner ved elvemunninger.',
   },
   Sjøørret: {
     description: 'Sjøørreten er brunørretens sjøvandrende form og finnes langs kysten i saltvann deler av året. Den er svært temperert og biter best i lavt lys ved fallende trykk. Sjøørret er kjent for ville hopp og spektakulære kamper på lett utstyr.',
@@ -139,6 +169,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Møresilda holografisk', 'Skjesluker (Toby, Søvik Auren)', 'Kystwobblere'],
     teknikktips: 'Spinnstopp er kritisk – la sluken synke 2–3 sek med jevne mellomrom. De fleste hugg kommer ved retningsskifte.',
     fargetips: '7–17 °C: holografisk sølv/sort eller sølv/blå · Kaldt vann: rosa, oransje eller hvit/fluo',
+    fraLandTips: 'Finn "leopardbunn" – en mosaik av sand, stein og tangbelter. Sjøørreten er ekstremt sky i klart vann; lange kast og forsiktig fremtreden er avgjørende. To timer før og etter flo er beste tid. Fisk over store områder med lette sluker.',
+    fraBåtTips: 'Dorging (trolling) langs land og i fjordene med dypstigger for nøyaktig dybdekontroll. Hold god avstand fra land og kast inn mot stranda. Naviger rundt fredningssoner ved elvemunninger – sjøørreten samler seg her før gytevandringstiden.',
   },
   Sjørøye: {
     description: 'Sjørøya er den nordligste av de anadrome laksefiskene og trives i kaldt arktisk vann. Den vandrer mellom ferskvann og saltvann og er kjent for sine intense farger i gytetiden. Sjørøye er en delikatesse med fast, rosa kjøtt.',
@@ -148,6 +180,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Astro Vibe', 'Hybridmodeller sluk/wobbler', 'Fargerike kystsluker'],
     teknikktips: 'Lignende teknikk som sjøørret – spinnstopp med 2–3 sekunders pause. Mest knyttet til fjordsystemer i Nord-Norge.',
     fargetips: 'Fargerike og kontrasterende varianter er generelt mest effektive',
+    fraLandTips: 'Landfiske er den mest effektive metoden – sjørøya holder seg svært nær land og elvemunningen. Bruk et bredt utvalg av fluer og små sluker, da sjørøya kan være svært selektiv. Vær oppmerksom på at pukkellaks kan utkonkurrere sjørøya i sjøfasen i noen vassdrag.',
+    fraBåtTips: 'Sjelden nødvendig da sjørøya holder seg kystnært, men lett kystfiske fra robåt eller kajakk langs elvemunninger og grunne fjordstrender kan gi gode resultater. Bruk samme teknikk som for sjøørret.',
   },
   Ørret: {
     description: 'Brunørreten er en av Norges mest ettertraktede sportsfisker og finnes i elver og innsjøer over hele landet. Den er best aktiv ved fallende lufttrykk og biter godt i det ideelle temperaturvinduet på 8–14 °C. Ørreten er en taktisk og krevende fisk.',
@@ -157,6 +191,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Møreungen Nordlys 12g', 'Sølvkroken Spesial Classic 10g', 'Aura Flake 12g'],
     teknikktips: 'Aura Flake med "discokule"-overflate er effektiv under nesten alle lysforhold. Match fluetype til årstidens insektklekk.',
     fargetips: 'Klart vann/sol: naturlige farger og sølv · Grumsete/overskyet: gull, kobber og fluorescerende',
+    fraLandTips: 'Linekontroll er avgjørende i elv – sluken eller flua må drive naturlig uten at snøret strammer (striping). Fisk oppover elva slik at du ikke varsler fisken. I lav sommerelv er ørreten ekstra sky; vad forsiktig og hold deg lav.',
+    fraBåtTips: 'Fra kano eller elvebåt: driv sakte nedover og kast inn mot land eller mot dype renner. Dette gir tilgang til plasser med tett vegetasjon langs bredden som er umulig å nå fra land. I innsjø er båt nødvendig for å nå den dype ørreten om sommeren.',
   },
   Røye: {
     description: 'Røya er en kaldtvannsart som trives best i dype, klare innsjøer. Den biter godt ved fallende trykk i kjølig vann og er særlig aktiv om høsten i gytetiden. Røye er Norges vakreste innlandsfisk med sine karakteristiske farger.',
@@ -166,6 +202,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Søvik-Skeia (kobber/rød)', 'Åsenskjea (kobber/rød)'],
     teknikktips: 'Kobberfarger er overlegne for røye, særlig ved lavt lys og om kvelden.',
     fargetips: 'Kveld/lavt lys: kobber og rød · Dagslys: naturlige ørretfarger',
+    fraLandTips: 'Tilgjengelig fra land om våren og høsten når røya søker opp i grunne partier. Om sommeren søker den ned til de dypeste, kaldeste vannlagene og er da utilgjengelig fra land. Bruk insektsimitasjoner og kobberfarger ved lavt lys.',
+    fraBåtTips: 'Ekkolodd og dypagn er nødvendig om sommeren for å nå røya i de dype vannlagene. Røya opptrer i store stimer – når du finner stimene kan fisket være svært effektivt. Vær oppmerksom på overbefolkning av røye i mange vann, som gir småvokst "tusenbrødre"-røye.',
   },
   Abbor: {
     description: 'Abboren er en av de vanligste innlandsfiskene i Norge og kjennes igjen på de vertikale stripene langs kroppen. Den er varmtvannsfisk og biter best om sommeren i tusmørket. Abbor samler seg gjerne rundt vegetasjon og strukturer nær land.',
@@ -175,6 +213,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Gummiappon 5–13 cm', 'Spinnere (Mepps/Vibrax)', 'Rapala X-Rap wobbler'],
     teknikktips: 'Spinnere sender ut sterke trykkbølger – ideelt for å lokalisere aktiv fisk i stimen raskt.',
     fargetips: 'Imiterer byttedyr: grønt, brunt, oransje · Aggresjon: gult og rød',
+    fraLandTips: 'Fokuser på strukturer som brygger, nedsunkne trær og kanten av takrørbelter. De største abborene står gjerne dypere og mer beskyttet enn småabboren – i vann med krøkle kan storfisk gå ned til 20+ m og er vanskelig å nå fra land.',
+    fraBåtTips: '"Prikkskyting" med jigger eller dropshot-rig direkte på ekkoloddekko er svært effektiv metode. Abbor opptrer i stimer – lokaliser en stim og fisk intensivt på plassen. I vann med mye mort holder abboren seg sjelden dypere enn 7 m.',
   },
   Gjedde: {
     description: 'Gjedda er toprøveren i norske innsjøer og elver med sitt karakteristiske andesnute og kraftige kropp. Den er en ambushjeger som liker lavt lys og venter stille på byttet. Store gjedder kan veie over 10 kg og er en av de mest spennende sportsfiskene i ferskvann.',
@@ -184,6 +224,8 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Abu Garcia Atom (stor skjesluk)', 'Store wobblere 15–25 cm'],
     teknikktips: 'Bruk alltid wire/stålfortom – gjeddas tenner kutter vanlig snøre umiddelbart.',
     fargetips: 'Uklart vann: sterke farger (Fire Tiger) · Klart vann: naturlige farger (abbor/gjeddemønster)',
+    fraLandTips: 'Bruk "weedless"-agn (kroker beskyttet mot fastkjøring) for å fiske inne i de tetteste sivbeltene og under vannliljer – der gjedda gjemmer seg. Kast langs vegetasjonskanten og la agnet synke. Bruk alltid stålfortom.',
+    fraBåtTips: 'Fisk langs vegetasjonskanten fra utsiden og inn, eller dorg over åpent vann etter storgjedda som kan følge sik- og lagesildstimer pelagisk. OBS sikkerhet: håndtering av stor gjedde med hundrevis av sylskarpe tenner krever kraftige tenger og avkrokingsmatteri.',
   },
   Harr: {
     description: 'Harren er kjent for sin imponerende seildorsalfinne og finnes i klare, raske elver med god vannkvalitet. Den er en delikat fluefisk som stiger til overflaten for å ta insekter. Harr er krevende å lure og belønner deg med spektakulære hopp.',
@@ -193,5 +235,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
     sluk: ['Spinnere str. 0–2'],
     teknikktips: 'Red Tag med rød "tag" er harrflue nr. 1 – den røde detaljen fungerer som en kraftig visuell trigger.',
     fargetips: 'Tidlig sesong: blank/sølv spinner · Høst: diskré og naturlige farger',
+    fraLandTips: 'Wading er standard – vad ut på grunne partier for å nå strømkantene der harren står på 1–4 m dyp. Bruk små fluer og kroker (harren har liten munn). Vad forsiktig – harren er svært var for vibrasjoner i vannet.',
+    fraBåtTips: 'Fra kano eller elvebåt: driv sakte nedover mens du kaster inn mot land eller mot dype renner midt i elva. Gir tilgang til plasser langs bredden med tett vegetasjon som er umulig å nå fra land. Bruk lett fluestang eller ultralett spinneutstyr.',
   },
 };
