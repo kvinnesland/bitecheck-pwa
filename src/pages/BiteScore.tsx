@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { type User } from 'firebase/auth';
 import { computeAllScores, type EnvInputs, type SpeciesScore, type SolunarInfo } from '../lib/biteScore';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useWeather } from '../hooks/useWeather';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { setPendingSpecies } from '../lib/navigationStore';
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
+import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
 import type { PressureTrend, TidePhase } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
 import styles from './BiteScore.module.css';
@@ -35,11 +37,25 @@ export function BiteScore({ user, navigate }: Props) {
   const userCatches = useUserCatches(user.uid);
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesScore | null>(null);
 
-  const [pressure, setPressure] = useState<PressureTrend>('stable');
-  const [waterTemp, setWaterTemp] = useState('8');
-  const [tide, setTide] = useState<TidePhase>('rising');
+  const [customLocation, setCustomLocation] = useState<SelectedLocation | null>(null);
+  const [datetime, setDatetime]             = useState<Date>(() => new Date());
+
+  const [pressure, setPressure]         = useState<PressureTrend>('stable');
+  const [waterTemp, setWaterTemp]       = useState('8');
+  const [tide, setTide]                 = useState<TidePhase>('rising');
   const [currentSpeed, setCurrentSpeed] = useState('0.5');
-  const [waterFilter, setWaterFilter] = useState<'salt' | 'fresh'>('salt');
+  const [waterFilter, setWaterFilter]   = useState<'salt' | 'fresh'>('salt');
+
+  const effectiveLat = customLocation?.lat ?? position?.lat ?? 60.0;
+  const effectiveLng = customLocation?.lng ?? position?.lng ?? 5.0;
+
+  const weather = useWeather(effectiveLat, effectiveLng, datetime);
+
+  // Auto-fill pressure and water temp from weather API
+  useEffect(() => {
+    if (weather.pressureTrend) setPressure(weather.pressureTrend);
+    if (weather.waterTemp !== null) setWaterTemp(String(weather.waterTemp));
+  }, [weather.pressureTrend, weather.waterTemp]);
 
   const { scores, solunar } = useMemo(() => {
     const inputs: EnvInputs = {
@@ -47,13 +63,13 @@ export function BiteScore({ user, navigate }: Props) {
       water_temp:       parseFloat(waterTemp) || 8,
       tide_phase:       tide,
       current_speed_ms: parseFloat(currentSpeed) || 0.5,
-      wind_speed_ms:    5,
-      lat:  position?.lat  ?? 60.0,
-      lng:  position?.lng  ?? 5.0,
-      date: new Date(),
+      wind_speed_ms:    weather.windSpeed ?? 5,
+      lat:  effectiveLat,
+      lng:  effectiveLng,
+      date: datetime,
     };
     return computeAllScores(inputs);
-  }, [pressure, waterTemp, tide, currentSpeed, position]);
+  }, [pressure, waterTemp, tide, currentSpeed, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
 
   function handleSpeciesClick(s: SpeciesScore) {
     setSelectedSpecies(s);
@@ -77,6 +93,16 @@ export function BiteScore({ user, navigate }: Props) {
           onNavigateToLog={handleNavigateToLog}
         />
       )}
+      <LocationDatePicker
+        location={customLocation}
+        datetime={datetime}
+        gpsLat={position?.lat ?? 60.0}
+        gpsLng={position?.lng ?? 5.0}
+        weatherLoading={weather.loading}
+        onLocationChange={setCustomLocation}
+        onDatetimeChange={setDatetime}
+      />
+
       <SolunarCard solunar={solunar} />
 
       <section className={styles.inputs}>

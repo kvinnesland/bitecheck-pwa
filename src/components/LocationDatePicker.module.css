@@ -1,0 +1,214 @@
+.wrap {
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ── Compact rows ── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:active { background: var(--color-bg-card); }
+
+.rowIcon {
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-primary);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.rowText {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowMuted { color: var(--color-text-muted); }
+
+.rowChevron {
+  width: 14px;
+  height: 14px;
+  stroke: var(--color-text-muted);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.rowChevronOpen { transform: rotate(180deg); }
+
+/* ── Expandable panel ── */
+.panel {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.25s ease;
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panelOpen { max-height: 400px; }
+
+/* ── Search bar inside panel ── */
+.searchWrap {
+  position: relative;
+  padding: 10px 12px 6px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-20%);
+  width: 14px;
+  height: 14px;
+  stroke: var(--color-text-muted);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  padding: 8px 10px 8px 32px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput:focus { border-color: var(--color-primary); }
+.searchInput::placeholder { color: var(--color-text-muted); }
+
+/* ── Geocoding results dropdown ── */
+.results {
+  margin: 0 12px 6px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.resultItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.1s;
+}
+
+.resultItem:last-child { border-bottom: none; }
+.resultItem:hover { background: var(--color-surface); }
+
+/* ── Mini map ── */
+.mapWrap {
+  height: 180px;
+  margin: 0 12px 6px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+/* ── Reset link ── */
+.resetBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.resetBtn:hover { color: var(--color-primary); }
+
+.resetIcon {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── DateTime panel ── */
+.datetimeWrap {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.datetimeInput {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  color-scheme: dark;
+}
+
+.datetimeInput:focus { border-color: var(--color-primary); }
+
+.nowBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.nowBtn:hover { color: var(--color-primary); }
+
+/* ── Auto-fill badge ── */
+.autoTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
