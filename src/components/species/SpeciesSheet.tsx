@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { SpeciesScore } from '../../lib/biteScore';
 import type { CatchRecord } from '../../types';
 import { SPECIES_INFO } from '../../lib/speciesInfo';
-import { FishSvg } from './FishSvg';
+import { SpeciesCardHeader } from './SpeciesCardHeader';
 import styles from './SpeciesSheet.module.css';
 
 interface Props {
@@ -124,13 +124,7 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
           onTouchMove={onHandleTouchMove}
           onTouchEnd={onHandleTouchEnd}
         >
-          <FishSvg name={score.name} className={styles.fishIllustration} />
-          <div className={styles.nameRow}>
-            <h2 className={styles.speciesName}>{score.name}</h2>
-            <span className={styles.waterBadge}>
-              {score.water === 'salt' ? 'Saltvann' : 'Ferskvann'}
-            </span>
-          </div>
+          <SpeciesCardHeader name={score.name} />
         </div>
 
         <div className={styles.content}>

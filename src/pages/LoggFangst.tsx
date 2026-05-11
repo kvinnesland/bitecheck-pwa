@@ -4,6 +4,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { FishSvg } from '../components/species/FishSvg';
+import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import styles from './LoggFangst.module.css';
 
 const SPECIES_GROUPS = [
@@ -112,54 +113,62 @@ export function LoggFangst({ user }: Props) {
           Tilbake
         </button>
 
-        <div className={styles.speciesBadge}>
-          <span>{species}</span>
-          <button className={styles.changeBtn} onClick={() => setStep('species')}>Endre</button>
-        </div>
-
-        <div className={styles.fields}>
-          <label className={styles.fieldGroup}>
-            <span className={styles.fieldLabel}>Vekt (kg)</span>
-            <input
-              ref={weightRef}
-              className={styles.input}
-              type="number"
-              inputMode="decimal"
-              placeholder="0.0"
-              min="0"
-              step="0.1"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <SpeciesCardHeader
+              name={species}
+              action={
+                <button className={styles.changeBtn} onClick={() => setStep('species')}>Endre</button>
+              }
             />
-          </label>
+          </div>
 
-          <label className={styles.fieldGroup}>
-            <span className={styles.fieldLabel}>Lengde (cm)</span>
-            <input
-              className={styles.input}
-              type="number"
-              inputMode="decimal"
-              placeholder="0"
-              min="0"
-              step="1"
-              value={length}
-              onChange={(e) => setLength(e.target.value)}
-            />
-          </label>
+          <div className={styles.cardBody}>
+            <div className={styles.fields}>
+              <label className={styles.fieldGroup}>
+                <span className={styles.fieldLabel}>Vekt (kg)</span>
+                <input
+                  ref={weightRef}
+                  className={styles.input}
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="0.0"
+                  min="0"
+                  step="0.1"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                />
+              </label>
+
+              <label className={styles.fieldGroup}>
+                <span className={styles.fieldLabel}>Lengde (cm)</span>
+                <input
+                  className={styles.input}
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  value={length}
+                  onChange={(e) => setLength(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className={`${styles.gpsRow} ${styles[`gps_${geoStatus}`]}`}>
+              <GpsIcon status={geoStatus} />
+              <span>{gpsLabel(geoStatus, position?.accuracy_m)}</span>
+            </div>
+
+            <button
+              className={styles.btnPrimary}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? 'Lagrer…' : 'Lagre fangst'}
+            </button>
+          </div>
         </div>
-
-        <div className={`${styles.gpsRow} ${styles[`gps_${geoStatus}`]}`}>
-          <GpsIcon status={geoStatus} />
-          <span>{gpsLabel(geoStatus, position?.accuracy_m)}</span>
-        </div>
-
-        <button
-          className={styles.btnPrimary}
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? 'Lagrer…' : 'Lagre fangst'}
-        </button>
       </div>
     );
   }
