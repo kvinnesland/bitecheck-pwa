@@ -37,6 +37,7 @@ export function LoggFangst({ user }: Props) {
   const { status: geoStatus, position } = useGeolocation();
   const weightRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,6 +179,14 @@ export function LoggFangst({ user }: Props) {
             <div className={styles.photoSection}>
               <span className={styles.photoSectionLabel}>Bilde</span>
               <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                onChange={handlePhotoChange}
+              />
+              <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
@@ -192,13 +201,23 @@ export function LoggFangst({ user }: Props) {
                   </button>
                 </div>
               ) : (
-                <button className={styles.photoAdd} onClick={() => fileInputRef.current?.click()}>
-                  <svg className={styles.photoAddIcon} viewBox="0 0 24 24">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                  Ta bilde eller velg fra galleri
-                </button>
+                <div className={styles.photoButtons}>
+                  <button className={styles.photoBtn} onClick={() => cameraInputRef.current?.click()}>
+                    <svg className={styles.photoBtnIcon} viewBox="0 0 24 24">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    Kamera
+                  </button>
+                  <button className={styles.photoBtn} onClick={() => fileInputRef.current?.click()}>
+                    <svg className={styles.photoBtnIcon} viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    Galleri
+                  </button>
+                </div>
               )}
             </div>
 

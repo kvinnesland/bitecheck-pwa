@@ -225,12 +225,18 @@
   color: var(--color-text-muted);
 }
 
-.photoAdd {
+.photoButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.photoBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 96px;
+  gap: 7px;
+  padding: 14px 8px;
   border: 1.5px dashed var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-card);
@@ -241,14 +247,14 @@
   transition: border-color 0.15s, color 0.15s;
 }
 
-.photoAdd:hover {
+.photoBtn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
-.photoAddIcon {
-  width: 20px;
-  height: 20px;
+.photoBtnIcon {
+  width: 18px;
+  height: 18px;
   stroke: currentColor;
   fill: none;
   stroke-width: 2;
