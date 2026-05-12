@@ -261,8 +261,8 @@ function LightLabel({ lux }: { lux: number }) {
 // ─── Species score card ───────────────────────────────────────────────────────
 
 function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: number; onClick: () => void }) {
-  const pct = Math.round(score.score * 100);
-  const color = scoreColor(score.score);
+  const pct   = Math.round(score.score * 100);
+  const color = score.outOfSeason ? 'var(--color-warning)' : scoreColor(score.score);
 
   return (
     <div className={styles.speciesCard} onClick={onClick} style={{ cursor: 'pointer' }}>
@@ -276,7 +276,7 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
             )}
           </span>
           <span className={styles.speciesLabel} style={{ color }}>
-            {score.label}
+            {score.outOfSeason ? 'Ikke i sesong' : score.label}
           </span>
           <span className={styles.speciesPct} style={{ color }}>
             {pct}%
