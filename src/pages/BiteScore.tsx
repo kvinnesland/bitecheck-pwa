@@ -203,7 +203,7 @@ export function BiteScore({ user, navigate }: Props) {
           {scores
             .filter((s) => s.water === waterFilter)
             .map((s, i) => (
-              <SpeciesCard key={s.name} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
+              <SpeciesCard key={`${s.name}-${s.method ?? ''}`} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
             ))}
         </div>
       </section>
