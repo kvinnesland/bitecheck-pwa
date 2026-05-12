@@ -38,3 +38,15 @@ Ingen CI/CD — alt deployes manuelt. Firebase-prosjekt: `fishing-projects`. URL
 
 ## UI-språk
 Hele appen er på norsk. Fortsett med norske labels, knapper og meldinger.
+
+## Åpne issues / TODO
+
+### Utsatt (bevisst)
+- **Firestore privacy-regler** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Krever design-beslutning: hva skal være privat vs. offentlig? Relevant når brukerbase vokser.
+
+### UX-spørsmål uavklart
+- **Torsk / Steinbit fra land vs. fra båt i SpeciesSheet** — begge viser identisk infokort i dag. Bør de ha forskjellig innhold (ulike tips, dyp, agn) eller er én felles beskrivelse greit?
+
+### Ideer ikke startet
+- Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)
+- Push-varslinger når solunarperiode starter (krever Notification API + service worker-integrasjon)
