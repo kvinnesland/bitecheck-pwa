@@ -1,11 +1,6 @@
+import { SPECIES_WATER } from '../../lib/biteScore';
 import { FishSvg } from './FishSvg';
 import styles from './SpeciesCardHeader.module.css';
-
-const SALT_SPECIES = new Set([
-  'Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme',
-  'Uer', 'Steinbit', 'Makrell', 'Rødspette', 'Lomre',
-  'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye',
-]);
 
 interface Props {
   name: string;
@@ -13,7 +8,7 @@ interface Props {
 }
 
 export function SpeciesCardHeader({ name, action }: Props) {
-  const water = SALT_SPECIES.has(name) ? 'Saltvann' : 'Ferskvann';
+  const water = SPECIES_WATER.get(name) === 'salt' ? 'Saltvann' : 'Ferskvann';
   return (
     <>
       <FishSvg name={name} className={styles.fishIllustration} />

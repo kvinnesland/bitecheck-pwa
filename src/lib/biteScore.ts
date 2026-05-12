@@ -417,6 +417,11 @@ const SPECIES_DEFS: SpeciesDef[] = [
   },
 ];
 
+// Single source of truth for species → water type. Derived from SPECIES_DEFS.
+export const SPECIES_WATER: ReadonlyMap<string, 'salt' | 'fresh'> = new Map(
+  SPECIES_DEFS.map((d) => [d.name, d.water]),
+);
+
 function scoreLabel(score: number): string {
   if (score >= 0.75) return 'Utmerket';
   if (score >= 0.5)  return 'Bra';
