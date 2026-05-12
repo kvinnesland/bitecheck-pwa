@@ -8,6 +8,7 @@ import { useUserCatches } from '../hooks/useUserCatches';
 import { setPendingSpecies } from '../lib/navigationStore';
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
 import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
+import { DailyScoreChart } from '../components/DailyScoreChart';
 import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
 import styles from './BiteScore.module.css';
@@ -58,7 +59,7 @@ export function BiteScore({ user, navigate }: Props) {
   const effectiveLng = customLocation?.lng ?? position?.lng ?? 5.0;
 
   const weather = useWeather(effectiveLat, effectiveLng, datetime);
-  const { tidePhase: autoTide, currentStrength: autoCurrentStrength, tideLoading } =
+  const { tidePhase: autoTide, currentStrength: autoCurrentStrength, hourlyTide, tideLoading } =
     useTide(effectiveLat, effectiveLng, datetime, waterFilter);
 
   // Auto-fill pressure and water temp from weather API
@@ -120,6 +121,17 @@ export function BiteScore({ user, navigate }: Props) {
       />
 
       <SolunarCard solunar={solunar} />
+
+      <DailyScoreChart
+        datetime={datetime}
+        hourlyTide={hourlyTide}
+        pressure={pressure}
+        waterTemp={parseFloat(waterTemp) || 8}
+        windSpeed={weather.windSpeed ?? 5}
+        lat={effectiveLat}
+        lng={effectiveLng}
+        waterFilter={waterFilter}
+      />
 
       <section className={styles.inputs}>
         <h3 className={styles.sectionTitle}>Miljøforhold</h3>
