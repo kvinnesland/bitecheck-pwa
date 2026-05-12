@@ -17,6 +17,7 @@ export interface EnvInputs {
 export interface SpeciesScore {
   name: string;
   water: 'salt' | 'fresh';
+  method?: 'land' | 'båt';
   score: number;      // 0.0–1.0 clamped
   primary: number;    // normalized primary variable
   secondary: number;  // normalized secondary variable
@@ -225,15 +226,23 @@ function derive(inputs: EnvInputs): Derived {
 interface SpeciesDef {
   name: string;
   water: 'salt' | 'fresh';
+  method?: 'land' | 'båt';
   primary:   (e: EnvInputs, d: Derived) => number;
   secondary: (e: EnvInputs, d: Derived) => number;
 }
 
 const SPECIES_DEFS: SpeciesDef[] = [
   {
-    name: 'Torsk', water: 'salt',
+    // Shallow coastal — SST is a decent proxy for near-surface water temp
+    name: 'Torsk', water: 'salt', method: 'land',
     primary:   (e)    => normPressure(e.pressure_trend),
-    secondary: (e)    => normTemp(e.water_temp, 4, 8),
+    secondary: (e)    => normTemp(e.water_temp, 4, 10, 8),
+  },
+  {
+    // Deep water (30–300 m) — SST irrelevant; moon/solunar drives feeding activity
+    name: 'Torsk', water: 'salt', method: 'båt',
+    primary:   (e)    => normPressure(e.pressure_trend),
+    secondary: (_, d) => normMoonPhase(d.moonPhase),
   },
   {
     name: 'Kveite', water: 'salt',
@@ -266,9 +275,16 @@ const SPECIES_DEFS: SpeciesDef[] = [
     secondary: (e)    => normPressureStable(e.pressure_trend),
   },
   {
-    name: 'Steinbit', water: 'salt',
-    primary:   (e)    => normTemp(e.water_temp, 4, 10, 6),
+    // Rocky shallows (5–40 m) — SST is a reasonable proxy
+    name: 'Steinbit', water: 'salt', method: 'land',
+    primary:   (e)    => normTemp(e.water_temp, 4, 12, 6),
     secondary: (e)    => normTide(e.tide_phase),
+  },
+  {
+    // Deep rocky bottom (50–200 m) — cold regardless of SST; tide & moon drive feeding
+    name: 'Steinbit', water: 'salt', method: 'båt',
+    primary:   (e)    => normTide(e.tide_phase),
+    secondary: (_, d) => normMoonPhase(d.moonPhase),
   },
   {
     name: 'Makrell', water: 'salt',
@@ -360,6 +376,7 @@ export function computeAllScores(inputs: EnvInputs): {
     return {
       name: def.name,
       water: def.water,
+      method: def.method,
       score,
       primary: p,
       secondary: s,

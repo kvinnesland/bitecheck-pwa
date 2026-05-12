@@ -269,7 +269,12 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
       <div className={styles.speciesRank}>{rank}</div>
       <div className={styles.speciesBody}>
         <div className={styles.speciesTop}>
-          <span className={styles.speciesName}>{score.name}</span>
+          <span className={styles.speciesName}>
+            {score.name}
+            {score.method && (
+              <span className={styles.methodTag}>{score.method === 'land' ? 'fra land' : 'fra båt'}</span>
+            )}
+          </span>
           <span className={styles.speciesLabel} style={{ color }}>
             {score.label}
           </span>

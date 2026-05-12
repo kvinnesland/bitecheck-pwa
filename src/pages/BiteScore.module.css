@@ -221,6 +221,16 @@
   font-weight: 600;
   color: var(--color-text);
   flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.methodTag {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
 }
 
 .speciesLabel {
