@@ -62,19 +62,38 @@ export function useWeather(lat: number, lng: number, datetime: Date): WeatherRes
       params.set('forecast_days', '16');
     }
 
-    fetch(`${base}?${params}`)
-      .then((r) => r.json())
-      .then((data) => {
+    const marineParams = new URLSearchParams({
+      latitude:   lat.toFixed(4),
+      longitude:  lng.toFixed(4),
+      hourly:     'sea_surface_temperature',
+      timezone:   'auto',
+      start_date: dateStr,
+      end_date:   dateStr,
+    });
+
+    Promise.allSettled([
+      fetch(`${base}?${params}`).then((r) => r.json()),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?${marineParams}`).then((r) => r.json()),
+    ])
+      .then(([weatherSettled, marineSettled]) => {
+        if (weatherSettled.status === 'rejected') throw new Error('weather failed');
+        const data = weatherSettled.value;
+        const marineData = marineSettled.status === 'fulfilled' ? marineSettled.value : null;
+
         const targetHour = datetime.toISOString().slice(0, 13) + ':00';
         let idx = data.hourly.time.findIndex((t: string) => t.startsWith(targetHour.slice(0, 13)));
         if (idx < 0) idx = 0;
 
-        const temp: number     = data.hourly.temperature_2m[idx]   ?? 8;
-        const pressure: number = data.hourly.surface_pressure[idx]  ?? 1013;
+        const temp: number         = data.hourly.temperature_2m[idx]              ?? 8;
+        const pressure: number     = data.hourly.surface_pressure[idx]             ?? 1013;
         const prevPressure: number = data.hourly.surface_pressure[Math.max(0, idx - 3)] ?? pressure;
-        const wind: number     = data.hourly.wind_speed_10m[idx]    ?? 5;
+        const wind: number         = data.hourly.wind_speed_10m[idx]               ?? 5;
 
-        const waterTemp = Math.round((temp - 1) * 2) / 2;
+        const sstRaw: number | null | undefined = marineData?.hourly?.sea_surface_temperature?.[idx];
+        const waterTemp = sstRaw != null
+          ? Math.round(sstRaw * 2) / 2
+          : Math.round((temp - 1) * 2) / 2;
+
         const res: WeatherResult = {
           waterTemp,
           pressureTrend: toPressureTrend(pressure - prevPressure),
