@@ -7,6 +7,7 @@ import styles from './SpeciesSheet.module.css';
 
 interface Props {
   score: SpeciesScore;
+  datetime: Date;
   userCatches: CatchRecord[];
   onClose: () => void;
   onNavigateToLog: () => void;
@@ -17,6 +18,15 @@ function scoreColor(score: number): string {
   if (score >= 0.5)  return '#22c55e';
   if (score >= 0.25) return '#f59e0b';
   return '#ef4444';
+}
+
+function CalendarIcon() {
+  return (
+    <svg className={styles.bestIcon} viewBox="0 0 14 14">
+      <rect x="1" y="2" width="12" height="11" rx="1" />
+      <path d="M1 6h12M4 1v2M10 1v2" />
+    </svg>
+  );
 }
 
 function ThermoIcon() {
@@ -62,7 +72,17 @@ function formatDate(isoString: string): string {
 
 const DISMISS_THRESHOLD = 80;
 
-export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: Props) {
+function scoreTimeLabel(datetime: Date): string {
+  const now = new Date();
+  const isToday =
+    datetime.getFullYear() === now.getFullYear() &&
+    datetime.getMonth() === now.getMonth() &&
+    datetime.getDate() === now.getDate();
+  if (isToday) return 'Score nå';
+  return 'Score ' + datetime.toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigateToLog }: Props) {
   const info = SPECIES_INFO[score.name];
   const pct = Math.round(score.score * 100);
   const color = scoreColor(score.score);
@@ -129,7 +149,7 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
 
         <div className={styles.content}>
           <section>
-            <h3 className={styles.sectionTitle}>Score nå</h3>
+            <h3 className={styles.sectionTitle}>{scoreTimeLabel(datetime)}</h3>
             <div className={styles.scoreBlock}>
               <div className={styles.scoreTotalRow}>
                 <span className={styles.scoreTotalLabel}>Totalt</span>
@@ -193,6 +213,10 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
                     <span>{info.bestTide}</span>
                   </div>
                 )}
+                <div className={styles.seasonRow}>
+                  <CalendarIcon />
+                  <span>{info.season}</span>
+                </div>
               </div>
             </section>
           )}

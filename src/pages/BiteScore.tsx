@@ -105,6 +105,7 @@ export function BiteScore({ user, navigate }: Props) {
       {selectedSpecies && (
         <SpeciesSheet
           score={selectedSpecies}
+          datetime={datetime}
           userCatches={userCatches}
           onClose={() => setSelectedSpecies(null)}
           onNavigateToLog={handleNavigateToLog}
@@ -125,6 +126,7 @@ export function BiteScore({ user, navigate }: Props) {
       <DailyScoreChart
         datetime={datetime}
         hourlyTide={hourlyTide}
+        hourlyWeather={weather.hourlyWeather}
         pressure={pressure}
         waterTemp={parseFloat(waterTemp) || 8}
         windSpeed={weather.windSpeed ?? 5}
@@ -151,7 +153,7 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>Sjøtemperatur (°C)</span>
+            <span className={styles.fieldLabel}>{waterFilter === 'fresh' ? 'Vanntemperatur (°C)' : 'Sjøtemperatur (°C)'}</span>
             <input
               className={styles.input}
               type="number"

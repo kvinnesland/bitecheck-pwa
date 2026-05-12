@@ -59,8 +59,9 @@
 /* ── Zoom hint (below layer buttons, shown when sediment layer is active but zoom too low) ── */
 .zoomHint {
   position: absolute;
-  top: 90px;
-  left: 12px;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -70,6 +71,7 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   z-index: 10;
   pointer-events: none;
+  white-space: nowrap;
   animation: fadeIn 0.2s ease;
 }
 

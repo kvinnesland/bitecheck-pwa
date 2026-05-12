@@ -2,17 +2,19 @@ import { useMemo } from 'react';
 import { computeAllScores, type EnvInputs } from '../lib/biteScore';
 import type { PressureTrend, CurrentStrength } from '../types';
 import type { HourlyTideEntry } from '../hooks/useTide';
+import type { HourlyWeatherEntry } from '../hooks/useWeather';
 import styles from './DailyScoreChart.module.css';
 
 interface Props {
-  datetime:    Date;
-  hourlyTide:  HourlyTideEntry[];
-  pressure:    PressureTrend;
-  waterTemp:   number;
-  windSpeed:   number;
-  lat:         number;
-  lng:         number;
-  waterFilter: 'salt' | 'fresh';
+  datetime:      Date;
+  hourlyTide:    HourlyTideEntry[];
+  hourlyWeather: HourlyWeatherEntry[];
+  pressure:      PressureTrend;
+  waterTemp:     number;
+  windSpeed:     number;
+  lat:           number;
+  lng:           number;
+  waterFilter:   'salt' | 'fresh';
 }
 
 const W = 300;
@@ -57,7 +59,7 @@ function buildPath(scores: number[]): { line: string; area: string } {
 const HOUR_LABELS = [0, 6, 12, 18, 23];
 
 export function DailyScoreChart({
-  datetime, hourlyTide, pressure, waterTemp, windSpeed, lat, lng, waterFilter,
+  datetime, hourlyTide, hourlyWeather, pressure, waterTemp, windSpeed, lat, lng, waterFilter,
 }: Props) {
   const selectedHour = datetime.getHours();
 
@@ -69,12 +71,13 @@ export function DailyScoreChart({
       const date: Date = new Date(dayStart.getTime() + h * 3_600_000);
       const tideEntry  = hourlyTide[h];
 
+      const wx = hourlyWeather[h];
       const inputs: EnvInputs = {
-        pressure_trend:   pressure,
-        water_temp:       waterTemp,
+        pressure_trend:   wx?.pressureTrend  ?? pressure,
+        water_temp:       wx?.waterTemp      ?? waterTemp,
         tide_phase:       tideEntry?.phase   ?? 'rising',
         current_strength: (tideEntry?.current ?? 'moderat') as CurrentStrength,
-        wind_speed_ms:    windSpeed,
+        wind_speed_ms:    wx?.windSpeed      ?? windSpeed,
         lat, lng, date,
       };
 
@@ -83,7 +86,7 @@ export function DailyScoreChart({
       return filtered.length > 0 ? Math.max(...filtered.map((s) => s.score)) : 0;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hourlyTide, pressure, waterTemp, windSpeed, lat, lng, waterFilter,
+  }, [hourlyTide, hourlyWeather, pressure, waterTemp, windSpeed, lat, lng, waterFilter,
       datetime.toDateString()]);
 
   const { line, area } = buildPath(scores);
@@ -129,19 +132,21 @@ export function DailyScoreChart({
           opacity="0.5"
         />
 
-        {/* Selected time cursor */}
-        <line
-          x1={cursorX} y1="0"
-          x2={cursorX} y2={H}
-          stroke="var(--color-warning)"
-          strokeWidth="1.5"
-        />
-        <circle
-          cx={cursorX} cy={cursorY} r="3"
-          fill="var(--color-warning)"
-          stroke="var(--color-bg)"
-          strokeWidth="1.5"
-        />
+        {/* Selected time cursor — only meaningful when viewing today */}
+        {isToday(datetime) && <>
+          <line
+            x1={cursorX} y1="0"
+            x2={cursorX} y2={H}
+            stroke="var(--color-warning)"
+            strokeWidth="1.5"
+          />
+          <circle
+            cx={cursorX} cy={cursorY} r="3"
+            fill="var(--color-warning)"
+            stroke="var(--color-bg)"
+            strokeWidth="1.5"
+          />
+        </>}
       </svg>
 
       {/* X-axis labels */}

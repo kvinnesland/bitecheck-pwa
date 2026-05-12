@@ -21,6 +21,20 @@ const SEDIMENT_WMS =
   '&BBOX={bbox-epsg-3857}&CRS=EPSG:3857&WIDTH=256&HEIGHT=256' +
   '&FORMAT=image/png&TRANSPARENT=TRUE&LAYERS=Bunnsedimenter_kornstorrelse_detaljert';
 
+const SEAMARK_TILES = 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
+
+const VERN_WMS =
+  'https://kart.miljodirektoratet.no/arcgis/services/vern/MapServer/WMSServer' +
+  '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
+  '&BBOX={bbox-epsg-3857}&CRS=EPSG:3857&WIDTH=256&HEIGHT=256' +
+  '&FORMAT=image/png&TRANSPARENT=TRUE&LAYERS=naturvern_omrade&STYLES=';
+
+const GYTE_WMS =
+  'https://gis.fiskeridir.no/server/services/fiskeridirWMS/MapServer/WMSServer' +
+  '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
+  '&BBOX={bbox-epsg-3857}&CRS=EPSG:3857&WIDTH=256&HEIGHT=256' +
+  '&FORMAT=image/png&TRANSPARENT=TRUE&LAYERS=gyteomraader&STYLES=';
+
 interface Props { user: User; }
 
 export function Kart({ user }: Props) {
@@ -29,6 +43,9 @@ export function Kart({ user }: Props) {
   const [mapReady, setMapReady] = useState(false);
   const [depthOn, setDepthOn] = useState(false);
   const [sedimentOn, setSedimentOn] = useState(false);
+  const [seaMarksOn, setSeaMarksOn] = useState(false);
+  const [vernOn, setVernOn] = useState(false);
+  const [gyteOn, setGyteOn] = useState(false);
   const [zoom, setZoom] = useState(4.5);
   const SEDIMENT_MIN_ZOOM = 8;
 
@@ -78,6 +95,51 @@ export function Kart({ user }: Props) {
         id: 'sediment',
         type: 'raster',
         source: 'sediment',
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.65 },
+      });
+
+      // OpenSeaMap — nautical marks
+      map.addSource('seamark', {
+        type: 'raster',
+        tiles: [SEAMARK_TILES],
+        tileSize: 256,
+        attribution: '© OpenSeaMap',
+      });
+      map.addLayer({
+        id: 'seamark',
+        type: 'raster',
+        source: 'seamark',
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.9 },
+      });
+
+      // Verneområder (Miljødirektoratet)
+      map.addSource('vern', {
+        type: 'raster',
+        tiles: [VERN_WMS],
+        tileSize: 256,
+        attribution: '© Miljødirektoratet',
+      });
+      map.addLayer({
+        id: 'vern',
+        type: 'raster',
+        source: 'vern',
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.6 },
+      });
+
+      // Gyteområder (Fiskeridirektoratet)
+      map.addSource('gyte', {
+        type: 'raster',
+        tiles: [GYTE_WMS],
+        tileSize: 256,
+        attribution: '© Fiskeridirektoratet',
+      });
+      map.addLayer({
+        id: 'gyte',
+        type: 'raster',
+        source: 'gyte',
         layout: { visibility: 'none' },
         paint: { 'raster-opacity': 0.65 },
       });
@@ -215,6 +277,27 @@ export function Kart({ user }: Props) {
     }
   }
 
+  function toggleSeaMarks() {
+    const next = !seaMarksOn;
+    setSeaMarksOn(next);
+    mapRef.current?.getLayer('seamark') &&
+      mapRef.current.setLayoutProperty('seamark', 'visibility', next ? 'visible' : 'none');
+  }
+
+  function toggleVern() {
+    const next = !vernOn;
+    setVernOn(next);
+    mapRef.current?.getLayer('vern') &&
+      mapRef.current.setLayoutProperty('vern', 'visibility', next ? 'visible' : 'none');
+  }
+
+  function toggleGyte() {
+    const next = !gyteOn;
+    setGyteOn(next);
+    mapRef.current?.getLayer('gyte') &&
+      mapRef.current.setLayoutProperty('gyte', 'visibility', next ? 'visible' : 'none');
+  }
+
   // ── Locate me ────────────────────────────────────────────────────────────
   function locateMe() {
     if (position && mapRef.current) {
@@ -249,6 +332,39 @@ export function Kart({ user }: Props) {
             <path d="M3 14c2-3 4-5 9-5s7 2 9 5" />
           </svg>
           Bunn
+        </button>
+        <button
+          className={`${styles.layerBtn} ${seaMarksOn ? styles.layerActive : ''}`}
+          onClick={toggleSeaMarks}
+          title="Sjømerker (OpenSeaMap)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2v14M5 20h14M8 14l4-4 4 4" />
+            <circle cx="12" cy="20" r="2" />
+          </svg>
+          Sjømerker
+        </button>
+        <button
+          className={`${styles.layerBtn} ${vernOn ? styles.layerActive : ''}`}
+          onClick={toggleVern}
+          title="Verneområder (Miljødirektoratet)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3L4 7v6c0 5 4 8.5 8 10 4-1.5 8-5 8-10V7l-8-4z" />
+          </svg>
+          Vern
+        </button>
+        <button
+          className={`${styles.layerBtn} ${gyteOn ? styles.layerActive : ''}`}
+          onClick={toggleGyte}
+          title="Gyteområder (Fiskeridirektoratet)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 12c2-5 6-7 10-7s8 2 10 7c-2 5-6 7-10 7S4 17 2 12z" />
+            <circle cx="16" cy="10" r="1.5" fill="currentColor" stroke="none" />
+            <path d="M20 8c1-2 2.5-3 3.5-3" />
+          </svg>
+          Gyting
         </button>
       </div>
 

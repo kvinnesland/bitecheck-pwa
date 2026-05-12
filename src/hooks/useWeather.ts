@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 import type { PressureTrend } from '../types';
 
+export interface HourlyWeatherEntry {
+  pressureTrend: PressureTrend;
+  waterTemp: number;
+  windSpeed: number;
+}
+
 export interface WeatherResult {
   waterTemp: number | null;
   pressureTrend: PressureTrend | null;
   windSpeed: number | null;
+  hourlyWeather: HourlyWeatherEntry[];
   loading: boolean;
 }
 
@@ -25,7 +32,7 @@ function cacheKey(lat: number, lng: number, dt: Date) {
 
 export function useWeather(lat: number, lng: number, datetime: Date): WeatherResult {
   const [result, setResult] = useState<WeatherResult>({
-    waterTemp: null, pressureTrend: null, windSpeed: null, loading: false,
+    waterTemp: null, pressureTrend: null, windSpeed: null, hourlyWeather: [], loading: false,
   });
 
   const hourKey = datetime.toISOString().slice(0, 13);
@@ -94,17 +101,32 @@ export function useWeather(lat: number, lng: number, datetime: Date): WeatherRes
           ? Math.round(sstRaw * 2) / 2
           : Math.round((temp - 1) * 2) / 2;
 
+        // Build 24-hour arrays for the selected day (hours 0–23)
+        const hourlyWeather: HourlyWeatherEntry[] = Array.from({ length: 24 }, (_, h) => {
+          const hi = idx - (datetime.getHours()) + h;
+          const p  = data.hourly.surface_pressure[hi]              ?? pressure;
+          const pp = data.hourly.surface_pressure[Math.max(0, hi - 3)] ?? p;
+          const sstH: number | null | undefined = marineData?.hourly?.sea_surface_temperature?.[hi];
+          const airH: number = data.hourly.temperature_2m[hi] ?? temp;
+          return {
+            pressureTrend: toPressureTrend(p - pp),
+            waterTemp: sstH != null ? Math.round(sstH * 2) / 2 : Math.round((airH - 1) * 2) / 2,
+            windSpeed: Math.round((data.hourly.wind_speed_10m[hi] ?? 5) * 10) / 10,
+          };
+        });
+
         const res: WeatherResult = {
           waterTemp,
           pressureTrend: toPressureTrend(pressure - prevPressure),
           windSpeed: Math.round(wind * 10) / 10,
+          hourlyWeather,
           loading: false,
         };
 
         CACHE.set(key, { ...res, ts: Date.now() });
         setResult(res);
       })
-      .catch(() => setResult({ waterTemp: null, pressureTrend: null, windSpeed: null, loading: false }));
+      .catch(() => setResult({ waterTemp: null, pressureTrend: null, windSpeed: null, hourlyWeather: [], loading: false }));
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat.toFixed(2), lng.toFixed(2), hourKey]);

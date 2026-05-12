@@ -5,6 +5,7 @@ export interface SpeciesInfo {
   bestPressure: string;
   bestLight: string;
   bestTide: string;
+  season: string;
   primaryDriver: string;
   secondaryDriver: string;
   agn: string[];
@@ -19,6 +20,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Torsk: {
     description: 'Torsken er Norges viktigste matfisk og finnes langs hele kysten. Den er mest aktiv når trykket faller, noe som utløser beiteatferd i stimer. Beste fiske skjer i kaldt vann mellom 4 og 8 °C, særlig på dypt vann om vinteren.',
     tempRange: [4, 8], tempLabel: '4–8 °C', bestPressure: 'Fallende', bestLight: 'Lavt lys', bestTide: 'Stigende',
+    season: 'Finnes langs hele kysten året rundt. Biter best januar–mars under gytevandringen når torsken samler seg på grunne banker.',
     primaryDriver: 'Lufttrykk', secondaryDriver: 'Vanntemperatur',
     agn: ['Makrellfilet', 'Hel agnsild', 'Strandkrabbe', 'Børstemark', 'Fjæremark'],
     sluk: ['Gummisild/jig', 'Pilk 40–100g', 'Sildesluker'],
@@ -30,6 +32,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Kveite: {
     description: 'Kveita er Norges største flatfisk og kan bli over 300 kg. Den er primært et dypvannsdyr som følger tidevannets bevegelser for å jakte på annen fisk. Stor og mektig – kveite krever tålmodighet og riktig utstyr.',
     tempRange: [4, 10], tempLabel: '4–10 °C', bestPressure: 'Stabilt', bestLight: 'Lavt lys', bestTide: 'Stigende',
+    season: 'Tilgjengelig hele året, men biter best august–september. Aktiviteten øker i takt med sommervarmingen av kystvannet.',
     primaryDriver: 'Tidevann', secondaryDriver: 'Månefase',
     agn: ['Hel agnsild', 'Makrellfilet'],
     sluk: ['Store gummijigger (sei/sild-imitasjon)'],
@@ -40,6 +43,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Sei: {
     description: 'Seien er en hurtig og stimfisk som jakter aktivt i vannmassene. Den trives best i moderat strøm og er særlig aktiv i tusmørket når lyset er lavt. Sei finnes langs hele norskekysten og er en populær sportsfisk.',
     tempRange: [6, 14], tempLabel: '6–14 °C', bestPressure: 'Fallende', bestLight: 'Tusmørke', bestTide: 'Stigende',
+    season: 'Finnes langs kysten hele året med to bitetopper: mai (vårinnsiget) og oktober (høstinnsiget). Minst aktiv midt på sommeren og midtvinters.',
     primaryDriver: 'Strøm', secondaryDriver: 'Lysnivå',
     agn: [],
     sluk: ['Kompakte sildesluker', 'Pilk', 'Gummimakk'],
@@ -51,6 +55,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Hyse: {
     description: 'Hysen er nær beslektet med torsken, men slankere og med et karakteristisk sort skulderflekkmerke. Den er mest aktiv ved fallende lufttrykk og lever nær bunnen på sandbunn og skjellsand. Hysen gir god kamp på lett utstyr.',
     tempRange: [4, 10], tempLabel: '4–10 °C', bestPressure: 'Fallende', bestLight: 'Dagslys', bestTide: 'Stigende',
+    season: 'Tilgjengelig hele året. Biter best april–mai og er jevnt god gjennom høsten.',
     primaryDriver: 'Lufttrykk', secondaryDriver: 'Bunntype',
     agn: ['Reke', 'Blåskjell', 'Fjæremark'],
     sluk: ['Takler med perler og spinnerblader'],
@@ -62,6 +67,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Lange: {
     description: 'Langen er en langstrakt torskefisk som lever på dypt, hardt bunn. Den foretrekker stille vann med lite strøm og er særlig aktiv ved stigende tidevann. Langens lange kropp og nennsom bit krever en viss teknikk.',
     tempRange: [4, 10], tempLabel: '4–10 °C', bestPressure: 'Stabilt', bestLight: 'Lavt lys', bestTide: 'Stigende',
+    season: 'Tilgjengelig hele året på dypt vann. Biter best mai–juni. Dybdepreferansen gjør den lite påvirket av årstidssvingninger i overflatetemperaturen.',
     primaryDriver: 'Tidevann', secondaryDriver: 'Vanndybde',
     agn: ['Makrellfilet', 'Sildfilet (store biter)'],
     sluk: ['Tunge lodd 300–800g', 'Selvlysende slanger', 'Blekksprutimitasjoner'],
@@ -72,6 +78,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Brosme: {
     description: 'Brosmen er en dypvannsfisk med lang ryggfinne og kraftig barbel under haken. Den holder til på steinbunn og korallrev på dypt vann. Brosme er en seig fighter og smaker utmerket røkt eller saltet.',
     tempRange: [4, 8], tempLabel: '4–8 °C', bestPressure: 'Stabilt', bestLight: 'Lavt lys', bestTide: 'Stigende',
+    season: 'Tilgjengelig hele året. Biter best mai–juni. Lever så dypt at overflatens årstidssvingninger har liten effekt på bitevilligheten.',
     primaryDriver: 'Tidevann', secondaryDriver: 'Vanndybde',
     agn: ['Makrell (ferskt)', 'Sild (ferskt)'],
     sluk: ['Tunge lodd', 'Selvlysende blekksprutimitasjoner'],
@@ -82,6 +89,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Uer: {
     description: 'Ueren er en langlivende rødfisk som kan bli over 100 år gammel. Den er nattaktiv og trives i stabilt vær med lite bevegelse i vannmassene. Store uer holder til på dypt vann i fjordene og langs ytterkysten.',
     tempRange: [4, 8], tempLabel: '4–8 °C', bestPressure: 'Stabilt', bestLight: 'Natt', bestTide: '—',
+    season: 'Tilgjengelig hele året. Biter best juni–juli. Ueren er ekstremt langlivet (100+ år) og bestanden er sårbar – vurder å sette tilbake store individer.',
     primaryDriver: 'Lysnivå', secondaryDriver: 'Lufttrykk',
     agn: ['Reke', 'Makrell', 'Sild'],
     sluk: ['Uersnik (lange takler, mange kroker)', 'Selvlysende kroker/detaljer'],
@@ -92,6 +100,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Steinbit: {
     description: 'Steinbiten har et stort, avrundet hode med kraftige tenner som kan knuse skjell og krabber. Den holder til på steinbunn i kaldt vann og er aktiv året rundt. Steinbiten er lite sky og biter godt i stabilt vær.',
     tempRange: [4, 10], tempLabel: '4–10 °C', bestPressure: 'Stabilt', bestLight: 'Lavt lys', bestTide: 'Stigende',
+    season: 'Tilgjengelig hele året langs norskekysten. Biter best juli–august, men er aktiv selv om vinteren i kaldt vann.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Tidevann',
     agn: ['Kamskjell', 'Blåskjell', 'Fiskefilet'],
     sluk: ['Gummifisk (ekstremt sakte)', 'Bunnmeite med bom og slep'],
@@ -102,6 +111,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Makrell: {
     description: 'Makrellen er en rask, stimfisk som inntar norske kystfarvann om sommeren når vannet er varmt. Den biter best i lett til moderat bris som rører overflaten. Makrell er kjent for sine intense kamper og er utmerket til mat.',
     tempRange: [12, 24], tempLabel: '12–24 °C', bestPressure: 'Stabilt', bestLight: 'Dagslys', bestTide: '—',
+    season: 'Sesongfisk: ankommer norskekysten mai–juni og forlater den i september–oktober. Fraværende om vinteren. Topp biteperiode er juli–august.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Vind',
     agn: ['Sild', 'Makrellbiter'],
     sluk: ['Sildesluker 15–28g', 'Makrellharpe/hekler (5–10 kroker)'],
@@ -112,6 +122,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Rødspette: {
     description: 'Rødspetta er en fargerik flatfisk med karakteristiske oransje prikker på oversiden. Den finnes på sandbunn i grunne kystfarvann og er særlig aktiv ved stigende tidevann. Rødspette er en delikatesse og gir god sport på lettutstyr.',
     tempRange: [8, 16], tempLabel: '8–16 °C', bestPressure: 'Stabilt', bestLight: 'Dagslys', bestTide: 'Stigende',
+    season: 'Tilgjengelig i kystfarvannene hele året. Biter best mai–juni. Aktiviteten avtar noe om vinteren i kaldt vann.',
     primaryDriver: 'Tidevann', secondaryDriver: 'Bunntype',
     agn: ['Sandorm/børstemark', 'Reke', 'Makrellstrimmel (hvitt bukskin)'],
     sluk: ['Perler og spinnerblader som attraktorer'],
@@ -123,6 +134,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Lomre: {
     description: 'Lomra er den minste av de norske flyndrefiskene og lever på sandbunn i rolige, grunne farvann. Den er lite krevende å fiske etter, men krever fint agn nær bunnen. Lomre er god på tallerkenen trass i beskjeden størrelse.',
     tempRange: [8, 16], tempLabel: '8–16 °C', bestPressure: 'Stabilt', bestLight: 'Dagslys', bestTide: '—',
+    season: 'Tilgjengelig hele året. Biter best mai–juni. Lomra er stasjonær og lite påvirket av temperatursvingninger – sesongvariasjon er beskjeden.',
     primaryDriver: 'Bunntype', secondaryDriver: 'Strøm',
     agn: ['Blåskjell (små biter)', 'Reke'],
     sluk: ['Kroker str. 4–8 (meget små)'],
@@ -133,6 +145,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Sandflyndre: {
     description: 'Sandflyndra ligner lomra, men er noe mer langstrakt og foretrekker litt dypere sandbunn. Den er et byttedyr for kveite og torsk, men kan også fiskes på lett snøre med mark. Sandflyndre gir god smak fra norske kystfarvann.',
     tempRange: [8, 16], tempLabel: '8–16 °C', bestPressure: 'Stabilt', bestLight: 'Dagslys', bestTide: '—',
+    season: 'Tilgjengelig hele året. Biter best mai–juni. Liten sesongvariasjon – holder seg stabilt på sandbunn gjennom hele året.',
     primaryDriver: 'Bunntype', secondaryDriver: 'Strøm',
     agn: ['Reke', 'Fiskestrimler', 'Mark'],
     sluk: ['Kroker str. 4–1'],
@@ -143,6 +156,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Sild: {
     description: 'Silden vandrer i store stimer langs norskekysten og er en nøkkelart i havøkosystemet. Den er mest aktiv i kjølig til temperert vann og samler seg gjerne i store stimer rundt fullmåne og nymåne. Sild er en klassisk norsk matfisk.',
     tempRange: [6, 14], tempLabel: '6–14 °C', bestPressure: 'Stabilt', bestLight: 'Natt', bestTide: '—',
+    season: 'To topper: mars (gyting langs kysten) og november (matsildsesong). Finnes langs kysten hele året, men lettest å fiske under stimkonsentrasjonene.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Månefase',
     agn: [],
     sluk: ['Sildehekler (reflekterende)', 'Planktonimitasjoner'],
@@ -153,6 +167,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Laks: {
     description: 'Laksen er en legendarisk sportsfisk som returnerer til elven der den ble klekket. I sjøen biter laksen best i tusmørket ved fallende lufttrykk. Den er en kraftig fighter som krever godt utstyr og tålmodighet fra fiskeren.',
     tempRange: [8, 18], tempLabel: '8–18 °C', bestPressure: 'Fallende', bestLight: 'Tusmørke', bestTide: 'Stigende',
+    season: 'Sjøfase mai–august. Fra august vandrer laksen mot elvene for gyting. Vær oppmerksom på fredningssoner ved elvemunninger.',
     primaryDriver: 'Lysnivå', secondaryDriver: 'Lufttrykk',
     agn: ['Sild', 'Brisling (ved dorging)'],
     sluk: ['Buch Salmon (gull/kobber-rød)', 'Trønderskjea', 'Møresilda 22–55g'],
@@ -164,6 +179,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Sjøørret: {
     description: 'Sjøørreten er brunørretens sjøvandrende form og finnes langs kysten i saltvann deler av året. Den er svært temperert og biter best i lavt lys ved fallende trykk. Sjøørret er kjent for ville hopp og spektakulære kamper på lett utstyr.',
     tempRange: [8, 16], tempLabel: '8–16 °C', bestPressure: 'Fallende', bestLight: 'Tusmørke', bestTide: 'Stigende',
+    season: 'I sjøen april–september med topp i mai–juni og igjen i september. Sjekk lokale fredningsregler – mange steder fredet fra 1. oktober.',
     primaryDriver: 'Lysnivå', secondaryDriver: 'Lufttrykk',
     agn: ['Pattegrisen-flue (reke)', 'Jiggy-flue (småfisk)'],
     sluk: ['Møresilda holografisk', 'Skjesluker (Toby, Søvik Auren)', 'Kystwobblere'],
@@ -175,6 +191,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Sjørøye: {
     description: 'Sjørøya er den nordligste av de anadrome laksefiskene og trives i kaldt arktisk vann. Den vandrer mellom ferskvann og saltvann og er kjent for sine intense farger i gytetiden. Sjørøye er en delikatesse med fast, rosa kjøtt.',
     tempRange: [2, 14], tempLabel: '2–14 °C', bestPressure: 'Stabilt', bestLight: 'Lavt lys', bestTide: 'Stigende',
+    season: 'Sjøfasen varer juni–august. Vandrer tilbake til ferskvann for gyting om høsten. Begrenset til fjordsystemer i Nord-Norge og Svalbard.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Saltholdighet',
     agn: [],
     sluk: ['Astro Vibe', 'Hybridmodeller sluk/wobbler', 'Fargerike kystsluker'],
@@ -186,6 +203,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Ørret: {
     description: 'Brunørreten er en av Norges mest ettertraktede sportsfisker og finnes i elver og innsjøer over hele landet. Den er best aktiv ved fallende lufttrykk og biter godt i det ideelle temperaturvinduet på 8–14 °C. Ørreten er en taktisk og krevende fisk.',
     tempRange: [8, 14], tempLabel: '8–14 °C', bestPressure: 'Fallende', bestLight: 'Tusmørke', bestTide: '—',
+    season: 'Aktiv april–oktober med topp i mai–juni og september. Inaktiv under is om vinteren. Fredningsbestemmelser varierer sterkt – sjekk alltid lokale regler.',
     primaryDriver: 'Lufttrykk', secondaryDriver: 'Vanntemperatur',
     agn: ['Parachute Adams (flue)', 'CdC and Elk (flue)', 'Maur/Stankelbein (flue)', 'Gold Ribbed Hares Ear (nymfe)'],
     sluk: ['Møreungen Nordlys 12g', 'Sølvkroken Spesial Classic 10g', 'Aura Flake 12g'],
@@ -197,6 +215,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Røye: {
     description: 'Røya er en kaldtvannsart som trives best i dype, klare innsjøer. Den biter godt ved fallende trykk i kjølig vann og er særlig aktiv om høsten i gytetiden. Røye er Norges vakreste innlandsfisk med sine karakteristiske farger.',
     tempRange: [4, 8], tempLabel: '4–8 °C', bestPressure: 'Fallende', bestLight: 'Lavt lys', bestTide: '—',
+    season: 'Biter best september–februar i kaldt vann. Om sommeren søker røya ned til dype, kalde lag og er da lite tilgjengelig fra land.',
     primaryDriver: 'Lufttrykk', secondaryDriver: 'Vanntemperatur',
     agn: ['Insektsimitasjoner (flue)'],
     sluk: ['Søvik-Skeia (kobber/rød)', 'Åsenskjea (kobber/rød)'],
@@ -208,6 +227,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Abbor: {
     description: 'Abboren er en av de vanligste innlandsfiskene i Norge og kjennes igjen på de vertikale stripene langs kroppen. Den er varmtvannsfisk og biter best om sommeren i tusmørket. Abbor samler seg gjerne rundt vegetasjon og strukturer nær land.',
     tempRange: [15, 22], tempLabel: '15–22 °C', bestPressure: 'Stabilt', bestLight: 'Tusmørke', bestTide: '—',
+    season: 'Aktiv mai–september med topp juni–august. Nær inaktiv om vinteren i kaldt vann – bitevinduet er sterkt temperaturavhengig.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Lysnivå',
     agn: [],
     sluk: ['Gummiappon 5–13 cm', 'Spinnere (Mepps/Vibrax)', 'Rapala X-Rap wobbler'],
@@ -219,6 +239,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Gjedde: {
     description: 'Gjedda er toprøveren i norske innsjøer og elver med sitt karakteristiske andesnute og kraftige kropp. Den er en ambushjeger som liker lavt lys og venter stille på byttet. Store gjedder kan veie over 10 kg og er en av de mest spennende sportsfiskene i ferskvann.',
     tempRange: [10, 20], tempLabel: '10–20 °C', bestPressure: 'Fallende', bestLight: 'Lavt lys', bestTide: '—',
+    season: 'To bitetopper: april–mai (rett etter gyting) og september–oktober. Halvveis inaktiv midt på sommeren i varmt vann.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Lysnivå',
     agn: ['Død fisk 15–30 cm (sild/makrell/mort)'],
     sluk: ['Abu Garcia Atom (stor skjesluk)', 'Store wobblere 15–25 cm'],
@@ -230,6 +251,7 @@ export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Harr: {
     description: 'Harren er kjent for sin imponerende seildorsalfinne og finnes i klare, raske elver med god vannkvalitet. Den er en delikat fluefisk som stiger til overflaten for å ta insekter. Harr er krevende å lure og belønner deg med spektakulære hopp.',
     tempRange: [8, 14], tempLabel: '8–14 °C', bestPressure: 'Stabilt', bestLight: 'Tusmørke', bestTide: '—',
+    season: 'Beste sesong mai–juni under den intensive insektklekken. Aktiv gjennom sommeren, men mer selektiv etter juni – kveldstimene er da viktigst.',
     primaryDriver: 'Vanntemperatur', secondaryDriver: 'Lufttrykk',
     agn: ['Red Tag (flue)', 'Superpuppan (flue)', 'BH nymfer (gull/kobberhode)'],
     sluk: ['Spinnere str. 0–2'],
