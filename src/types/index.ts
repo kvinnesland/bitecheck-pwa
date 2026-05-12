@@ -21,7 +21,6 @@ export interface CatchSpecies {
   name: string;
   weight_kg: number | null;
   length_cm: number | null;
-  photo_url: string | null;
 }
 
 export interface CatchEnvironment {

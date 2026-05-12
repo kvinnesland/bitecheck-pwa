@@ -1,9 +1,7 @@
 import SunCalc from 'suncalc';
 import { doc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from './firebase';
+import { db } from './firebase';
 import { saveCatch, getCatch } from './db';
-import { compressImage } from './imageUtils';
 import type { CatchRecord } from '../types';
 
 interface GeoPosition { lat: number; lng: number; accuracy_m: number; }
@@ -23,7 +21,6 @@ export async function createCatch(params: {
   weight_kg: number | null;
   length_cm: number | null;
   location: GeoPosition | null;
-  photoFile?: File | null;
 }): Promise<CatchRecord> {
   const now = new Date();
   const moonIllum = SunCalc.getMoonIllumination(now);
@@ -43,7 +40,6 @@ export async function createCatch(params: {
       name: params.species,
       weight_kg: params.weight_kg,
       length_cm: params.length_cm,
-      photo_url: null,
     },
     environment: {
       bite_score: 0,
@@ -58,31 +54,7 @@ export async function createCatch(params: {
 
   await saveCatch(record);
   syncToFirestore(record);
-
-  if (params.photoFile) {
-    uploadPhoto(record, params.photoFile);
-  }
-
   return record;
-}
-
-async function uploadPhoto(record: CatchRecord, file: File): Promise<void> {
-  try {
-    const blob = await compressImage(file);
-    const storageRef = ref(storage, `catches/${record.user_id}/${record.catch_id}.jpg`);
-    await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-    const url = await getDownloadURL(storageRef);
-    const updated: CatchRecord = {
-      ...record,
-      updated_at: new Date().toISOString(),
-      sync_status: 'pending',
-      species: { ...record.species, photo_url: url },
-    };
-    await saveCatch(updated);
-    syncToFirestore(updated);
-  } catch {
-    // Photo upload failure is non-fatal — catch is already saved without photo
-  }
 }
 
 export async function updateCatch(
@@ -105,7 +77,6 @@ export async function updateCatch(
       name:      updates.species_name ?? existing.species.name,
       weight_kg: updates.weight_kg   !== undefined ? updates.weight_kg : existing.species.weight_kg,
       length_cm: updates.length_cm   !== undefined ? updates.length_cm : existing.species.length_cm,
-      photo_url: existing.species.photo_url ?? null,
     },
   };
 
