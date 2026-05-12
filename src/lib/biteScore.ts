@@ -134,11 +134,17 @@ function sunAltToLux(altRad: number): number {
   return 100_000;
 }
 
+const _moonExtremesCache = new Map<string, { transit: Date; nadir: Date }>();
+
 function scanMoonExtremes(
   lat: number,
   lng: number,
   date: Date,
 ): { transit: Date; nadir: Date } {
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)},${date.toDateString()}`;
+  const cached = _moonExtremesCache.get(key);
+  if (cached) return cached;
+
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
 
@@ -154,7 +160,9 @@ function scanMoonExtremes(
     if (altitude < minAlt) { minAlt = altitude; nadirTime   = t; }
   }
 
-  return { transit: transitTime, nadir: nadirTime };
+  const result = { transit: transitTime, nadir: nadirTime };
+  _moonExtremesCache.set(key, result);
+  return result;
 }
 
 function derive(inputs: EnvInputs): Derived {

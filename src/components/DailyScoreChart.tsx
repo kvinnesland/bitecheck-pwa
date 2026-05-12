@@ -95,7 +95,7 @@ export function DailyScoreChart({
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
-        <span className={styles.title}>Score i dag</span>
+        <span className={styles.title}>{isToday(datetime) ? 'Score i dag' : datetime.toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
         <span className={styles.peak}>
           Topp {pad(peakHour)}:00 · {Math.round(peakScore * 100)}%
         </span>
@@ -162,4 +162,9 @@ export function DailyScoreChart({
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
+}
+
+function isToday(d: Date): boolean {
+  const now = new Date();
+  return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
