@@ -1,5 +1,8 @@
 # BiteCheck PWA
 
+> **For Claude:** Hold denne filen oppdatert løpende. Når en issue løses, stryk den fra listen. Når nye bugs eller beslutninger dukker opp i samtalen, legg dem til. Commit endringer i `CLAUDE.md` sammen med relevant kode.
+
+
 Norsk fiske-PWA som predikerer bitesjanse per art basert på miljøforhold.
 
 ## Tech stack
