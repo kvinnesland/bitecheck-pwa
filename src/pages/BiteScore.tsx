@@ -8,7 +8,7 @@ import { useUserCatches } from '../hooks/useUserCatches';
 import { setPendingSpecies } from '../lib/navigationStore';
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
 import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
-import type { PressureTrend, TidePhase } from '../types';
+import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
 import styles from './BiteScore.module.css';
 
@@ -28,6 +28,13 @@ const TIDE_OPTIONS: { value: TidePhase; label: string }[] = [
   { value: 'slack',   label: 'Strømstopp' },
 ];
 
+const CURRENT_OPTIONS: { value: CurrentStrength; label: string }[] = [
+  { value: 'stille',   label: 'Stille' },
+  { value: 'moderat',  label: 'Moderat' },
+  { value: 'sterk',    label: 'Sterk' },
+  { value: 'sterkest', label: 'Sterkest' },
+];
+
 interface Props {
   user: User;
   navigate: (v: AppView) => void;
@@ -41,17 +48,18 @@ export function BiteScore({ user, navigate }: Props) {
   const [customLocation, setCustomLocation] = useState<SelectedLocation | null>(null);
   const [datetime, setDatetime]             = useState<Date>(() => new Date());
 
-  const [pressure, setPressure]         = useState<PressureTrend>('stable');
-  const [waterTemp, setWaterTemp]       = useState('8');
-  const [tide, setTide]                 = useState<TidePhase>('rising');
-  const [currentSpeed, setCurrentSpeed] = useState('0.5');
-  const [waterFilter, setWaterFilter]   = useState<'salt' | 'fresh'>('salt');
+  const [pressure,         setPressure]         = useState<PressureTrend>('stable');
+  const [waterTemp,        setWaterTemp]        = useState('8');
+  const [tide,             setTide]             = useState<TidePhase>('rising');
+  const [currentStrength,  setCurrentStrength]  = useState<CurrentStrength>('moderat');
+  const [waterFilter,      setWaterFilter]      = useState<'salt' | 'fresh'>('salt');
 
   const effectiveLat = customLocation?.lat ?? position?.lat ?? 60.0;
   const effectiveLng = customLocation?.lng ?? position?.lng ?? 5.0;
 
   const weather = useWeather(effectiveLat, effectiveLng, datetime);
-  const { tidePhase: autoTide, tideLoading } = useTide(effectiveLat, effectiveLng, datetime, waterFilter);
+  const { tidePhase: autoTide, currentStrength: autoCurrentStrength, tideLoading } =
+    useTide(effectiveLat, effectiveLng, datetime, waterFilter);
 
   // Auto-fill pressure and water temp from weather API
   useEffect(() => {
@@ -59,24 +67,25 @@ export function BiteScore({ user, navigate }: Props) {
     if (weather.waterTemp !== null) setWaterTemp(String(weather.waterTemp));
   }, [weather.pressureTrend, weather.waterTemp]);
 
-  // Auto-fill tide phase from Kartverket API
+  // Auto-fill tide phase and current strength from Kartverket API
   useEffect(() => {
     if (autoTide) setTide(autoTide);
-  }, [autoTide]);
+    if (autoCurrentStrength) setCurrentStrength(autoCurrentStrength);
+  }, [autoTide, autoCurrentStrength]);
 
   const { scores, solunar } = useMemo(() => {
     const inputs: EnvInputs = {
       pressure_trend:   pressure,
       water_temp:       parseFloat(waterTemp) || 8,
       tide_phase:       tide,
-      current_speed_ms: parseFloat(currentSpeed) || 0.5,
+      current_strength: currentStrength,
       wind_speed_ms:    weather.windSpeed ?? 5,
       lat:  effectiveLat,
       lng:  effectiveLng,
       date: datetime,
     };
     return computeAllScores(inputs);
-  }, [pressure, waterTemp, tide, currentSpeed, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
+  }, [pressure, waterTemp, tide, currentStrength, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
 
   function handleSpeciesClick(s: SpeciesScore) {
     setSelectedSpecies(s);
@@ -166,17 +175,25 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>Strøm (m/s)</span>
-            <input
-              className={styles.input}
-              type="number"
-              inputMode="decimal"
-              value={currentSpeed}
-              min="0"
-              max="5"
-              step="0.1"
-              onChange={(e) => setCurrentSpeed(e.target.value)}
-            />
+            <span className={styles.fieldLabel}>
+              Strøm
+              {waterFilter === 'salt' && (
+                tideLoading
+                  ? <span className={styles.autoTag}>henter…</span>
+                  : autoCurrentStrength
+                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
+                    : null
+              )}
+            </span>
+            <select
+              className={styles.select}
+              value={currentStrength}
+              onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
+            >
+              {CURRENT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </label>
         </div>
       </section>

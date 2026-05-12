@@ -1,5 +1,7 @@
 export type SyncStatus = 'pending' | 'synced' | 'failed';
 
+export type CurrentStrength = 'stille' | 'moderat' | 'sterk' | 'sterkest';
+
 export type PressureTrend =
   | 'falling_rapidly'
   | 'falling'

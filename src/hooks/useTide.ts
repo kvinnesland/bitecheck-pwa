@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
-import type { TidePhase } from '../types';
+import type { TidePhase, CurrentStrength } from '../types';
 
-const CACHE = new Map<string, { phase: TidePhase; fetchedAt: number }>();
+interface CacheEntry {
+  phase: TidePhase;
+  currentStrength: CurrentStrength;
+  fetchedAt: number;
+}
+
+const CACHE = new Map<string, CacheEntry>();
 const CACHE_TTL = 30 * 60 * 1000;
 
 function pad(s: string | number, n = 2) {
@@ -15,7 +21,7 @@ function toLocalISO(d: Date): string {
   );
 }
 
-interface WaterEvent { time: Date; flag: 'H' | 'L'; }
+interface WaterEvent { time: Date; flag: 'H' | 'L'; value: number; }
 
 function parseEvents(xml: string): WaterEvent[] {
   const parser = new DOMParser();
@@ -23,10 +29,11 @@ function parseEvents(xml: string): WaterEvent[] {
   const nodes = doc.querySelectorAll('waterlevel');
   const events: WaterEvent[] = [];
   nodes.forEach((n) => {
-    const flag = n.getAttribute('flag');
+    const flag  = n.getAttribute('flag');
     const timeStr = n.getAttribute('time');
-    if ((flag === 'H' || flag === 'L') && timeStr) {
-      events.push({ time: new Date(timeStr), flag });
+    const valStr  = n.getAttribute('value');
+    if ((flag === 'H' || flag === 'L') && timeStr && valStr) {
+      events.push({ time: new Date(timeStr), flag: flag as 'H' | 'L', value: parseFloat(valStr) });
     }
   });
   return events;
@@ -35,30 +42,48 @@ function parseEvents(xml: string): WaterEvent[] {
 function classifyPhase(events: WaterEvent[], target: Date): TidePhase {
   if (events.length === 0) return 'rising';
   const t = target.getTime();
-
-  // Find the event just before and just after target
   let before: WaterEvent | null = null;
-  let after: WaterEvent | null = null;
+  let after:  WaterEvent | null = null;
   for (const ev of events) {
-    const et = ev.time.getTime();
-    if (et <= t) before = ev;
+    if (ev.time.getTime() <= t) before = ev;
     else if (!after) after = ev;
   }
 
-  // Determine phase
-  const SLACK_MS = 25 * 60 * 1000; // within 25 min of H or L → slack/peak
-
-  if (before && Math.abs(before.time.getTime() - t) < SLACK_MS) {
+  const SLACK_MS = 25 * 60 * 1000;
+  if (before && Math.abs(before.time.getTime() - t) < SLACK_MS)
     return before.flag === 'H' ? 'high' : 'low';
-  }
-  if (after && Math.abs(after.time.getTime() - t) < SLACK_MS) {
+  if (after && Math.abs(after.time.getTime() - t) < SLACK_MS)
     return after.flag === 'H' ? 'high' : 'low';
-  }
-
-  // Between events: direction depends on what's next
   if (after) return after.flag === 'H' ? 'rising' : 'falling';
   if (before) return before.flag === 'H' ? 'falling' : 'rising';
   return 'rising';
+}
+
+// Estimate instantaneous tidal rate (cm/h) using sinusoidal approximation,
+// then classify as a qualitative current strength.
+function classifyCurrentStrength(events: WaterEvent[], target: Date): CurrentStrength {
+  if (events.length < 2) return 'moderat';
+  const t = target.getTime();
+  let before: WaterEvent | null = null;
+  let after:  WaterEvent | null = null;
+  for (const ev of events) {
+    if (ev.time.getTime() <= t) before = ev;
+    else if (!after) after = ev;
+  }
+  if (!before || !after) return 'moderat';
+
+  const range_cm     = Math.abs(after.value - before.value);
+  const half_period_h = (after.time.getTime() - before.time.getTime()) / 3_600_000;
+  const phase        = (t - before.time.getTime()) / (after.time.getTime() - before.time.getTime());
+
+  // Peak rate of a sinusoidal tide = range × π / (2 × half_period)
+  // Instantaneous rate at phase position:
+  const rate_cm_h = (range_cm * Math.PI) / (2 * half_period_h) * Math.sin(Math.PI * phase);
+
+  if (rate_cm_h < 8)  return 'stille';
+  if (rate_cm_h < 22) return 'moderat';
+  if (rate_cm_h < 45) return 'sterk';
+  return 'sterkest';
 }
 
 export function useTide(
@@ -66,17 +91,19 @@ export function useTide(
   lng: number,
   datetime: Date,
   waterType: 'salt' | 'fresh',
-): { tidePhase: TidePhase | null; tideLoading: boolean } {
-  const [tidePhase, setTidePhase] = useState<TidePhase | null>(null);
-  const [tideLoading, setTideLoading] = useState(false);
+): { tidePhase: TidePhase | null; currentStrength: CurrentStrength | null; tideLoading: boolean } {
+  const [tidePhase,       setTidePhase]       = useState<TidePhase | null>(null);
+  const [currentStrength, setCurrentStrength] = useState<CurrentStrength | null>(null);
+  const [tideLoading,     setTideLoading]     = useState(false);
 
-  const latK = lat.toFixed(2);
-  const lngK = lng.toFixed(2);
-  const hourKey = Math.floor(datetime.getTime() / (60 * 60 * 1000));
+  const latK    = lat.toFixed(2);
+  const lngK    = lng.toFixed(2);
+  const hourKey = Math.floor(datetime.getTime() / 3_600_000);
 
   useEffect(() => {
     if (waterType === 'fresh') {
       setTidePhase(null);
+      setCurrentStrength(null);
       return;
     }
 
@@ -84,11 +111,12 @@ export function useTide(
     const cached = CACHE.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
       setTidePhase(cached.phase);
+      setCurrentStrength(cached.currentStrength);
       return;
     }
 
-    const from = new Date(datetime.getTime() - 6 * 60 * 60 * 1000);
-    const to   = new Date(datetime.getTime() + 6 * 60 * 60 * 1000);
+    const from = new Date(datetime.getTime() - 6 * 3_600_000);
+    const to   = new Date(datetime.getTime() + 6 * 3_600_000);
 
     const url =
       `https://vannstand.kartverket.no/tideapi.php` +
@@ -100,15 +128,17 @@ export function useTide(
     fetch(url)
       .then((r) => r.text())
       .then((xml) => {
-        const events = parseEvents(xml);
-        const phase  = classifyPhase(events, datetime);
-        CACHE.set(cacheKey, { phase, fetchedAt: Date.now() });
+        const events         = parseEvents(xml);
+        const phase          = classifyPhase(events, datetime);
+        const currentStrength = classifyCurrentStrength(events, datetime);
+        CACHE.set(cacheKey, { phase, currentStrength, fetchedAt: Date.now() });
         setTidePhase(phase);
+        setCurrentStrength(currentStrength);
       })
-      .catch(() => {/* non-fatal — user can still pick manually */})
+      .catch(() => {/* non-fatal */})
       .finally(() => setTideLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latK, lngK, hourKey, waterType]);
 
-  return { tidePhase, tideLoading };
+  return { tidePhase, currentStrength, tideLoading };
 }

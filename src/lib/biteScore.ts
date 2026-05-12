@@ -1,16 +1,16 @@
 import SunCalc from 'suncalc';
-import type { PressureTrend, TidePhase } from '../types';
+import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 
 // ─── Input types ────────────────────────────────────────────────────────────
 
 export interface EnvInputs {
-  pressure_trend: PressureTrend;
-  water_temp: number;       // °C
-  tide_phase: TidePhase;
-  current_speed_ms: number; // m/s  (0.5 default when unknown)
-  wind_speed_ms: number;    // m/s  (5.0 default when unknown)
-  lat: number;
-  lng: number;
+  pressure_trend:   PressureTrend;
+  water_temp:       number;          // °C
+  tide_phase:       TidePhase;
+  current_strength: CurrentStrength; // qualitative, derived from tidal rate
+  wind_speed_ms:    number;          // m/s  (5.0 default when unknown)
+  lat:  number;
+  lng:  number;
   date: Date;
 }
 
@@ -91,17 +91,17 @@ function normMoonPhase(phase: number): number {
   return Math.exp(-Math.pow(minDist / 0.15, 2));
 }
 
-function normCurrentSei(speed: number): number {
-  // Peak 0.5–1.5 m/s
-  if (speed >= 0.5 && speed <= 1.5) return 1.0;
-  if (speed < 0.5) return speed / 0.5;
-  return Math.max(0, 1 - (speed - 1.5) / 1.5);
-}
+// Sei thrives in moderate current (schools baitfish in rips)
+const CURRENT_SEI: Record<CurrentStrength, number> = {
+  stille: 0.2, moderat: 1.0, sterk: 0.8, sterkest: 0.3,
+};
+function normCurrentSei(s: CurrentStrength): number { return CURRENT_SEI[s]; }
 
-function normCurrentSlow(speed: number): number {
-  // Lange/Brosme/Lomre: peak < 0.2 m/s
-  return Math.max(0, 1 - speed / 0.8);
-}
+// Lange / Brosme / Lomre prefer slack or gentle current on the bottom
+const CURRENT_SLOW: Record<CurrentStrength, number> = {
+  stille: 1.0, moderat: 0.5, sterk: 0.1, sterkest: 0.0,
+};
+function normCurrentSlow(s: CurrentStrength): number { return CURRENT_SLOW[s]; }
 
 function normLightInverted(lux: number): number {
   return Math.max(0, 1 - lux / 100_000);
@@ -276,7 +276,7 @@ const SPECIES_DEFS: SpeciesDef[] = [
   },
   {
     name: 'Sei', water: 'salt',
-    primary:   (e)    => normCurrentSei(e.current_speed_ms),
+    primary:   (e)    => normCurrentSei(e.current_strength),
     secondary: (_, d) => normLightTwilight(d.lightLux),
     seasonal: [0.7,  0.7,  0.8,  0.9,  1.0,  0.9,  0.8,  0.8,  0.9,  1.0,  0.8,  0.7],
   },
@@ -334,13 +334,13 @@ const SPECIES_DEFS: SpeciesDef[] = [
   {
     name: 'Lomre', water: 'salt',
     primary:   ()     => 0.5,
-    secondary: (e)    => normCurrentSlow(e.current_speed_ms),
+    secondary: (e)    => normCurrentSlow(e.current_strength),
     seasonal: [0.5,  0.5,  0.6,  0.8,  1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5],
   },
   {
     name: 'Sandflyndre', water: 'salt',
     primary:   ()     => 0.5,
-    secondary: (e)    => normCurrentSlow(e.current_speed_ms),
+    secondary: (e)    => normCurrentSlow(e.current_strength),
     seasonal: [0.5,  0.5,  0.6,  0.8,  1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5],
   },
   {
