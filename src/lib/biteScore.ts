@@ -1,27 +1,29 @@
 import SunCalc from 'suncalc';
-import type { PressureTrend, TidePhase } from '../types';
+import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 
 // ─── Input types ────────────────────────────────────────────────────────────
 
 export interface EnvInputs {
-  pressure_trend: PressureTrend;
-  water_temp: number;       // °C
-  tide_phase: TidePhase;
-  current_speed_ms: number; // m/s  (0.5 default when unknown)
-  wind_speed_ms: number;    // m/s  (5.0 default when unknown)
-  lat: number;
-  lng: number;
+  pressure_trend:   PressureTrend;
+  water_temp:       number;          // °C
+  tide_phase:       TidePhase;
+  current_strength: CurrentStrength; // qualitative, derived from tidal rate
+  wind_speed_ms:    number;          // m/s  (5.0 default when unknown)
+  lat:  number;
+  lng:  number;
   date: Date;
 }
 
 export interface SpeciesScore {
   name: string;
   water: 'salt' | 'fresh';
-  score: number;      // 0.0–1.0 clamped
-  primary: number;    // normalized primary variable
-  secondary: number;  // normalized secondary variable
-  solunar: number;    // multiplier applied
-  label: string;      // 'Utmerket' | 'Bra' | 'Moderat' | 'Dårlig'
+  method?: 'land' | 'båt';
+  score: number;        // 0.0–1.0 clamped, after seasonal & geo
+  primary: number;
+  secondary: number;
+  solunar: number;
+  label: string;
+  outOfSeason: boolean; // true when seasonGeo < 0.2
 }
 
 export interface SolunarInfo {
@@ -89,17 +91,17 @@ function normMoonPhase(phase: number): number {
   return Math.exp(-Math.pow(minDist / 0.15, 2));
 }
 
-function normCurrentSei(speed: number): number {
-  // Peak 0.5–1.5 m/s
-  if (speed >= 0.5 && speed <= 1.5) return 1.0;
-  if (speed < 0.5) return speed / 0.5;
-  return Math.max(0, 1 - (speed - 1.5) / 1.5);
-}
+// Sei thrives in moderate current (schools baitfish in rips)
+const CURRENT_SEI: Record<CurrentStrength, number> = {
+  stille: 0.2, moderat: 1.0, sterk: 0.8, sterkest: 0.3,
+};
+function normCurrentSei(s: CurrentStrength): number { return CURRENT_SEI[s]; }
 
-function normCurrentSlow(speed: number): number {
-  // Lange/Brosme/Lomre: peak < 0.2 m/s
-  return Math.max(0, 1 - speed / 0.8);
-}
+// Lange / Brosme / Lomre prefer slack or gentle current on the bottom
+const CURRENT_SLOW: Record<CurrentStrength, number> = {
+  stille: 1.0, moderat: 0.5, sterk: 0.1, sterkest: 0.0,
+};
+function normCurrentSlow(s: CurrentStrength): number { return CURRENT_SLOW[s]; }
 
 function normLightInverted(lux: number): number {
   return Math.max(0, 1 - lux / 100_000);
@@ -225,115 +227,185 @@ function derive(inputs: EnvInputs): Derived {
 interface SpeciesDef {
   name: string;
   water: 'salt' | 'fresh';
+  method?: 'land' | 'båt';
   primary:   (e: EnvInputs, d: Derived) => number;
   secondary: (e: EnvInputs, d: Derived) => number;
+  // Monthly presence factors [Jan..Dec], 0 = absent, 1 = peak season
+  seasonal: readonly number[];
+  // Optional latitude-based presence factor (1.0 = full range)
+  geoFactor?: (lat: number) => number;
 }
 
+// Linearly interpolate between monthly values based on day-of-month
+function interpolateSeasonal(seasonal: readonly number[], date: Date): number {
+  const m  = date.getMonth();
+  const day = date.getDate();
+  const daysInMonth = new Date(date.getFullYear(), m + 1, 0).getDate();
+  const t  = (day - 1) / daysInMonth;
+  return seasonal[m] * (1 - t) + seasonal[(m + 1) % 12] * t;
+}
+
+// Latitude ramp: returns 1.0 at or below latFull, 0.0 at or above latNone
+function latRamp(lat: number, latFull: number, latNone: number): number {
+  if (lat <= latFull) return 1.0;
+  if (lat >= latNone) return 0.0;
+  return 1.0 - (lat - latFull) / (latNone - latFull);
+}
+
+// prettier-ignore
 const SPECIES_DEFS: SpeciesDef[] = [
+  // ── Saltwater ──────────────────────────────────────────────────────────────
   {
-    name: 'Torsk', water: 'salt',
+    name: 'Torsk', water: 'salt', method: 'land',
     primary:   (e)    => normPressure(e.pressure_trend),
-    secondary: (e)    => normTemp(e.water_temp, 4, 8),
+    secondary: (e)    => normTemp(e.water_temp, 4, 10, 8),
+    //                   J     F     M     A     M     J     J     A     S     O     N     D
+    seasonal: [1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5,  0.6,  0.7,  0.8,  0.9],
+  },
+  {
+    name: 'Torsk', water: 'salt', method: 'båt',
+    primary:   (e)    => normPressure(e.pressure_trend),
+    secondary: (_, d) => normMoonPhase(d.moonPhase),
+    seasonal: [1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5,  0.6,  0.7,  0.8,  0.9],
   },
   {
     name: 'Kveite', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
     secondary: (_, d) => normMoonPhase(d.moonPhase),
+    seasonal: [0.4,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9,  1.0,  1.0,  0.8,  0.6,  0.5],
   },
   {
     name: 'Sei', water: 'salt',
-    primary:   (e)    => normCurrentSei(e.current_speed_ms),
+    primary:   (e)    => normCurrentSei(e.current_strength),
     secondary: (_, d) => normLightTwilight(d.lightLux),
+    seasonal: [0.7,  0.7,  0.8,  0.9,  1.0,  0.9,  0.8,  0.8,  0.9,  1.0,  0.8,  0.7],
   },
   {
     name: 'Hyse', water: 'salt',
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: ()     => 0.5,
+    seasonal: [0.7,  0.7,  0.8,  1.0,  1.0,  0.9,  0.8,  0.7,  0.8,  0.8,  0.7,  0.7],
   },
   {
     name: 'Lange', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
     secondary: ()     => 0.6,
+    seasonal: [0.7,  0.7,  0.8,  0.9,  1.0,  1.0,  0.9,  0.8,  0.8,  0.7,  0.7,  0.7],
   },
   {
     name: 'Brosme', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
     secondary: ()     => 0.6,
+    seasonal: [0.7,  0.7,  0.8,  0.9,  1.0,  1.0,  0.9,  0.8,  0.8,  0.7,  0.7,  0.7],
   },
   {
     name: 'Uer', water: 'salt',
     primary:   (_, d) => normLightInverted(d.lightLux),
     secondary: (e)    => normPressureStable(e.pressure_trend),
+    seasonal: [0.6,  0.6,  0.7,  0.8,  0.9,  1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.6],
   },
   {
-    name: 'Steinbit', water: 'salt',
-    primary:   (e)    => normTemp(e.water_temp, 4, 10, 6),
+    name: 'Steinbit', water: 'salt', method: 'land',
+    primary:   (e)    => normTemp(e.water_temp, 4, 12, 6),
     secondary: (e)    => normTide(e.tide_phase),
+    seasonal: [0.7,  0.7,  0.7,  0.8,  0.8,  0.9,  1.0,  1.0,  0.9,  0.8,  0.7,  0.7],
+  },
+  {
+    name: 'Steinbit', water: 'salt', method: 'båt',
+    primary:   (e)    => normTide(e.tide_phase),
+    secondary: (_, d) => normMoonPhase(d.moonPhase),
+    seasonal: [0.7,  0.7,  0.7,  0.8,  0.8,  0.9,  1.0,  1.0,  0.9,  0.8,  0.7,  0.7],
   },
   {
     name: 'Makrell', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 12, 24, 8),
     secondary: (e)    => Math.min(1, e.wind_speed_ms / 15),
+    // Migratory — absent in Norwegian waters Nov–Apr
+    seasonal: [0.0,  0.0,  0.0,  0.05, 0.5,  0.9,  1.0,  1.0,  0.7,  0.2,  0.0,  0.0],
+    // Less common north of 65°N even in season
+    geoFactor: (lat) => latRamp(lat, 62, 70),
   },
   {
     name: 'Rødspette', water: 'salt',
     primary:   (e)    => normTide(e.tide_phase),
     secondary: ()     => 0.5,
+    seasonal: [0.5,  0.5,  0.7,  0.9,  1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5],
   },
   {
     name: 'Lomre', water: 'salt',
     primary:   ()     => 0.5,
-    secondary: (e)    => normCurrentSlow(e.current_speed_ms),
+    secondary: (e)    => normCurrentSlow(e.current_strength),
+    seasonal: [0.5,  0.5,  0.6,  0.8,  1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5],
   },
   {
     name: 'Sandflyndre', water: 'salt',
     primary:   ()     => 0.5,
-    secondary: (e)    => normCurrentSlow(e.current_speed_ms),
+    secondary: (e)    => normCurrentSlow(e.current_strength),
+    seasonal: [0.5,  0.5,  0.6,  0.8,  1.0,  1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.5],
   },
   {
     name: 'Sild', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 6, 14, 6),
     secondary: (_, d) => normMoonPhase(d.moonPhase),
+    // Peaks winter (gyting) and autumn (matsildsesong)
+    seasonal: [0.7,  0.9,  1.0,  0.8,  0.6,  0.5,  0.5,  0.5,  0.7,  0.9,  1.0,  0.8],
   },
   {
     name: 'Laks', water: 'salt',
     primary:   (_, d) => normLightTwilight(d.lightLux),
     secondary: (e)    => normPressure(e.pressure_trend),
+    // Best in sea May–Aug before river migration
+    seasonal: [0.1,  0.1,  0.2,  0.3,  0.8,  1.0,  0.9,  0.7,  0.3,  0.2,  0.1,  0.1],
   },
   {
     name: 'Sjøørret', water: 'salt',
     primary:   (_, d) => normLightTwilight(d.lightLux),
     secondary: (e)    => normPressure(e.pressure_trend),
+    seasonal: [0.5,  0.5,  0.6,  0.8,  1.0,  1.0,  0.8,  0.7,  0.8,  0.9,  0.7,  0.5],
   },
   {
     name: 'Sjørøye', water: 'salt',
     primary:   (e)    => normTemp(e.water_temp, 2, 14, 6),
     secondary: ()     => 0.5,
+    seasonal: [0.5,  0.5,  0.6,  0.7,  0.9,  1.0,  1.0,  0.9,  0.7,  0.6,  0.5,  0.5],
   },
+
+  // ── Ferskvann ──────────────────────────────────────────────────────────────
   {
     name: 'Ørret', water: 'fresh',
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: (e)    => normTemp(e.water_temp, 8, 14, 6),
+    seasonal: [0.4,  0.4,  0.6,  0.8,  1.0,  1.0,  0.8,  0.7,  0.8,  0.9,  0.6,  0.4],
   },
   {
     name: 'Røye', water: 'fresh',
     primary:   (e)    => normPressure(e.pressure_trend),
     secondary: (e)    => normTemp(e.water_temp, 4, 8, 6),
+    // Cold-water species — peaks autumn/winter
+    seasonal: [0.8,  0.8,  0.7,  0.6,  0.6,  0.6,  0.7,  0.8,  0.9,  1.0,  1.0,  0.9],
   },
   {
     name: 'Abbor', water: 'fresh',
     primary:   (e)    => normTemp(e.water_temp, 15, 22, 6),
     secondary: (_, d) => normLightTwilight(d.lightLux),
+    // Very inactive in cold water; effectively absent in winter
+    seasonal: [0.1,  0.1,  0.2,  0.4,  0.7,  1.0,  1.0,  0.9,  0.6,  0.3,  0.1,  0.1],
+    // Primarily eastern/southern Norway (Østlandet + innlandet)
+    geoFactor: (lat) => latRamp(lat, 60, 67),
   },
   {
     name: 'Gjedde', water: 'fresh',
     primary:   (e)    => normTemp(e.water_temp, 10, 20, 8),
     secondary: (_, d) => normLightInverted(d.lightLux),
+    // Post-spawn peak April–May, second peak autumn
+    seasonal: [0.3,  0.4,  0.7,  1.0,  1.0,  0.7,  0.5,  0.5,  0.8,  0.9,  0.6,  0.4],
   },
   {
     name: 'Harr', water: 'fresh',
     primary:   (e)    => normTemp(e.water_temp, 8, 14, 6),
     secondary: (e)    => normPressureStable(e.pressure_trend),
+    // Insect-hatch driven — peaks May–June
+    seasonal: [0.3,  0.3,  0.4,  0.7,  1.0,  1.0,  0.8,  0.6,  0.5,  0.4,  0.3,  0.3],
   },
 ];
 
@@ -356,15 +428,23 @@ export function computeAllScores(inputs: EnvInputs): {
     const p = def.primary(inputs, d);
     const s = def.secondary(inputs, d);
     const raw = (p * 0.6 + s * 0.4) * d.solunarMultiplier;
-    const score = Math.min(1, Math.max(0, raw));
+
+    const seasonal  = interpolateSeasonal(def.seasonal, inputs.date);
+    const geo       = def.geoFactor ? def.geoFactor(inputs.lat) : 1.0;
+    const seasonGeo = seasonal * geo;
+    const outOfSeason = seasonGeo < 0.2;
+
+    const score = Math.min(1, Math.max(0, raw * seasonGeo));
     return {
       name: def.name,
       water: def.water,
+      method: def.method,
       score,
       primary: p,
       secondary: s,
       solunar: d.solunarMultiplier,
       label: scoreLabel(score),
+      outOfSeason,
     };
   }).sort((a, b) => b.score - a.score);
 

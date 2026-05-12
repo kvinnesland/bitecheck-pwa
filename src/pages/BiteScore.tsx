@@ -1,11 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { type User } from 'firebase/auth';
 import { computeAllScores, type EnvInputs, type SpeciesScore, type SolunarInfo } from '../lib/biteScore';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useWeather } from '../hooks/useWeather';
+import { useTide } from '../hooks/useTide';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { setPendingSpecies } from '../lib/navigationStore';
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
-import type { PressureTrend, TidePhase } from '../types';
+import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
+import { DailyScoreChart } from '../components/DailyScoreChart';
+import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
 import styles from './BiteScore.module.css';
 
@@ -25,6 +29,13 @@ const TIDE_OPTIONS: { value: TidePhase; label: string }[] = [
   { value: 'slack',   label: 'Strømstopp' },
 ];
 
+const CURRENT_OPTIONS: { value: CurrentStrength; label: string }[] = [
+  { value: 'stille',   label: 'Stille' },
+  { value: 'moderat',  label: 'Moderat' },
+  { value: 'sterk',    label: 'Sterk' },
+  { value: 'sterkest', label: 'Sterkest' },
+];
+
 interface Props {
   user: User;
   navigate: (v: AppView) => void;
@@ -35,25 +46,47 @@ export function BiteScore({ user, navigate }: Props) {
   const userCatches = useUserCatches(user.uid);
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesScore | null>(null);
 
-  const [pressure, setPressure] = useState<PressureTrend>('stable');
-  const [waterTemp, setWaterTemp] = useState('8');
-  const [tide, setTide] = useState<TidePhase>('rising');
-  const [currentSpeed, setCurrentSpeed] = useState('0.5');
-  const [waterFilter, setWaterFilter] = useState<'salt' | 'fresh'>('salt');
+  const [customLocation, setCustomLocation] = useState<SelectedLocation | null>(null);
+  const [datetime, setDatetime]             = useState<Date>(() => new Date());
+
+  const [pressure,         setPressure]         = useState<PressureTrend>('stable');
+  const [waterTemp,        setWaterTemp]        = useState('8');
+  const [tide,             setTide]             = useState<TidePhase>('rising');
+  const [currentStrength,  setCurrentStrength]  = useState<CurrentStrength>('moderat');
+  const [waterFilter,      setWaterFilter]      = useState<'salt' | 'fresh'>('salt');
+
+  const effectiveLat = customLocation?.lat ?? position?.lat ?? 60.0;
+  const effectiveLng = customLocation?.lng ?? position?.lng ?? 5.0;
+
+  const weather = useWeather(effectiveLat, effectiveLng, datetime);
+  const { tidePhase: autoTide, currentStrength: autoCurrentStrength, hourlyTide, tideLoading } =
+    useTide(effectiveLat, effectiveLng, datetime, waterFilter);
+
+  // Auto-fill pressure and water temp from weather API
+  useEffect(() => {
+    if (weather.pressureTrend) setPressure(weather.pressureTrend);
+    if (weather.waterTemp !== null) setWaterTemp(String(weather.waterTemp));
+  }, [weather.pressureTrend, weather.waterTemp]);
+
+  // Auto-fill tide phase and current strength from Kartverket API
+  useEffect(() => {
+    if (autoTide) setTide(autoTide);
+    if (autoCurrentStrength) setCurrentStrength(autoCurrentStrength);
+  }, [autoTide, autoCurrentStrength]);
 
   const { scores, solunar } = useMemo(() => {
     const inputs: EnvInputs = {
       pressure_trend:   pressure,
       water_temp:       parseFloat(waterTemp) || 8,
       tide_phase:       tide,
-      current_speed_ms: parseFloat(currentSpeed) || 0.5,
-      wind_speed_ms:    5,
-      lat:  position?.lat  ?? 60.0,
-      lng:  position?.lng  ?? 5.0,
-      date: new Date(),
+      current_strength: currentStrength,
+      wind_speed_ms:    weather.windSpeed ?? 5,
+      lat:  effectiveLat,
+      lng:  effectiveLng,
+      date: datetime,
     };
     return computeAllScores(inputs);
-  }, [pressure, waterTemp, tide, currentSpeed, position]);
+  }, [pressure, waterTemp, tide, currentStrength, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
 
   function handleSpeciesClick(s: SpeciesScore) {
     setSelectedSpecies(s);
@@ -77,7 +110,28 @@ export function BiteScore({ user, navigate }: Props) {
           onNavigateToLog={handleNavigateToLog}
         />
       )}
+      <LocationDatePicker
+        location={customLocation}
+        datetime={datetime}
+        gpsLat={position?.lat ?? 60.0}
+        gpsLng={position?.lng ?? 5.0}
+        weatherLoading={weather.loading}
+        onLocationChange={setCustomLocation}
+        onDatetimeChange={setDatetime}
+      />
+
       <SolunarCard solunar={solunar} />
+
+      <DailyScoreChart
+        datetime={datetime}
+        hourlyTide={hourlyTide}
+        pressure={pressure}
+        waterTemp={parseFloat(waterTemp) || 8}
+        windSpeed={weather.windSpeed ?? 5}
+        lat={effectiveLat}
+        lng={effectiveLng}
+        waterFilter={waterFilter}
+      />
 
       <section className={styles.inputs}>
         <h3 className={styles.sectionTitle}>Miljøforhold</h3>
@@ -111,7 +165,16 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>Tidevann</span>
+            <span className={styles.fieldLabel}>
+              Tidevann
+              {waterFilter === 'salt' && (
+                tideLoading
+                  ? <span className={styles.autoTag}>henter…</span>
+                  : autoTide
+                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
+                    : null
+              )}
+            </span>
             <select
               className={styles.select}
               value={tide}
@@ -124,17 +187,25 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>Strøm (m/s)</span>
-            <input
-              className={styles.input}
-              type="number"
-              inputMode="decimal"
-              value={currentSpeed}
-              min="0"
-              max="5"
-              step="0.1"
-              onChange={(e) => setCurrentSpeed(e.target.value)}
-            />
+            <span className={styles.fieldLabel}>
+              Strøm
+              {waterFilter === 'salt' && (
+                tideLoading
+                  ? <span className={styles.autoTag}>henter…</span>
+                  : autoCurrentStrength
+                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
+                    : null
+              )}
+            </span>
+            <select
+              className={styles.select}
+              value={currentStrength}
+              onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
+            >
+              {CURRENT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </label>
         </div>
       </section>
@@ -161,7 +232,7 @@ export function BiteScore({ user, navigate }: Props) {
           {scores
             .filter((s) => s.water === waterFilter)
             .map((s, i) => (
-              <SpeciesCard key={s.name} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
+              <SpeciesCard key={`${s.name}-${s.method ?? ''}`} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
             ))}
         </div>
       </section>
@@ -219,17 +290,22 @@ function LightLabel({ lux }: { lux: number }) {
 // ─── Species score card ───────────────────────────────────────────────────────
 
 function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: number; onClick: () => void }) {
-  const pct = Math.round(score.score * 100);
-  const color = scoreColor(score.score);
+  const pct   = Math.round(score.score * 100);
+  const color = score.outOfSeason ? 'var(--color-warning)' : scoreColor(score.score);
 
   return (
     <div className={styles.speciesCard} onClick={onClick} style={{ cursor: 'pointer' }}>
       <div className={styles.speciesRank}>{rank}</div>
       <div className={styles.speciesBody}>
         <div className={styles.speciesTop}>
-          <span className={styles.speciesName}>{score.name}</span>
+          <span className={styles.speciesName}>
+            {score.name}
+            {score.method && (
+              <span className={styles.methodTag}>{score.method === 'land' ? 'fra land' : 'fra båt'}</span>
+            )}
+          </span>
           <span className={styles.speciesLabel} style={{ color }}>
-            {score.label}
+            {score.outOfSeason ? 'Ikke i sesong' : score.label}
           </span>
           <span className={styles.speciesPct} style={{ color }}>
             {pct}%

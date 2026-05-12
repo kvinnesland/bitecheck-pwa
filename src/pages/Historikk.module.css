@@ -272,9 +272,31 @@
 
 .modalActions {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-top: 4px;
 }
+
+.modalActionsRight {
+  display: flex;
+  gap: 10px;
+}
+
+.modalDelete {
+  padding: 13px 0;
+  background: transparent;
+  border: none;
+  color: var(--color-error, #e53e3e);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.modalDelete:hover { opacity: 0.7; }
 
 .modalCancel {
   flex: 1;

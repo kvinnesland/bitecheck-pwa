@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { SpeciesScore } from '../../lib/biteScore';
 import type { CatchRecord } from '../../types';
 import { SPECIES_INFO } from '../../lib/speciesInfo';
-import { FishSvg } from './FishSvg';
+import { SpeciesCardHeader } from './SpeciesCardHeader';
 import styles from './SpeciesSheet.module.css';
 
 interface Props {
@@ -124,13 +124,7 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
           onTouchMove={onHandleTouchMove}
           onTouchEnd={onHandleTouchEnd}
         >
-          <FishSvg name={score.name} className={styles.fishIllustration} />
-          <div className={styles.nameRow}>
-            <h2 className={styles.speciesName}>{score.name}</h2>
-            <span className={styles.waterBadge}>
-              {score.water === 'salt' ? 'Saltvann' : 'Ferskvann'}
-            </span>
-          </div>
+          <SpeciesCardHeader name={score.name} />
         </div>
 
         <div className={styles.content}>
@@ -241,6 +235,34 @@ export function SpeciesSheet({ score, userCatches, onClose, onNavigateToLog }: P
                   <span className={styles.fargetips}>{info.fargetips}</span>
                 </div>
               )}
+            </section>
+          )}
+
+          {info && (
+            <section>
+              <h3 className={styles.sectionTitle}>Fangsttips</h3>
+              <div className={styles.catchTipsRow}>
+                <svg className={styles.catchTipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 11 C3 9 5 8 7 9 C9 10 11 9 12 7" />
+                  <path d="M12 7 L12 5 L10 7" />
+                  <circle cx="2" cy="11" r="1" fill="currentColor" stroke="none" />
+                </svg>
+                <div>
+                  <span className={styles.catchTipsLabel}>Fra land</span>
+                  <p className={styles.catchTipsText}>{info.fraLandTips}</p>
+                </div>
+              </div>
+              <div className={styles.catchTipsRow}>
+                <svg className={styles.catchTipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 9 h10 l-1.5 3 H3.5 Z" />
+                  <path d="M4 9 V6 Q7 4 10 6 V9" />
+                  <path d="M7 4 V2" />
+                </svg>
+                <div>
+                  <span className={styles.catchTipsLabel}>Fra båt</span>
+                  <p className={styles.catchTipsText}>{info.fraBåtTips}</p>
+                </div>
+              </div>
             </section>
           )}
 

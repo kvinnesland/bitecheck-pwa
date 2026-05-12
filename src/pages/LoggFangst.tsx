@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { FishSvg } from '../components/species/FishSvg';
+import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import styles from './LoggFangst.module.css';
 
 const SPECIES_GROUPS = [
@@ -29,10 +30,29 @@ export function LoggFangst({ user }: Props) {
   const [species, setSpecies] = useState('');
   const [weight, setWeight] = useState('');
   const [length, setLength] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState('');
   const { status: geoStatus, position } = useGeolocation();
   const weightRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    const url = URL.createObjectURL(file);
+    setPhotoPreview(url);
+  }, []);
+
+  function removePhoto() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
   useEffect(() => {
     const pending = consumePendingSpecies();
@@ -65,6 +85,7 @@ export function LoggFangst({ user }: Props) {
         weight_kg: weight ? parseFloat(weight) : null,
         length_cm: length ? parseFloat(length) : null,
         location: position,
+        photoFile,
       });
       setStep('success');
     } finally {
@@ -78,6 +99,7 @@ export function LoggFangst({ user }: Props) {
     setWeight('');
     setLength('');
     setQuery('');
+    removePhoto();
   }
 
   if (step === 'success') {
@@ -112,54 +134,107 @@ export function LoggFangst({ user }: Props) {
           Tilbake
         </button>
 
-        <div className={styles.speciesBadge}>
-          <span>{species}</span>
-          <button className={styles.changeBtn} onClick={() => setStep('species')}>Endre</button>
-        </div>
-
-        <div className={styles.fields}>
-          <label className={styles.fieldGroup}>
-            <span className={styles.fieldLabel}>Vekt (kg)</span>
-            <input
-              ref={weightRef}
-              className={styles.input}
-              type="number"
-              inputMode="decimal"
-              placeholder="0.0"
-              min="0"
-              step="0.1"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <SpeciesCardHeader
+              name={species}
+              action={
+                <button className={styles.changeBtn} onClick={() => setStep('species')}>Endre</button>
+              }
             />
-          </label>
+          </div>
 
-          <label className={styles.fieldGroup}>
-            <span className={styles.fieldLabel}>Lengde (cm)</span>
-            <input
-              className={styles.input}
-              type="number"
-              inputMode="decimal"
-              placeholder="0"
-              min="0"
-              step="1"
-              value={length}
-              onChange={(e) => setLength(e.target.value)}
-            />
-          </label>
+          <div className={styles.cardBody}>
+            <div className={styles.fields}>
+              <label className={styles.fieldGroup}>
+                <span className={styles.fieldLabel}>Vekt (kg)</span>
+                <input
+                  ref={weightRef}
+                  className={styles.input}
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="0.0"
+                  min="0"
+                  step="0.1"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                />
+              </label>
+
+              <label className={styles.fieldGroup}>
+                <span className={styles.fieldLabel}>Lengde (cm)</span>
+                <input
+                  className={styles.input}
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  value={length}
+                  onChange={(e) => setLength(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className={styles.photoSection}>
+              <span className={styles.photoSectionLabel}>Bilde</span>
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                onChange={handlePhotoChange}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handlePhotoChange}
+              />
+              {photoPreview ? (
+                <div className={styles.photoPreviewWrap}>
+                  <img src={photoPreview} alt="Fangstbilde" className={styles.photoPreview} />
+                  <button className={styles.photoRemove} onClick={removePhoto} aria-label="Fjern bilde">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.photoButtons}>
+                  <button className={styles.photoBtn} onClick={() => cameraInputRef.current?.click()}>
+                    <svg className={styles.photoBtnIcon} viewBox="0 0 24 24">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    Kamera
+                  </button>
+                  <button className={styles.photoBtn} onClick={() => fileInputRef.current?.click()}>
+                    <svg className={styles.photoBtnIcon} viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    Galleri
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className={`${styles.gpsRow} ${styles[`gps_${geoStatus}`]}`}>
+              <GpsIcon status={geoStatus} />
+              <span>{gpsLabel(geoStatus, position?.accuracy_m)}</span>
+            </div>
+
+            <button
+              className={styles.btnPrimary}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? 'Lagrer…' : 'Lagre fangst'}
+            </button>
+          </div>
         </div>
-
-        <div className={`${styles.gpsRow} ${styles[`gps_${geoStatus}`]}`}>
-          <GpsIcon status={geoStatus} />
-          <span>{gpsLabel(geoStatus, position?.accuracy_m)}</span>
-        </div>
-
-        <button
-          className={styles.btnPrimary}
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? 'Lagrer…' : 'Lagre fangst'}
-        </button>
       </div>
     );
   }

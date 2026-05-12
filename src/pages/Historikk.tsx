@@ -106,6 +106,7 @@ export function Historikk({ user }: Props) {
         <EditModal
           record={editTarget}
           onSave={(updates) => handleEdit(editTarget.catch_id, updates)}
+          onDelete={() => { handleDelete(editTarget); setEditTarget(null); }}
           onClose={() => setEditTarget(null)}
         />
       )}
@@ -210,10 +211,12 @@ function CatchRow({
 function EditModal({
   record,
   onSave,
+  onDelete,
   onClose,
 }: {
   record: CatchRecord;
   onSave: (u: { species_name?: string; weight_kg?: number | null; length_cm?: number | null }) => void;
+  onDelete: () => void;
   onClose: () => void;
 }) {
   const [name,   setName]   = useState(record.species.name);
@@ -274,8 +277,11 @@ function EditModal({
         </p>
 
         <div className={styles.modalActions}>
-          <button className={styles.modalCancel} onClick={onClose}>Avbryt</button>
-          <button className={styles.modalSave}   onClick={handleSave}>Lagre</button>
+          <button className={styles.modalDelete} onClick={onDelete}>Slett fangst</button>
+          <div className={styles.modalActionsRight}>
+            <button className={styles.modalCancel} onClick={onClose}>Avbryt</button>
+            <button className={styles.modalSave}   onClick={handleSave}>Lagre</button>
+          </div>
         </div>
       </div>
     </div>

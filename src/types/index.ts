@@ -1,5 +1,7 @@
 export type SyncStatus = 'pending' | 'synced' | 'failed';
 
+export type CurrentStrength = 'stille' | 'moderat' | 'sterk' | 'sterkest';
+
 export type PressureTrend =
   | 'falling_rapidly'
   | 'falling'
@@ -19,6 +21,7 @@ export interface CatchSpecies {
   name: string;
   weight_kg: number | null;
   length_cm: number | null;
+  photo_url: string | null;
 }
 
 export interface CatchEnvironment {
