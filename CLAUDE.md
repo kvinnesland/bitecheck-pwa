@@ -29,15 +29,33 @@ Ingen CI/CD — alt deployes manuelt. Firebase-prosjekt: `fishing-projects`. URL
 
 **Firestore privacy-regler er bevisst svake** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Dette er en kjent issue som er utsatt fordi det krever en større design-beslutning om privat vs. offentlig data.
 
-**Torsk og Steinbit har to varianter** — `method: 'land' | 'båt'` i `SPECIES_DEFS`. Tanken er at SST (sjøtemperatur) påvirker kystfiske fra land men ikke dypvannsfiske fra båt. Land-varianter bruker `water_temp` i scoringsformelen; båt-varianter bruker månefase/tidevann.
+**Torsk og Steinbit har to varianter** — `method: 'land' | 'båt'` i `SPECIES_DEFS`. Tanken er at SST påvirker kystfiske fra land men ikke dypvannsfiske fra båt. Land-varianter bruker `water_temp` i scoringsformelen; båt-varianter bruker månefase/tidevann. **Ingen andre arter splittes** — de øvrige er enten primært én metode, eller overflatepelagiske der dybdeforskjell ikke gir ulikt scoring-signal.
+
+**Torsk/Steinbit trenger ikke egne SpeciesSheet-sider** — de er samme fisk, infokortene er identiske uavhengig av land/båt-varianten.
+
+**Tidevann og strøm skjules for ferskvann** — kontrollene i BiteScore vises kun når `waterFilter === 'salt'`. `useTide` returnerer tom data for ferskvann.
+
+**Score-kurven bruker timedata** — `useWeather` returnerer nå `hourlyWeather[]` (24 entries) slik at kurven bruker riktig trykk/temp/vind per time i stedet for én fast verdi. Dette gir realistisk variasjon gjennom dagen.
+
+**Kartlag (gratis WMS/tiles):**
+- Dybde: Geonorge WMS
+- Bunn: NGU WMS
+- Sjømerker: OpenSeaMap XYZ tiles
+- Verneområder: Miljødirektoratet WMS (`naturvern_omrade`) — dekker sjø og ferskvann
+- Gyteområder: Fiskeridirektoratet WMS (`gyteomraader`) — sjø, sesongrestriksjoner
+- Ingen dedikert "fiskeforbudt"-lag finnes nasjonalt — verneområder + gyteområder er beste tilnærming
+
+**Bundle-størrelse** — produksjonsbuilden er ~1,7 MB (482 KB gzipped). Vite advarer om chunk-størrelse. Ikke kritisk, men code-splitting med dynamic `import()` bør vurderes på sikt.
 
 ## Nøkkelfiler
 - `src/lib/biteScore.ts` — all scoringslogikk + `SPECIES_DEFS` (enkelt sannhetskilde for alle arter). Eksporterer `SPECIES_WATER` map.
 - `src/lib/db.ts` — IndexedDB-wrapper med pub/sub for live-oppdateringer
-- `src/hooks/useWeather.ts` — parallelle kall til open-meteo vær-API + marint SST-API
-- `src/hooks/useTide.ts` — Kartverket vannstand-API → `TidePhase` + `CurrentStrength`
+- `src/lib/speciesInfo.ts` — norsk fiskeinfo for alle arter inkl. `season`-felt (brukes i `SpeciesSheet`)
+- `src/hooks/useWeather.ts` — parallelle kall til open-meteo vær-API + marint SST-API. Returnerer både enkeltverdi (nåværende time) og `hourlyWeather[]` (hele dagen)
+- `src/hooks/useTide.ts` — Kartverket vannstand-API → `TidePhase` + `CurrentStrength`. Returnerer tom data for `waterType === 'fresh'`
 - `src/hooks/usePublicCatches.ts` — Firestore-query med `where('user_id', '!=', ...)` (krever ingen eksplisitt komposittindeks — dekkes av Firestores auto-indekser)
-- `src/lib/speciesInfo.ts` — norsk fiskeinfo for alle arter (brukes i `SpeciesSheet`)
+- `src/components/DailyScoreChart.tsx` — daglig scorekurve. Bruker `hourlyWeather[]` per time. Viser ikke "nå"-kursoren for fremtidige datoer.
+- `src/pages/Kart.tsx` — kartside med 5 togglebare lag
 
 ## UI-språk
 Hele appen er på norsk. Fortsett med norske labels, knapper og meldinger.
@@ -47,9 +65,8 @@ Hele appen er på norsk. Fortsett med norske labels, knapper og meldinger.
 ### Utsatt (bevisst)
 - **Firestore privacy-regler** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Krever design-beslutning: hva skal være privat vs. offentlig? Relevant når brukerbase vokser.
 
-### UX-spørsmål uavklart
-- **Torsk / Steinbit fra land vs. fra båt i SpeciesSheet** — begge viser identisk infokort i dag. Bør de ha forskjellig innhold (ulike tips, dyp, agn) eller er én felles beskrivelse greit?
-
 ### Ideer ikke startet
 - Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)
 - Push-varslinger når solunarperiode starter (krever Notification API + service worker-integrasjon)
+- Code-splitting av bundle (1,7 MB → dynamisk import av tunge libs som MapLibre, SunCalc)
+- Kartside: vurder å vise bitesjanse-heatmap for brukerens posisjon direkte på kartet
