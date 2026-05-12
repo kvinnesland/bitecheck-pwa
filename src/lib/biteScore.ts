@@ -386,7 +386,7 @@ export function computeAllScores(inputs: EnvInputs): {
 
 function moonPhaseLabel(phase: number): string {
   if (phase < 0.05 || phase > 0.95) return 'Nymåne';
-  if (phase < 0.2)  return 'Tiltagende halvmåne';
+  if (phase < 0.2)  return 'Tiltagende sigd';
   if (phase < 0.3)  return 'Tiltagende halvmåne';
   if (phase < 0.45) return 'Tiltagende gibbus';
   if (phase < 0.55) return 'Fullmåne';

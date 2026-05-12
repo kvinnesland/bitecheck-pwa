@@ -62,20 +62,6 @@ export async function getPendingCatches(): Promise<CatchRecord[]> {
   return db.getAllFromIndex('catches', 'by_sync_status', 'pending');
 }
 
-export async function deleteCatchLocal(catchId: string, userId: string): Promise<void> {
-  const db = await getDB();
-  const record = await db.get('catches', catchId);
-  if (record && record.user_id === userId) {
-    await db.put('catches', {
-      ...record,
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-      sync_status: 'pending',
-      updated_at: new Date().toISOString(),
-    });
-  }
-}
-
 export async function clearUserData(userId: string): Promise<void> {
   const db = await getDB();
   const catches = await db.getAllFromIndex('catches', 'by_user', userId);

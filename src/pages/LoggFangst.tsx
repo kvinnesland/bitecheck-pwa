@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
@@ -202,15 +202,15 @@ export function LoggFangst({ user }: Props) {
           </>
         ) : (
           SPECIES_GROUPS.map((group) => (
-            <>
-              <span key={group.label} className={styles.groupLabel}>{group.label}</span>
+            <React.Fragment key={group.label}>
+              <span className={styles.groupLabel}>{group.label}</span>
               {group.names.map((name) => (
                 <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
                   <FishSvg name={name} className={styles.speciesFish} />
                   <span>{name}</span>
                 </button>
               ))}
-            </>
+            </React.Fragment>
           ))
         )}
       </div>
