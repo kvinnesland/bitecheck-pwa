@@ -164,49 +164,49 @@ export function BiteScore({ user, navigate }: Props) {
             />
           </label>
 
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>
-              Tidevann
-              {waterFilter === 'salt' && (
-                tideLoading
+          {waterFilter === 'salt' && (
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>
+                Tidevann
+                {tideLoading
                   ? <span className={styles.autoTag}>henter…</span>
                   : autoTide
                     ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
-                    : null
-              )}
-            </span>
-            <select
-              className={styles.select}
-              value={tide}
-              onChange={(e) => setTide(e.target.value as TidePhase)}
-            >
-              {TIDE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </label>
+                    : null}
+              </span>
+              <select
+                className={styles.select}
+                value={tide}
+                onChange={(e) => setTide(e.target.value as TidePhase)}
+              >
+                {TIDE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
 
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>
-              Strøm
-              {waterFilter === 'salt' && (
-                tideLoading
+          {waterFilter === 'salt' && (
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>
+                Strøm
+                {tideLoading
                   ? <span className={styles.autoTag}>henter…</span>
                   : autoCurrentStrength
                     ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
-                    : null
-              )}
-            </span>
-            <select
-              className={styles.select}
-              value={currentStrength}
-              onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
-            >
-              {CURRENT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </label>
+                    : null}
+              </span>
+              <select
+                className={styles.select}
+                value={currentStrength}
+                onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
+              >
+                {CURRENT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       </section>
 

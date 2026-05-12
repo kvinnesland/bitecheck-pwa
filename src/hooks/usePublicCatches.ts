@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { PublicCatchRecord } from '../types';
 
@@ -9,14 +9,15 @@ export function usePublicCatches(userId: string) {
   useEffect(() => {
     const q = query(
       collection(db, 'catches'),
-      where('deleted', '==', false),
+      where('user_id', '!=', userId),
+      orderBy('user_id'),
       limit(200),
     );
 
     getDocs(q)
       .then((snapshot) => {
         const records: PublicCatchRecord[] = snapshot.docs
-          .filter((d) => d.data().user_id !== userId)
+          .filter((d) => !d.data().deleted)
           .map((d) => {
             const data = d.data();
             return {

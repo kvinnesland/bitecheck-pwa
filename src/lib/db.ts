@@ -1,6 +1,13 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { CatchRecord } from '../types';
 
+const _listeners = new Set<() => void>();
+export function onCatchesChanged(fn: () => void): () => void {
+  _listeners.add(fn);
+  return () => { _listeners.delete(fn); };
+}
+function notifyCatchesChanged() { _listeners.forEach((fn) => fn()); }
+
 interface BiteCheckDB extends DBSchema {
   catches: {
     key: string;
@@ -44,6 +51,7 @@ export async function getDB(): Promise<IDBPDatabase<BiteCheckDB>> {
 export async function saveCatch(record: CatchRecord): Promise<void> {
   const db = await getDB();
   await db.put('catches', record);
+  notifyCatchesChanged();
 }
 
 export async function getCatch(catchId: string): Promise<CatchRecord | undefined> {

@@ -28,15 +28,18 @@ export function Historikk({ user }: Props) {
     ));
   }, [user.uid]);
 
+  useEffect(() => {
+    return () => { if (undoItem) clearTimeout(undoItem.timer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleDelete(record: CatchRecord) {
     setCatches((prev) => prev.filter((c) => c.catch_id !== record.catch_id));
     await softDeleteCatch(record.catch_id, user.uid);
 
     if (undoItem) clearTimeout(undoItem.timer);
 
-    const timer = setTimeout(async () => {
-      setUndoItem(null);
-    }, 5000);
+    const timer = setTimeout(() => { setUndoItem(null); }, 5000);
 
     setUndoItem({ id: record.catch_id, name: record.species.name, timer });
   }
