@@ -562,3 +562,88 @@ match /personalRecords/{uid} {
 - **Fan-out scaling** — hybrid approach for accounts with large follower counts
 - **Reporting/moderation** — report a catch, block a user
 - **Code-splitting** — MapLibre + SunCalc dynamic import (already in main Todo)
+- **Map: tide forecast layer** — time-scrubber-aware, shows predicted tide level across map
+- **Map: temperature forecast layer** — time-scrubber-aware, shows SST or air temp across map
+
+---
+
+## 9. Map Wind Layer
+
+### 9.1 Overview
+
+A 6th toggleable layer in the existing map layer panel. Animated wind particle flow (Yr.no-style) showing direction and speed. Shared time scrubber infrastructure at the bottom of the map screen.
+
+### 9.2 Visualization
+
+- Animated particles drift continuously across the map in the direction wind is blowing *to*.
+- Particle color follows a green → yellow → red speed ramp.
+- Speed legend pinned to left side of map: m/s as primary label, Beaufort scale in parentheses.
+- Particle density is a single config constant (default: subtle).
+
+Reference: Yr.no wind layer aesthetic.
+
+### 9.3 Data
+
+- **Zoomed out** (below zoom threshold): reuse `hourlyWeather[]` already returned by `useWeather.ts`. No extra API calls.
+- **Zoomed in** (at or above zoom threshold): fetch wind forecast for the current map center from open-meteo. Re-fetch on pan, debounced.
+- 12 hours of hourly wind data (direction + speed).
+- All config in `WIND_CONFIG` object (see §9.6).
+
+### 9.4 Time Scrubber
+
+- Horizontal drag bar at the bottom of the map screen.
+- Visible whenever at least one time-aware layer is active (wind layer now; tide + temperature forecast on Todo).
+- Displays current selected timestamp.
+- Drag to scrub manually through the 12-hour window.
+- **Play button:** auto-advances timestamp, loops back to "now" after +12 hours.
+- Scrubber is standalone shared infrastructure — not coupled to wind layer specifically.
+
+### 9.5 Code Architecture
+
+```
+src/
+  lib/
+    windLayer.ts          — particle animation logic, color ramp, speed → Beaufort conversion
+    windConfig.ts         — WIND_CONFIG and TIME_SCRUBBER_CONFIG constants (all tunables here)
+
+  hooks/
+    useWindData.ts        — selects hourly wind slice from useWeather or fetches for map center;
+                           handles zoom threshold + debounced pan re-fetch
+
+  components/
+    map/
+      WindParticleLayer.tsx   — MapLibre canvas overlay, renders animated particles
+      WindLegend.tsx          — speed legend (m/s + Beaufort), pinned left
+      MapTimeScrubber.tsx     — scrubber bar + play button, shared across time layers
+```
+
+- `windConfig.ts` is the single place to tune all constants — import it everywhere, change it once.
+- `WindParticleLayer` and `MapTimeScrubber` are decoupled — scrubber emits a `timestamp` prop, layer consumes it.
+
+### 9.6 Config Constants (`windConfig.ts`)
+
+```ts
+export const WIND_CONFIG = {
+  PARTICLE_DENSITY: 60,            // number of simultaneous particles on screen
+  ZOOM_THRESHOLD: 10,              // below this: use useWeather data; at/above: fetch for map center
+  PAN_DEBOUNCE_MS: 800,            // debounce delay before re-fetching on pan
+  FORECAST_HOURS: 12,              // how many hours ahead the scrubber covers
+};
+
+export const TIME_SCRUBBER_CONFIG = {
+  PLAYBACK_MS_PER_HOUR: 1000,      // ms of real time per forecast hour during auto-play
+  LOOP: true,                      // loop back to "now" after reaching end
+};
+```
+
+### 9.7 Tune-After-Implementation Checklist
+
+Test and adjust these after first working implementation:
+
+- [ ] `PARTICLE_DENSITY` — does it look subtle enough? Can you still read the map underneath?
+- [ ] `ZOOM_THRESHOLD` — does zoom 10 feel right for switching to local data?
+- [ ] `PLAYBACK_MS_PER_HOUR` — does 1 second per hour feel readable or too fast/slow?
+- [ ] `LOOP` — does looping feel natural or disorienting?
+- [ ] `PAN_DEBOUNCE_MS` — does 800 ms feel responsive without hammering the API?
+- [ ] Color ramp — are the green/yellow/red breakpoints at sensible m/s values for Norwegian coastal conditions?
+- [ ] Legend placement — does left-side placement conflict with any existing map controls?
