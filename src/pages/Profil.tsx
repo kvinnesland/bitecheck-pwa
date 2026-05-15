@@ -4,9 +4,13 @@ import type { User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
+import { cn } from '@/lib/utils';
 import type { CatchRecord } from '../types';
 
 interface Props { user: User; }
+
+// Replace with a real image path (e.g. '/images/banner-default.jpg') once the asset is added to public/
+const BANNER_SRC: string | null = null;
 
 function computeStats(catches: CatchRecord[]) {
   const active = catches.filter(c => !c.deleted);
@@ -16,23 +20,19 @@ function computeStats(catches: CatchRecord[]) {
   let bestWeight: number | null = null;
   let bestLength: number | null = null;
   for (const c of active) {
-    if (c.species.weight_kg != null && (bestWeight == null || c.species.weight_kg > bestWeight)) {
+    if (c.species.weight_kg != null && (bestWeight == null || c.species.weight_kg > bestWeight))
       bestWeight = c.species.weight_kg;
-    }
-    if (c.species.length_cm != null && (bestLength == null || c.species.length_cm > bestLength)) {
+    if (c.species.length_cm != null && (bestLength == null || c.species.length_cm > bestLength))
       bestLength = c.species.length_cm;
-    }
   }
 
   const now = new Date();
   const months: { label: string; count: number }[] = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const y = d.getFullYear();
-    const m = d.getMonth();
     const count = active.filter(c => {
       const cd = new Date(c.created_at);
-      return cd.getFullYear() === y && cd.getMonth() === m;
+      return cd.getFullYear() === d.getFullYear() && cd.getMonth() === d.getMonth();
     }).length;
     months.push({ label: d.toLocaleString('default', { month: 'short' }), count });
   }
@@ -61,80 +61,126 @@ export function Profil({ user }: Props) {
     .join('')
     .toUpperCase();
 
-  const maxMonth = Math.max(...stats.months.map(m => m.count), 1);
-
   const bestDisplay = stats.bestWeight != null
     ? formatWeight(stats.bestWeight, prefs.weight)
     : stats.bestLength != null
       ? formatLength(stats.bestLength, prefs.length)
       : null;
 
+  const maxMonth = Math.max(...stats.months.map(m => m.count), 1);
   const topMax = stats.topSpecies[0]?.[1] ?? 1;
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="px-4 py-6 max-w-lg mx-auto space-y-6">
+    <div className="h-full overflow-y-auto bg-bg">
 
-        {/* Avatar + name */}
-        <div className="flex items-center gap-4">
+      {/* ── Hero banner ─────────────────────────────────────────── */}
+      {/*
+        The wave illusion: an SVG is positioned at the banner's bottom.
+        Its path fills everything BELOW the wave curve with var(--color-bg),
+        making the image appear to have a wavy bottom edge.
+        No clipping needed — the SVG simply paints over the image.
+      */}
+      <div className="relative h-52">
+        {/* Background image / gradient */}
+        {BANNER_SRC ? (
+          <img
+            src={BANNER_SRC}
+            className="absolute inset-0 w-full h-full object-cover"
+            alt=""
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(150deg, #0c2330 0%, #1a4a5e 45%, #2d7a8a 80%, #3a9aaa 100%)' }}
+          />
+        )}
+
+        {/* Wave SVG — fills below the wave curve with the page background color */}
+        <svg
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 w-full"
+          style={{ height: 52 }}
+          viewBox="0 0 390 52"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0,28 C130,48 260,8 390,32 L390,52 L0,52 Z"
+            style={{ fill: 'var(--color-bg)' }}
+          />
+        </svg>
+
+        {/* Avatar — anchored to wave boundary on the left */}
+        <div className="absolute left-5 -bottom-9">
           {user.photoURL ? (
             <img
               src={user.photoURL}
               alt={user.displayName ?? ''}
-              className="w-16 h-16 rounded-full object-cover border-2 border-divider"
+              referrerPolicy="no-referrer"
+              className="w-[72px] h-[72px] rounded-full object-cover"
+              style={{ border: '3px solid var(--color-bg)' }}
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-white text-xl font-bold shrink-0">
+            <div
+              className="w-[72px] h-[72px] rounded-full bg-accent flex items-center justify-center text-white text-xl font-bold"
+              style={{ border: '3px solid var(--color-bg)' }}
+            >
               {initials}
             </div>
           )}
-          <div className="min-w-0">
-            <p className="text-lg font-semibold text-text leading-tight truncate">
-              {user.displayName ?? t('profile.title')}
-            </p>
-            {user.email && (
-              <p className="text-sm text-text-muted truncate">{user.email}</p>
-            )}
-          </div>
+        </div>
+      </div>
+
+      {/* ── Profile body ────────────────────────────────────────── */}
+      <div className="px-5 pb-8 space-y-5" style={{ paddingTop: 44 }}>
+
+        {/* Name */}
+        <div>
+          <h1 className="text-[1.4rem] font-bold text-text leading-tight tracking-tight">
+            {user.displayName ?? t('profile.title')}
+          </h1>
+          {user.email && (
+            <p className="text-sm text-text-muted mt-0.5">{user.email}</p>
+          )}
         </div>
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-3 gap-3">
-          <StatCard label={t('profile.catches')} value={String(stats.total)} />
-          <StatCard label={t('profile.species')} value={String(stats.species)} />
-          <StatCard
-            label={t('profile.personalBest')}
-            value={bestDisplay ?? '—'}
-            small={bestDisplay == null}
-          />
+        {/* Stats row */}
+        <div className="flex items-start gap-5">
+          <StatItem value={String(stats.total)} label={t('profile.catches')} />
+          <div className="w-px self-stretch bg-divider" />
+          <StatItem value={String(stats.species)} label={t('profile.species')} />
+          {bestDisplay && (
+            <>
+              <div className="w-px self-stretch bg-divider" />
+              <StatItem value={bestDisplay} label={t('profile.personalBest')} compact />
+            </>
+          )}
         </div>
 
+        {/* Empty state */}
         {stats.total === 0 ? (
-          <div className="bg-surface border border-divider rounded-[var(--radius-md)] p-6 text-center">
-            <p className="text-text-muted text-sm">{t('profile.emptyHint')}</p>
+          <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-6 text-center">
+            <p className="text-sm text-text-muted">{t('profile.emptyHint')}</p>
           </div>
         ) : (
           <>
             {/* Monthly trend */}
-            <div className="bg-surface border border-divider rounded-[var(--radius-md)] p-4">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">
+            <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-4">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-text-muted">
                 {t('profile.monthlyTrend')}
               </p>
-              <div className="flex items-end gap-1.5 h-20">
+              <div className="flex items-end gap-1.5 h-[68px]">
                 {stats.months.map(({ label, count }) => (
-                  <div key={label} className="flex-1 flex flex-col items-center gap-1">
+                  <div key={label} className="flex flex-1 flex-col items-center gap-1">
                     <div
-                      className="w-full rounded-t-sm bg-accent/20 transition-all duration-300"
-                      style={{ height: `${Math.round((count / maxMonth) * 64)}px`, minHeight: count > 0 ? 4 : 0 }}
-                    >
-                      {count > 0 && (
-                        <div
-                          className="w-full rounded-t-sm bg-accent"
-                          style={{ height: '100%' }}
-                        />
-                      )}
-                    </div>
-                    <span className="text-[10px] text-text-muted leading-none">{label}</span>
+                      className="w-full rounded-t-[3px] transition-all duration-300"
+                      style={{
+                        height: count > 0 ? `${Math.round((count / maxMonth) * 52)}px` : 0,
+                        background: 'var(--color-accent)',
+                        opacity: count > 0 ? 1 : 0,
+                      }}
+                    />
+                    <span className="text-[10px] leading-none text-text-muted">{label}</span>
                   </div>
                 ))}
               </div>
@@ -142,21 +188,26 @@ export function Profil({ user }: Props) {
 
             {/* Top species */}
             {stats.topSpecies.length > 0 && (
-              <div className="bg-surface border border-divider rounded-[var(--radius-md)] p-4">
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+              <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-4">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-muted">
                   {t('profile.topSpecies')}
                 </p>
                 <div className="space-y-3">
                   {stats.topSpecies.map(([name, count]) => (
                     <div key={name} className="flex items-center gap-3">
-                      <span className="text-sm text-text w-24 shrink-0 truncate">{name}</span>
-                      <div className="flex-1 bg-divider rounded-full h-2">
+                      <span className="w-24 shrink-0 truncate text-sm text-text">{name}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-divider overflow-hidden">
                         <div
-                          className="bg-accent h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.round((count / topMax) * 100)}%` }}
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.round((count / topMax) * 100)}%`,
+                            background: 'var(--color-accent)',
+                          }}
                         />
                       </div>
-                      <span className="text-sm font-semibold text-text w-6 text-right shrink-0">{count}</span>
+                      <span className="w-6 shrink-0 text-right text-sm font-semibold text-text">
+                        {count}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -169,13 +220,13 @@ export function Profil({ user }: Props) {
   );
 }
 
-function StatCard({ label, value, small }: { label: string; value: string; small?: boolean }) {
+function StatItem({ value, label, compact }: { value: string; label: string; compact?: boolean }) {
   return (
-    <div className="bg-surface border border-divider rounded-[var(--radius-md)] p-3 flex flex-col items-center gap-1">
-      <span className={small ? 'text-base font-bold text-text' : 'text-2xl font-bold text-text'}>
+    <div className="flex flex-col gap-0.5">
+      <span className={cn('font-bold text-text leading-none', compact ? 'text-lg' : 'text-2xl')}>
         {value}
       </span>
-      <span className="text-[11px] text-text-muted text-center leading-tight">{label}</span>
+      <span className="text-xs text-text-muted">{label}</span>
     </div>
   );
 }
