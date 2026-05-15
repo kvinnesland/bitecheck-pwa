@@ -115,7 +115,9 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
+- **Demo-profiler** — fiktive brukere med realistiske innlegg for å teste feed-design. Skal se ut og oppføre seg som ekte brukere (avatar, navn, innlegg, interaksjon). Trenger avklaring: Firestore write-regler, avatar-bilder (placeholder-service eller fargekodet initial), antall profiler og innlegg, Add/Remove-kontroll i Settings. Påbegynt implementasjon finnes i `src/lib/demoData.ts`, `src/lib/seedDemo.ts` og `SettingsSheet.tsx`.
 - **Utstyrsliste (gear)** — mulighet til å logge hvilket utstyr som ble brukt per fangst (stang, sluk, agn, snøre). Åpne spørsmål: fri tekst vs. forhåndsdefinerte kategorier? Lagres i CatchRecord (nytt felt, krever migreringsstrategi) eller separat? Nyttig for å koble utstyr mot fangstresultat over tid.
+- **Internasjonale arter** — artslisten er norsk-sentrisk. Utvid med internasjonalt relevante arter (bass, pike, carp, trout varieties, tuna, etc.). Vurder om SPECIES_DEFS bør regionsfilteres eller om alle arter alltid vises.
 - Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)
 - Push-varslinger når solunarperiode starter (krever Notification API + service worker-integrasjon)
 - ~~Code-splitting av bundle~~ — gjort. React.lazy på alle sider.

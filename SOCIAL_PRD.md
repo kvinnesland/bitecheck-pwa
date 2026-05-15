@@ -1,9 +1,9 @@
 # BiteCheck Social — Product Requirements Document
 
-> Scope: Social feed, following graph, reactions, comments, profiles, notifications, discovery.
-> Challenges, leaderboards, verified badges, photos (requires Firebase Blaze), and Contact Picker API are explicitly out of scope for v1 (see Todo).
+> Scope: Social feed, following graph, reactions, comments, profiles, notifications, discovery, photos (requires Firebase Blaze upgrade).
+> Challenges, leaderboards, verified badges, and Contact Picker API are explicitly out of scope for v1 (see Todo).
 >
-> **Core social unit: the fishing trip, not the individual catch.** A trip is published immediately when the first catch is logged and updates live as more catches are added. Trips auto-close after 8 hours of inactivity.
+> **Core social unit: the fishing trip, not the individual catch.** A trip is published immediately when the first catch is logged and updates live as more catches are added. Trips are closed explicitly by the user, not by a time heuristic.
 
 ---
 
@@ -80,8 +80,9 @@ The primary social entity. One trip = one feed post.
   tripId: string,
   uid: string,                          // owner
   status: 'open' | 'closed',           // open = still accepting catches; closed = final
+  isMultiDay: boolean,                  // user-set flag; no UI difference except surfaced on trip card
   startedAt: Timestamp,
-  closedAt: Timestamp | null,           // null while open; set on manual close or auto-close
+  closedAt: Timestamp | null,           // null while open; set on explicit user action only
   location: GeoPoint | null,            // location of first catch, or user's location at start
   locationShare: 'exact' | 'approximate' | 'hidden',
   approximateLocationName: string | null,
@@ -97,7 +98,7 @@ The primary social entity. One trip = one feed post.
 }
 ```
 
-> **Auto-close rule:** A Cloud Function checks for open trips with no activity for 8 hours and sets `status: 'closed'`, `closedAt: now`.
+> **Close rule:** Trips are closed explicitly by the user only — no auto-close. When logging a catch, the confirmation screen offers two actions: **Continue trip** (trip stays open) or **End trip** (sets `status: 'closed'`, `closedAt: now`). Dismissing without choosing leaves the trip open. The `isMultiDay` flag has no effect on close logic — it is purely informational, surfaced on the trip card so followers know the trip spans multiple days.
 
 ### 3.5 `catches/{catchId}` (extended)
 
@@ -109,8 +110,13 @@ Existing fields kept. New fields:
   tripId: string,                       // always set — every catch belongs to a trip
   locationShare: 'exact' | 'approximate' | 'hidden',
   approximateLocationName: string | null,
+  isPublic: boolean,                    // visibility toggle, default true
+  photoRefs: string[],                  // ordered list of Firebase Storage paths, max 10
+                                        // empty until Firebase Blaze is enabled
 }
 ```
+
+> **Photos:** Each catch supports 0–10 photos stored in Firebase Storage at `catches/{catchId}/{filename}`. Photos can be added at log time (camera capture) or after the fact (camera roll). Requires Firebase Blaze plan — `photoRefs` is written as `[]` until Storage is enabled. The UI shows a photo add button that is visible but shows an "upgrade required" message until Blaze is active. This ensures the data model is in place before Storage is enabled.
 
 ### 3.6 `trips/{tripId}/reactions/{userId}`
 
@@ -380,16 +386,19 @@ Each vertical is independently deployable and testable. Suggested order:
 
 ---
 
-### Vertical 3 — Social Catch Layer
-**Goal:** Catches have social fields. Feed cards display correctly.
+### Vertical 3 — Trip & Catch Layer
+**Goal:** Catches belong to trips. Social fields on catch. Feed cards display correctly.
 
-- Extend catch log form with visibility toggle + location privacy toggle + approximate location name.
-- `isPublic`, `locationShare`, `approximateLocationName` written on new catches.
-- Catch card component (condensed view).
-- Catch detail view (full conditions + map).
+- Trip creation on first catch log. Trip confirmation screen: **Continue trip** / **End trip** / **Multi-day trip** toggle.
+- "Add to existing trip?" prompt when an open trip exists and user logs a new catch.
+- Extend catch log form: visibility toggle, location privacy toggle, approximate location name, photo add button (shows "requires Blaze" if Storage not enabled).
+- `tripId`, `isPublic`, `locationShare`, `approximateLocationName`, `photoRefs` written on new catches.
+- Photo upload flow: camera capture + camera roll picker. Photos stored in Firebase Storage (requires Blaze). UI in place regardless.
+- Trip card component (condensed feed view showing trip status, catch count, species list).
+- Catch detail view (photo carousel at top, full conditions + map below).
 - No feed yet — just the components, testable via a static list.
 
-**Testable:** Log catch with "Skjul sted" → card shows no map → log catch with "Vis omtrentlig sted" → card shows Nominatim-derived name → tap card → detail view shows conditions.
+**Testable:** Log catch → prompted to continue or end trip → log second catch → offered to add to open trip → trip card shows 2 catches → add photo → photo appears in carousel → tap card → detail view shows conditions and photos.
 
 ---
 
@@ -509,6 +518,7 @@ src/
       updatePRs.ts       — on catch write: update personalRecords
       updateCounts.ts    — on reaction/comment write: update denormalized counts
       sendInviteEmail.ts — HTTP function: send invite email
+      // NOTE: no auto-close function — trips are closed explicitly by the user only
 ```
 
 **Rules:**
@@ -584,7 +594,7 @@ match /personalRecords/{uid} {
 
 ## 8. Todo (Out of Scope Now)
 
-- **Photos on trips** — requires upgrading to Firebase Blaze plan + Storage setup. Users attach photos of scenery, weather, or companions to a trip. Deliberately excluded from v1.
+- **Photos (activate)** — data model and UI are in place (see §3.5). Activation requires upgrading to Firebase Blaze plan, creating a Storage bucket, and updating Firestore + Storage security rules. Once done, remove the "upgrade required" gate from the photo add button.
 - **Challenges** — community goals and competitions
 - **Leaderboards** — biggest fish / most catches by species, area, time window
 - **Verified/celeb badge** — ✓ on notable angler profiles
