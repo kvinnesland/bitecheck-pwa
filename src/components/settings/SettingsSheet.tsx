@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useUnits } from '../../contexts/UnitsContext';
 import { useTheme } from '../../hooks/useTheme';
 import { cn } from '@/lib/utils';
+import { DEMO_PROFILES } from '../../lib/demoData';
+import { seedProfile, unseedProfile, isProfileSeeded } from '../../lib/seedDemo';
 
 interface Props {
   user: User;
@@ -40,6 +43,72 @@ function Toggle<T extends string>({
           {label(v)}
         </button>
       ))}
+    </div>
+  );
+}
+
+function DemoSection() {
+  type Status = 'loading' | 'seeded' | 'unseeded' | 'working';
+  const [statuses, setStatuses] = useState<Record<string, Status>>(
+    () => Object.fromEntries(DEMO_PROFILES.map(p => [p.id, 'loading'])),
+  );
+
+  useEffect(() => {
+    DEMO_PROFILES.forEach(async p => {
+      const seeded = await isProfileSeeded(p).catch(() => false);
+      setStatuses(s => ({ ...s, [p.id]: seeded ? 'seeded' : 'unseeded' }));
+    });
+  }, []);
+
+  async function toggle(id: string) {
+    const profile = DEMO_PROFILES.find(p => p.id === id)!;
+    setStatuses(s => ({ ...s, [id]: 'working' }));
+    try {
+      if (statuses[id] === 'seeded') {
+        await unseedProfile(profile);
+        setStatuses(s => ({ ...s, [id]: 'unseeded' }));
+      } else {
+        await seedProfile(profile);
+        setStatuses(s => ({ ...s, [id]: 'seeded' }));
+      }
+    } catch {
+      setStatuses(s => ({ ...s, [id]: statuses[id] === 'seeded' ? 'seeded' : 'unseeded' }));
+    }
+  }
+
+  return (
+    <div className="px-5 py-4 border-b border-divider">
+      <div className="text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-text-muted mb-3">
+        Demo
+      </div>
+      <div className="space-y-2.5">
+        {DEMO_PROFILES.map(p => {
+          const status = statuses[p.id];
+          const isSeeded = status === 'seeded';
+          const isWorking = status === 'working' || status === 'loading';
+          return (
+            <div key={p.id} className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[0.9rem] text-text truncate">{p.name}</p>
+                <p className="text-[11px] text-text-muted">{p.posts.length} posts</p>
+              </div>
+              <button
+                onClick={() => toggle(p.id)}
+                disabled={isWorking}
+                className={cn(
+                  'shrink-0 px-3 py-1 rounded-[var(--radius-sm)] text-[0.8rem] font-medium border transition-colors duration-150',
+                  isSeeded
+                    ? 'border-error text-error hover:bg-error/10'
+                    : 'border-accent text-accent hover:bg-accent/10',
+                  isWorking && 'opacity-40 pointer-events-none',
+                )}
+              >
+                {isWorking ? '…' : isSeeded ? 'Remove' : 'Add'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -128,6 +197,8 @@ export function SettingsSheet({ user, onClose, onSignOut }: Props) {
             />
           </div>
         </div>
+
+        <DemoSection />
 
         <div className="px-5 py-4 flex items-center gap-3 border-b border-divider">
           {user.photoURL && (
