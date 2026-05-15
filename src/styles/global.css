@@ -72,13 +72,11 @@
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BASE STYLES
+   Note: the *, margin/padding reset is intentionally omitted here.
+   Tailwind v4 emits it inside @layer base. Repeating it outside any layer
+   would make it unlayered (highest cascade precedence), silently zeroing out
+   every padding/margin utility class in the whole app.
 ───────────────────────────────────────────────────────────────────────────── */
-
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
 
 html, body, #root {
   height: 100%;
