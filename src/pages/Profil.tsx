@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Settings } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { useUnits } from '../contexts/UnitsContext';
@@ -7,9 +8,12 @@ import { formatWeight, formatLength } from '../lib/units';
 import { cn } from '@/lib/utils';
 import type { CatchRecord } from '../types';
 
-interface Props { user: User; }
+interface Props {
+  user: User;
+  onSettingsOpen: () => void;
+}
 
-// Replace with a real image path (e.g. '/images/banner-default.jpg') once the asset is added to public/
+// Replace with real path once asset is in public/
 const BANNER_SRC: string | null = '/banner-default.jpg';
 
 function computeStats(catches: CatchRecord[]) {
@@ -48,7 +52,7 @@ function computeStats(catches: CatchRecord[]) {
   return { total, species: speciesSet.size, bestWeight, bestLength, months, topSpecies };
 }
 
-export function Profil({ user }: Props) {
+export function Profil({ user, onSettingsOpen }: Props) {
   const { t } = useTranslation();
   const { prefs } = useUnits();
   const catches = useUserCatches(user.uid);
@@ -73,15 +77,13 @@ export function Profil({ user }: Props) {
   return (
     <div className="h-full overflow-y-auto bg-bg">
 
-      {/* ── Hero banner ─────────────────────────────────────────── */}
-      {/*
-        The wave illusion: an SVG is positioned at the banner's bottom.
-        Its path fills everything BELOW the wave curve with var(--color-bg),
-        making the image appear to have a wavy bottom edge.
-        No clipping needed — the SVG simply paints over the image.
-      */}
-      <div className="relative h-52">
-        {/* Background image / gradient */}
+      {/* ── Hero banner ─────────────────────────────────────────────
+          Goes to the very top of the viewport (no app header on this tab).
+          Safe-area padding keeps the settings button clear of status bar.
+      ──────────────────────────────────────────────────────────── */}
+      <div className="relative" style={{ height: 220 }}>
+
+        {/* Banner image / fallback gradient */}
         {BANNER_SRC ? (
           <img
             src={BANNER_SRC}
@@ -95,34 +97,44 @@ export function Profil({ user }: Props) {
           />
         )}
 
-        {/* Wave SVG — fills below the wave curve with the page background color */}
+        {/* Settings button — top-right, respects status bar */}
+        <button
+          onClick={onSettingsOpen}
+          aria-label={t('settings.title')}
+          className="absolute right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          style={{ top: 'calc(env(safe-area-inset-top) + 10px)' }}
+        >
+          <Settings size={17} strokeWidth={1.75} />
+        </button>
+
+        {/* Wave cutout — SVG paints over image with page bg color */}
         <svg
           aria-hidden="true"
           className="absolute bottom-0 left-0 w-full"
-          style={{ height: 52 }}
-          viewBox="0 0 390 52"
+          style={{ height: 44 }}
+          viewBox="0 0 390 44"
           preserveAspectRatio="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M0,28 C130,48 260,8 390,32 L390,52 L0,52 Z"
+            d="M0,22 C110,42 280,2 390,26 L390,44 L0,44 Z"
             style={{ fill: 'var(--color-bg)' }}
           />
         </svg>
 
-        {/* Avatar — anchored to wave boundary on the left */}
-        <div className="absolute left-5 -bottom-9">
+        {/* Avatar — sits at the wave boundary, left-aligned */}
+        <div className="absolute left-5" style={{ bottom: -30 }}>
           {user.photoURL ? (
             <img
               src={user.photoURL}
               alt={user.displayName ?? ''}
               referrerPolicy="no-referrer"
-              className="w-[72px] h-[72px] rounded-full object-cover"
+              className="w-[68px] h-[68px] rounded-full object-cover"
               style={{ border: '3px solid var(--color-bg)' }}
             />
           ) : (
             <div
-              className="w-[72px] h-[72px] rounded-full bg-accent flex items-center justify-center text-white text-xl font-bold"
+              className="w-[68px] h-[68px] rounded-full bg-accent flex items-center justify-center text-white text-xl font-bold"
               style={{ border: '3px solid var(--color-bg)' }}
             >
               {initials}
@@ -131,12 +143,12 @@ export function Profil({ user }: Props) {
         </div>
       </div>
 
-      {/* ── Profile body ────────────────────────────────────────── */}
-      <div className="px-5 pb-8 space-y-5" style={{ paddingTop: 44 }}>
+      {/* ── Profile body ──────────────────────────────────────────── */}
+      <div className="px-5 pb-8 space-y-4" style={{ paddingTop: 40 }}>
 
-        {/* Name */}
+        {/* Name + email */}
         <div>
-          <h1 className="text-[1.4rem] font-bold text-text leading-tight tracking-tight">
+          <h1 className="text-[1.35rem] font-bold text-text leading-tight tracking-tight">
             {user.displayName ?? t('profile.title')}
           </h1>
           {user.email && (

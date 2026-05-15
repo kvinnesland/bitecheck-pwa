@@ -39,13 +39,13 @@ export default function App() {
   return (
     <UnitsProvider>
       <AppShell user={user} onSignOut={signOutUser}>
-        {(view: AppView, navigate: (v: AppView) => void) => (
+        {(view: AppView, navigate: (v: AppView) => void, openSettings: () => void) => (
           <Suspense fallback={<PageSpinner />}>
             {view === 'logg'      && <LoggFangst user={user} />}
             {view === 'kart'      && <Kart user={user} />}
             {view === 'score'     && <BiteScore user={user} navigate={navigate} />}
             {view === 'historikk' && <Historikk user={user} />}
-            {view === 'profil'    && <Profil user={user} />}
+            {view === 'profil'    && <Profil user={user} onSettingsOpen={openSettings} />}
           </Suspense>
         )}
       </AppShell>
