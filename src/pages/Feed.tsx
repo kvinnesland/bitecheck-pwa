@@ -149,7 +149,10 @@ export function Feed({ user, onSettingsOpen }: Props) {
   const { t, i18n } = useTranslation();
   const { prefs } = useUnits();
   const { position } = useGeolocation();
-  const weather = useFeedWeather(position?.lat ?? null, position?.lng ?? null);
+  // Round to 2 decimal places (~1 km) so GPS jitter doesn't re-trigger the weather fetch
+  const lat = position ? Math.round(position.lat * 100) / 100 : null;
+  const lng = position ? Math.round(position.lng * 100) / 100 : null;
+  const weather = useFeedWeather(lat, lng);
   const posts = useFeedPosts(user);
 
   const hour = new Date().getHours();

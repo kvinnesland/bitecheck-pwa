@@ -14,7 +14,7 @@ export function useFeedWeather(lat: number | null, lng: number | null): FeedWeat
 
   useEffect(() => {
     if (lat == null || lng == null) return;
-    setWeather(w => ({ ...w, loading: true }));
+    setWeather(w => ({ ...w, loading: w.temp == null }));
 
     fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,weathercode,windspeed_10m&wind_speed_unit=ms&timezone=auto`,
