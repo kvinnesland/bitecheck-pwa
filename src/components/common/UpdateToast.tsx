@@ -5,7 +5,11 @@ export function UpdateToast() {
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    onRegisteredSW(_swUrl, r) {
+      r && setInterval(() => r.update(), 60 * 60 * 1000); // check every hour
+    },
+  });
 
   if (!needRefresh) return null;
 
