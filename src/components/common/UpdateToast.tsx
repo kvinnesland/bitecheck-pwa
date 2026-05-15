@@ -8,7 +8,7 @@ export function UpdateToast() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, r) {
-      r && setInterval(() => r.update(), 60 * 60 * 1000);
+      r && setInterval(() => r.update(), 5 * 60 * 1000);
     },
   });
 
