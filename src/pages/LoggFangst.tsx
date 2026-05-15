@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
@@ -9,13 +10,13 @@ import styles from './LoggFangst.module.css';
 
 const SPECIES_GROUPS = [
   {
-    label: 'Saltvann',
+    labelKey: 'predictions.saltwater',
     names: ['Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme',
             'Uer', 'Steinbit', 'Makrell', 'Rødspette', 'Lomre',
             'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye'],
   },
   {
-    label: 'Ferskvann',
+    labelKey: 'predictions.freshwater',
     names: ['Ørret', 'Røye', 'Abbor', 'Gjedde', 'Harr'],
   },
 ];
@@ -26,6 +27,7 @@ type Step = 'species' | 'details' | 'success';
 interface Props { user: User; }
 
 export function LoggFangst({ user }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('species');
   const [species, setSpecies] = useState('');
   const [weight, setWeight] = useState('');
@@ -90,14 +92,14 @@ export function LoggFangst({ user }: Props) {
             <polyline points="9 12 11 14 15 10" />
           </svg>
         </div>
-        <h2>Fangst lagret!</h2>
+        <h2>{t('log.saved')}</h2>
         <p className={styles.successSpecies}>{species}</p>
         {weight && <p className={styles.successMeta}>{weight} kg{length ? ` · ${length} cm` : ''}</p>}
         <p className={styles.successSync}>
-          {geoStatus === 'ok' ? 'GPS registrert' : 'Ingen GPS-posisjon'}
+          {geoStatus === 'ok' ? t('log.gpsRecorded') : t('log.noGps')}
         </p>
         <button className={styles.btnPrimary} onClick={reset}>
-          Logg ny fangst
+          {t('log.logNew')}
         </button>
       </div>
     );
@@ -110,7 +112,7 @@ export function LoggFangst({ user }: Props) {
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          Tilbake
+          {t('log.back')}
         </button>
 
         <div className={styles.card}>
@@ -118,7 +120,7 @@ export function LoggFangst({ user }: Props) {
             <SpeciesCardHeader
               name={species}
               action={
-                <button className={styles.changeBtn} onClick={() => setStep('species')}>Endre</button>
+                <button className={styles.changeBtn} onClick={() => setStep('species')}>{t('log.change')}</button>
               }
             />
           </div>
@@ -126,7 +128,7 @@ export function LoggFangst({ user }: Props) {
           <div className={styles.cardBody}>
             <div className={styles.fields}>
               <label className={styles.fieldGroup}>
-                <span className={styles.fieldLabel}>Vekt (kg)</span>
+                <span className={styles.fieldLabel}>{t('log.weight')}</span>
                 <input
                   ref={weightRef}
                   className={styles.input}
@@ -141,7 +143,7 @@ export function LoggFangst({ user }: Props) {
               </label>
 
               <label className={styles.fieldGroup}>
-                <span className={styles.fieldLabel}>Lengde (cm)</span>
+                <span className={styles.fieldLabel}>{t('log.length')}</span>
                 <input
                   className={styles.input}
                   type="number"
@@ -157,7 +159,7 @@ export function LoggFangst({ user }: Props) {
 
             <div className={`${styles.gpsRow} ${styles[`gps_${geoStatus}`]}`}>
               <GpsIcon status={geoStatus} />
-              <span>{gpsLabel(geoStatus, position?.accuracy_m)}</span>
+              <GpsLabel status={geoStatus} accuracy={position?.accuracy_m} />
             </div>
 
             <button
@@ -165,7 +167,7 @@ export function LoggFangst({ user }: Props) {
               onClick={handleSave}
               disabled={saving}
             >
-              {saving ? 'Lagrer…' : 'Lagre fangst'}
+              {saving ? t('log.saving') : t('log.save')}
             </button>
           </div>
         </div>
@@ -175,7 +177,7 @@ export function LoggFangst({ user }: Props) {
 
   return (
     <div className={styles.page}>
-      <h2 className={styles.title}>Hvilken art?</h2>
+      <h2 className={styles.title}>{t('log.whichSpecies')}</h2>
 
       <div className={styles.searchWrap}>
         <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -184,7 +186,7 @@ export function LoggFangst({ user }: Props) {
         <input
           className={styles.search}
           type="text"
-          placeholder="Søk etter art…"
+          placeholder={t('log.searchPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
@@ -205,14 +207,14 @@ export function LoggFangst({ user }: Props) {
                 className={`${styles.speciesBtn} ${styles.customSpecies}`}
                 onClick={() => selectSpecies(query.trim())}
               >
-                + Legg til «{query.trim()}»
+                {t('log.addCustom', { name: query.trim() })}
               </button>
             )}
           </>
         ) : (
           SPECIES_GROUPS.map((group) => (
-            <React.Fragment key={group.label}>
-              <span className={styles.groupLabel}>{group.label}</span>
+            <React.Fragment key={group.labelKey}>
+              <span className={styles.groupLabel}>{t(group.labelKey)}</span>
               {group.names.map((name) => (
                 <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
                   <FishSvg name={name} className={styles.speciesFish} />
@@ -250,11 +252,12 @@ function GpsIcon({ status }: { status: string }) {
   );
 }
 
-function gpsLabel(status: string, accuracy?: number): string {
+function GpsLabel({ status, accuracy }: { status: string; accuracy?: number }) {
+  const { t } = useTranslation();
   switch (status) {
-    case 'acquiring': return 'Henter posisjon…';
-    case 'ok': return accuracy ? `GPS ±${Math.round(accuracy)} m` : 'GPS klar';
-    case 'denied': return 'Posisjon ikke tillatt';
-    default: return 'GPS ikke tilgjengelig';
+    case 'acquiring': return <>{t('gps.acquiring')}</>;
+    case 'ok': return <>{accuracy ? t('gps.ok', { accuracy: Math.round(accuracy) }) : t('gps.okReady')}</>;
+    case 'denied': return <>{t('gps.denied')}</>;
+    default: return <>{t('gps.unavailable')}</>;
   }
 }

@@ -1,0 +1,161 @@
+{
+  "nav": {
+    "log": "Logg",
+    "map": "Kart",
+    "biteScore": "Bite Score",
+    "history": "Historikk",
+    "ariaLabel": "Hovednavigasjon"
+  },
+  "conditions": {
+    "title": "Miljøforhold",
+    "pressure": "Lufttrykk",
+    "seaTemp": "Sjøtemperatur (°C)",
+    "freshTemp": "Vanntemperatur (°C)",
+    "tide": "Tidevann",
+    "current": "Strøm",
+    "fetching": "henter…",
+    "auto": "auto"
+  },
+  "pressure": {
+    "falling_rapidly": "Faller raskt",
+    "falling": "Faller",
+    "stable": "Stabilt",
+    "rising": "Stiger",
+    "rising_rapidly": "Stiger raskt"
+  },
+  "tide": {
+    "rising": "Stigende",
+    "high": "Høyvann",
+    "falling": "Fallende",
+    "low": "Lavvann",
+    "slack": "Strømstopp"
+  },
+  "current": {
+    "stille": "Stille",
+    "moderat": "Moderat",
+    "sterk": "Sterk",
+    "sterkest": "Sterkest"
+  },
+  "predictions": {
+    "title": "Prediksjoner",
+    "saltwater": "Saltvann",
+    "freshwater": "Ferskvann",
+    "fromShore": "fra land",
+    "fromBoat": "fra båt",
+    "outOfSeason": "Ikke i sesong"
+  },
+  "solunar": {
+    "majorActive": "Stor periode aktiv",
+    "minorActive": "Liten periode aktiv",
+    "nextMajor": "Neste: stor om {{minutes}} min",
+    "nextMinor": "Neste: liten om {{minutes}} min",
+    "illuminated": "{{pct}}% belyst",
+    "multiplier": "×{{value}} bite-multiplikator"
+  },
+  "light": {
+    "night": "Natt",
+    "astronomical": "Astronomisk tusmørke",
+    "nautical": "Nautisk tusmørke",
+    "civil": "Borgerlig tusmørke",
+    "sunrise": "Soloppgang / -nedgang",
+    "daylight": "Dagslys",
+    "fullDaylight": "Fullt dagslys"
+  },
+  "history": {
+    "title": "Historikk",
+    "count": "{{count}} fangster",
+    "empty": "Ingen fangster ennå",
+    "emptyHint": "Trykk på Logg-fanen for å registrere din første fangst",
+    "noMeasurements": "Ingen mål",
+    "deleted": "{{name}} slettet",
+    "undo": "Angre"
+  },
+  "editModal": {
+    "title": "Rediger fangst",
+    "species": "Art",
+    "weight": "Vekt (kg)",
+    "length": "Lengde (cm)",
+    "lockedFields": "GPS og tidspunkt kan ikke endres",
+    "delete": "Slett fangst",
+    "cancel": "Avbryt",
+    "save": "Lagre"
+  },
+  "map": {
+    "depthLabel": "Dybde",
+    "depthTitle": "Dybdekonturer (Geonorge)",
+    "bottomLabel": "Bunn",
+    "bottomTitle": "Bunnsedimenter (NGU)",
+    "seamarksLabel": "Sjømerker",
+    "seamarksTitle": "Sjømerker (OpenSeaMap)",
+    "protectedLabel": "Vern",
+    "protectedTitle": "Verneområder (Miljødirektoratet)",
+    "spawningLabel": "Gyting",
+    "spawningTitle": "Gyteområder (Fiskeridirektoratet)",
+    "zoomForBottom": "Zoom inn for å se bunndata",
+    "goToPosition": "Gå til min posisjon",
+    "mine": "Mine",
+    "others": "Andre"
+  },
+  "log": {
+    "whichSpecies": "Hvilken art?",
+    "searchPlaceholder": "Søk etter art…",
+    "addCustom": "+ Legg til «{{name}}»",
+    "back": "Tilbake",
+    "change": "Endre",
+    "weight": "Vekt (kg)",
+    "length": "Lengde (cm)",
+    "save": "Lagre fangst",
+    "saving": "Lagrer…",
+    "logNew": "Logg ny fangst",
+    "saved": "Fangst lagret!",
+    "gpsRecorded": "GPS registrert",
+    "noGps": "Ingen GPS-posisjon",
+    "logSpecies": "Logg fangst av {{name}}"
+  },
+  "gps": {
+    "acquiring": "Henter posisjon…",
+    "ok": "GPS ±{{accuracy}} m",
+    "okReady": "GPS klar",
+    "denied": "Posisjon ikke tillatt",
+    "unavailable": "GPS ikke tilgjengelig"
+  },
+  "auth": {
+    "subtitle": "Sportsfiske med databaserte prediksjoner",
+    "signIn": "Logg inn med Google",
+    "signingIn": "Logger inn…",
+    "gdpr": "Ved å logge inn godtar du at GPS-posisjon og fangstdata lagres i henhold til GDPR."
+  },
+  "location": {
+    "myPosition": "Min posisjon (GPS)",
+    "searchPlaceholder": "Søk på sted…",
+    "searching": "Søker…",
+    "useGps": "Bruk min GPS-posisjon",
+    "useCurrentTime": "Bruk nåværende tidspunkt"
+  },
+  "species": {
+    "scoreNow": "Score nå",
+    "total": "Totalt",
+    "primaryDriver": "Primærfaktor",
+    "secondaryDriver": "Sekundærfaktor",
+    "solunarMultiplier": "Solunar-multiplikator: ×{{value}}",
+    "bestConditions": "Beste forhold",
+    "temperature": "Temperatur",
+    "pressure": "Trykk",
+    "light": "Lys",
+    "tide": "Tidevann",
+    "baitAndLures": "Agn & sluk",
+    "naturalBait": "Naturlig agn",
+    "lures": "Sluk & lokkemidler",
+    "catchTips": "Fangsttips",
+    "fromShore": "Fra land",
+    "fromBoat": "Fra båt",
+    "about": "Om arten",
+    "myCatches": "Mine fangster ({{count}})",
+    "saltwater": "Saltvann",
+    "freshwater": "Ferskvann"
+  },
+  "update": {
+    "available": "Ny versjon tilgjengelig",
+    "update": "Oppdater"
+  }
+}

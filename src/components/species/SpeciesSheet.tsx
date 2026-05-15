@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { SpeciesScore } from '../../lib/biteScore';
 import type { CatchRecord } from '../../types';
 import { SPECIES_INFO } from '../../lib/speciesInfo';
@@ -64,25 +65,28 @@ function TideIcon() {
   );
 }
 
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString('nb-NO', {
+function formatDate(isoString: string, locale: string): string {
+  return new Date(isoString).toLocaleDateString(locale, {
     day: 'numeric', month: 'short', year: 'numeric',
   });
 }
 
 const DISMISS_THRESHOLD = 80;
 
-function scoreTimeLabel(datetime: Date): string {
-  const now = new Date();
-  const isToday =
-    datetime.getFullYear() === now.getFullYear() &&
-    datetime.getMonth() === now.getMonth() &&
-    datetime.getDate() === now.getDate();
-  if (isToday) return 'Score nå';
-  return 'Score ' + datetime.toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
 export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigateToLog }: Props) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language.startsWith('nb') ? 'nb-NO' : 'en-US';
+
+  function scoreTimeLabel(dt: Date): string {
+    const now = new Date();
+    const isToday =
+      dt.getFullYear() === now.getFullYear() &&
+      dt.getMonth() === now.getMonth() &&
+      dt.getDate() === now.getDate();
+    if (isToday) return t('species.scoreNow');
+    return dt.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
   const info = SPECIES_INFO[score.name];
   const pct = Math.round(score.score * 100);
   const color = scoreColor(score.score);
@@ -150,9 +154,10 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
         <div className={styles.content}>
           <section>
             <h3 className={styles.sectionTitle}>{scoreTimeLabel(datetime)}</h3>
+
             <div className={styles.scoreBlock}>
               <div className={styles.scoreTotalRow}>
-                <span className={styles.scoreTotalLabel}>Totalt</span>
+                <span className={styles.scoreTotalLabel}>{t('species.total')}</span>
                 <span className={styles.scoreTotalPct} style={{ color }}>{pct}%</span>
               </div>
               <div className={styles.barTrack}>
@@ -160,7 +165,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
               </div>
 
               <div className={styles.subScoreRow}>
-                <span>{info?.primaryDriver ?? 'Primærfaktor'}</span>
+                <span>{info?.primaryDriver ?? t('species.primaryDriver')}</span>
                 <span>{Math.round(score.primary * 100)}%</span>
               </div>
               <div className={styles.barTrack}>
@@ -171,7 +176,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
               </div>
 
               <div className={styles.subScoreRow}>
-                <span>{info?.secondaryDriver ?? 'Sekundærfaktor'}</span>
+                <span>{info?.secondaryDriver ?? t('species.secondaryDriver')}</span>
                 <span>{Math.round(score.secondary * 100)}%</span>
               </div>
               <div className={styles.barTrack}>
@@ -182,34 +187,34 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
               </div>
 
               <div className={styles.solunarRow}>
-                Solunar-multiplikator: ×{score.solunar.toFixed(2)}
+                {t('species.solunarMultiplier', { value: score.solunar.toFixed(2) })}
               </div>
             </div>
           </section>
 
           {info && (
             <section>
-              <h3 className={styles.sectionTitle}>Beste forhold</h3>
+              <h3 className={styles.sectionTitle}>{t('species.bestConditions')}</h3>
               <div className={styles.conditionRows}>
                 <div className={styles.bestRow}>
                   <ThermoIcon />
-                  <span className={styles.bestLabel}>Temperatur</span>
+                  <span className={styles.bestLabel}>{t('species.temperature')}</span>
                   <span>{info.tempLabel}</span>
                 </div>
                 <div className={styles.bestRow}>
                   <PressureIcon />
-                  <span className={styles.bestLabel}>Trykk</span>
+                  <span className={styles.bestLabel}>{t('species.pressure')}</span>
                   <span>{info.bestPressure}</span>
                 </div>
                 <div className={styles.bestRow}>
                   <LightIcon />
-                  <span className={styles.bestLabel}>Lys</span>
+                  <span className={styles.bestLabel}>{t('species.light')}</span>
                   <span>{info.bestLight}</span>
                 </div>
                 {info.bestTide !== '—' && (
                   <div className={styles.bestRow}>
                     <TideIcon />
-                    <span className={styles.bestLabel}>Tidevann</span>
+                    <span className={styles.bestLabel}>{t('species.tide')}</span>
                     <span>{info.bestTide}</span>
                   </div>
                 )}
@@ -223,10 +228,10 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {info && (info.agn.length > 0 || info.sluk.length > 0) && (
             <section>
-              <h3 className={styles.sectionTitle}>Agn &amp; sluk</h3>
+              <h3 className={styles.sectionTitle}>{t('species.baitAndLures')}</h3>
               {info.agn.length > 0 && (
                 <div className={styles.chipGroup}>
-                  <span className={styles.chipGroupLabel}>Naturlig agn</span>
+                  <span className={styles.chipGroupLabel}>{t('species.naturalBait')}</span>
                   <div className={styles.chips}>
                     {info.agn.map((a) => <span key={a} className={styles.chip}>{a}</span>)}
                   </div>
@@ -234,7 +239,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
               )}
               {info.sluk.length > 0 && (
                 <div className={styles.chipGroup}>
-                  <span className={styles.chipGroupLabel}>Sluk &amp; lokkemidler</span>
+                  <span className={styles.chipGroupLabel}>{t('species.lures')}</span>
                   <div className={styles.chips}>
                     {info.sluk.map((s) => <span key={s} className={`${styles.chip} ${styles.chipSluk}`}>{s}</span>)}
                   </div>
@@ -264,7 +269,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {info && (
             <section>
-              <h3 className={styles.sectionTitle}>Fangsttips</h3>
+              <h3 className={styles.sectionTitle}>{t('species.catchTips')}</h3>
               <div className={styles.catchTipsRow}>
                 <svg className={styles.catchTipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 11 C3 9 5 8 7 9 C9 10 11 9 12 7" />
@@ -272,7 +277,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                   <circle cx="2" cy="11" r="1" fill="currentColor" stroke="none" />
                 </svg>
                 <div>
-                  <span className={styles.catchTipsLabel}>Fra land</span>
+                  <span className={styles.catchTipsLabel}>{t('species.fromShore')}</span>
                   <p className={styles.catchTipsText}>{info.fraLandTips}</p>
                 </div>
               </div>
@@ -283,7 +288,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                   <path d="M7 4 V2" />
                 </svg>
                 <div>
-                  <span className={styles.catchTipsLabel}>Fra båt</span>
+                  <span className={styles.catchTipsLabel}>{t('species.fromBoat')}</span>
                   <p className={styles.catchTipsText}>{info.fraBåtTips}</p>
                 </div>
               </div>
@@ -292,14 +297,14 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {info && (
             <section>
-              <h3 className={styles.sectionTitle}>Om arten</h3>
+              <h3 className={styles.sectionTitle}>{t('species.about')}</h3>
               <p className={styles.description}>{info.description}</p>
             </section>
           )}
 
           {relevant.length > 0 && (
             <section>
-              <h3 className={styles.sectionTitle}>Mine fangster ({relevant.length})</h3>
+              <h3 className={styles.sectionTitle}>{t('species.myCatches', { count: relevant.length })}</h3>
               <div className={styles.catchList}>
                 {relevant.slice(0, 10).map((c) => (
                   <div key={c.catch_id} className={styles.catchRow}>
@@ -311,7 +316,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                         {c.species.length_cm != null ? `${c.species.length_cm} cm` : ''}
                       </div>
                     </div>
-                    <div className={styles.catchDate}>{formatDate(c.created_at)}</div>
+                    <div className={styles.catchDate}>{formatDate(c.created_at, dateLocale)}</div>
                   </div>
                 ))}
               </div>
@@ -319,7 +324,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
           )}
 
           <button className={styles.logBtn} onClick={onNavigateToLog}>
-            Logg fangst av {score.name}
+            {t('log.logSpecies', { name: score.name })}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { getUserCatches } from '../lib/db';
@@ -9,6 +10,8 @@ import styles from './Historikk.module.css';
 interface Props { user: User; }
 
 export function Historikk({ user }: Props) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language.startsWith('nb') ? 'no-NO' : 'en-US';
   const rawCatches = useUserCatches(user.uid);
   const [catches, setCatches] = useState<CatchRecord[]>([]);
   const [undoItem, setUndoItem] = useState<{ id: string; name: string; timer: ReturnType<typeof setTimeout> } | null>(null);
@@ -70,8 +73,8 @@ export function Historikk({ user }: Props) {
           <line x1="9" y1="12" x2="15" y2="12" />
           <line x1="9" y1="16" x2="13" y2="16" />
         </svg>
-        <p>Ingen fangster ennå</p>
-        <span>Trykk på Logg-fanen for å registrere din første fangst</span>
+        <p>{t('history.empty')}</p>
+        <span>{t('history.emptyHint')}</span>
       </div>
     );
   }
@@ -80,8 +83,8 @@ export function Historikk({ user }: Props) {
     <>
       <div className={styles.page}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Historikk</h2>
-          <span className={styles.count}>{catches.length} fangster</span>
+          <h2 className={styles.title}>{t('history.title')}</h2>
+          <span className={styles.count}>{t('history.count', { count: catches.length })}</span>
         </div>
 
         <ul className={styles.list}>
@@ -89,6 +92,7 @@ export function Historikk({ user }: Props) {
             <CatchRow
               key={c.catch_id}
               record={c}
+              dateLocale={dateLocale}
               onDelete={() => handleDelete(c)}
               onEdit={() => setEditTarget(c)}
             />
@@ -98,9 +102,9 @@ export function Historikk({ user }: Props) {
 
       {undoItem && (
         <div className={styles.undoToast}>
-          <span>{undoItem.name} slettet</span>
+          <span>{t('history.deleted', { name: undoItem.name })}</span>
           <button className={styles.undoBtn} onClick={handleUndo}>
-            Angre
+            {t('history.undo')}
           </button>
         </div>
       )}
@@ -123,11 +127,14 @@ function CatchRow({
   record,
   onDelete,
   onEdit,
+  dateLocale,
 }: {
   record: CatchRecord;
   onDelete: () => void;
   onEdit: () => void;
+  dateLocale: string;
 }) {
+  const { t } = useTranslation();
   const [offset, setOffset] = useState(0);
   const startX = useRef(0);
   const dragging = useRef(false);
@@ -154,8 +161,8 @@ function CatchRow({
   }
 
   const date = new Date(record.created_at);
-  const dateStr = date.toLocaleDateString('no-NO', { day: '2-digit', month: 'short', year: 'numeric' });
-  const timeStr = date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = date.toLocaleDateString(dateLocale, { day: '2-digit', month: 'short', year: 'numeric' });
+  const timeStr = date.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' });
 
   const hasGps = record.location.accuracy_m !== -1;
   const syncColor =
@@ -187,7 +194,7 @@ function CatchRow({
             {[
               record.species.weight_kg != null && `${record.species.weight_kg} kg`,
               record.species.length_cm != null && `${record.species.length_cm} cm`,
-            ].filter(Boolean).join(' · ') || 'Ingen mål'}
+            ].filter(Boolean).join(' · ') || t('history.noMeasurements')}
           </span>
           <span className={styles.datetime}>{dateStr} {timeStr}</span>
         </div>
@@ -222,6 +229,7 @@ function EditModal({
   onDelete: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [name,   setName]   = useState(record.species.name);
   const [weight, setWeight] = useState(record.species.weight_kg?.toString() ?? '');
   const [length, setLength] = useState(record.species.length_cm?.toString() ?? '');
@@ -238,10 +246,10 @@ function EditModal({
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHandle} />
-        <h3 className={styles.modalTitle}>Rediger fangst</h3>
+        <h3 className={styles.modalTitle}>{t('editModal.title')}</h3>
 
         <label className={styles.modalField}>
-          <span>Art</span>
+          <span>{t('editModal.species')}</span>
           <input
             className={styles.modalInput}
             value={name}
@@ -250,7 +258,7 @@ function EditModal({
         </label>
 
         <label className={styles.modalField}>
-          <span>Vekt (kg)</span>
+          <span>{t('editModal.weight')}</span>
           <input
             className={styles.modalInput}
             type="number"
@@ -263,7 +271,7 @@ function EditModal({
         </label>
 
         <label className={styles.modalField}>
-          <span>Lengde (cm)</span>
+          <span>{t('editModal.length')}</span>
           <input
             className={styles.modalInput}
             type="number"
@@ -276,14 +284,14 @@ function EditModal({
         </label>
 
         <p className={styles.modalLocked}>
-          GPS og tidspunkt kan ikke endres
+          {t('editModal.lockedFields')}
         </p>
 
         <div className={styles.modalActions}>
-          <button className={styles.modalDelete} onClick={onDelete}>Slett fangst</button>
+          <button className={styles.modalDelete} onClick={onDelete}>{t('editModal.delete')}</button>
           <div className={styles.modalActionsRight}>
-            <button className={styles.modalCancel} onClick={onClose}>Avbryt</button>
-            <button className={styles.modalSave}   onClick={handleSave}>Lagre</button>
+            <button className={styles.modalCancel} onClick={onClose}>{t('editModal.cancel')}</button>
+            <button className={styles.modalSave}   onClick={handleSave}>{t('editModal.save')}</button>
           </div>
         </div>
       </div>

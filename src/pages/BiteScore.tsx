@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { computeAllScores, type EnvInputs, type SpeciesScore, type SolunarInfo } from '../lib/biteScore';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -13,28 +14,9 @@ import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
 import styles from './BiteScore.module.css';
 
-const PRESSURE_OPTIONS: { value: PressureTrend; label: string }[] = [
-  { value: 'falling_rapidly', label: 'Faller raskt' },
-  { value: 'falling',         label: 'Faller' },
-  { value: 'stable',          label: 'Stabilt' },
-  { value: 'rising',          label: 'Stiger' },
-  { value: 'rising_rapidly',  label: 'Stiger raskt' },
-];
-
-const TIDE_OPTIONS: { value: TidePhase; label: string }[] = [
-  { value: 'rising',  label: 'Stigende' },
-  { value: 'high',    label: 'Høyvann' },
-  { value: 'falling', label: 'Fallende' },
-  { value: 'low',     label: 'Lavvann' },
-  { value: 'slack',   label: 'Strømstopp' },
-];
-
-const CURRENT_OPTIONS: { value: CurrentStrength; label: string }[] = [
-  { value: 'stille',   label: 'Stille' },
-  { value: 'moderat',  label: 'Moderat' },
-  { value: 'sterk',    label: 'Sterk' },
-  { value: 'sterkest', label: 'Sterkest' },
-];
+const PRESSURE_VALUES: PressureTrend[] = ['falling_rapidly', 'falling', 'stable', 'rising', 'rising_rapidly'];
+const TIDE_VALUES: TidePhase[] = ['rising', 'high', 'falling', 'low', 'slack'];
+const CURRENT_VALUES: CurrentStrength[] = ['stille', 'moderat', 'sterk', 'sterkest'];
 
 interface Props {
   user: User;
@@ -42,6 +24,7 @@ interface Props {
 }
 
 export function BiteScore({ user, navigate }: Props) {
+  const { t } = useTranslation();
   const { position } = useGeolocation();
   const userCatches = useUserCatches(user.uid);
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesScore | null>(null);
@@ -136,24 +119,24 @@ export function BiteScore({ user, navigate }: Props) {
       />
 
       <section className={styles.inputs}>
-        <h3 className={styles.sectionTitle}>Miljøforhold</h3>
+        <h3 className={styles.sectionTitle}>{t('conditions.title')}</h3>
 
         <div className={styles.inputGrid}>
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>Lufttrykk</span>
+            <span className={styles.fieldLabel}>{t('conditions.pressure')}</span>
             <select
               className={styles.select}
               value={pressure}
               onChange={(e) => setPressure(e.target.value as PressureTrend)}
             >
-              {PRESSURE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+              {PRESSURE_VALUES.map((v) => (
+                <option key={v} value={v}>{t(`pressure.${v}`)}</option>
               ))}
             </select>
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>{waterFilter === 'fresh' ? 'Vanntemperatur (°C)' : 'Sjøtemperatur (°C)'}</span>
+            <span className={styles.fieldLabel}>{waterFilter === 'fresh' ? t('conditions.freshTemp') : t('conditions.seaTemp')}</span>
             <input
               className={styles.input}
               type="number"
@@ -169,11 +152,11 @@ export function BiteScore({ user, navigate }: Props) {
           {waterFilter === 'salt' && (
             <label className={styles.field}>
               <span className={styles.fieldLabel}>
-                Tidevann
+                {t('conditions.tide')}
                 {tideLoading
-                  ? <span className={styles.autoTag}>henter…</span>
+                  ? <span className={styles.autoTag}>{t('conditions.fetching')}</span>
                   : autoTide
-                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
+                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>{t('conditions.auto')}</span>
                     : null}
               </span>
               <select
@@ -181,8 +164,8 @@ export function BiteScore({ user, navigate }: Props) {
                 value={tide}
                 onChange={(e) => setTide(e.target.value as TidePhase)}
               >
-                {TIDE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                {TIDE_VALUES.map((v) => (
+                  <option key={v} value={v}>{t(`tide.${v}`)}</option>
                 ))}
               </select>
             </label>
@@ -191,11 +174,11 @@ export function BiteScore({ user, navigate }: Props) {
           {waterFilter === 'salt' && (
             <label className={styles.field}>
               <span className={styles.fieldLabel}>
-                Strøm
+                {t('conditions.current')}
                 {tideLoading
-                  ? <span className={styles.autoTag}>henter…</span>
+                  ? <span className={styles.autoTag}>{t('conditions.fetching')}</span>
                   : autoCurrentStrength
-                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>auto</span>
+                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>{t('conditions.auto')}</span>
                     : null}
               </span>
               <select
@@ -203,8 +186,8 @@ export function BiteScore({ user, navigate }: Props) {
                 value={currentStrength}
                 onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
               >
-                {CURRENT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                {CURRENT_VALUES.map((v) => (
+                  <option key={v} value={v}>{t(`current.${v}`)}</option>
                 ))}
               </select>
             </label>
@@ -214,19 +197,19 @@ export function BiteScore({ user, navigate }: Props) {
 
       <section className={styles.results}>
         <div className={styles.resultsHeader}>
-          <h3 className={styles.sectionTitle}>Prediksjoner</h3>
+          <h3 className={styles.sectionTitle}>{t('predictions.title')}</h3>
           <div className={styles.waterToggle}>
             <button
               className={`${styles.waterBtn} ${waterFilter === 'salt' ? styles.waterActive : ''}`}
               onClick={() => setWaterFilter('salt')}
             >
-              Saltvann
+              {t('predictions.saltwater')}
             </button>
             <button
               className={`${styles.waterBtn} ${waterFilter === 'fresh' ? styles.waterActive : ''}`}
               onClick={() => setWaterFilter('fresh')}
             >
-              Ferskvann
+              {t('predictions.freshwater')}
             </button>
           </div>
         </div>
@@ -245,10 +228,13 @@ export function BiteScore({ user, navigate }: Props) {
 // ─── Solunar card ────────────────────────────────────────────────────────────
 
 function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
+  const { t } = useTranslation();
   const periodLabel =
-    solunar.type === 'major' ? 'Stor periode aktiv' :
-    solunar.type === 'minor' ? 'Liten periode aktiv' :
-    `Neste: ${solunar.nextType === 'major' ? 'stor' : 'liten'} om ${solunar.minutesUntilNext} min`;
+    solunar.type === 'major' ? t('solunar.majorActive') :
+    solunar.type === 'minor' ? t('solunar.minorActive') :
+    solunar.nextType === 'major'
+      ? t('solunar.nextMajor', { minutes: solunar.minutesUntilNext })
+      : t('solunar.nextMinor', { minutes: solunar.minutesUntilNext });
 
   const moonPct = Math.round(
     solunar.moonPhase <= 0.5
@@ -262,14 +248,14 @@ function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
         <MoonIcon phase={solunar.moonPhase} />
         <div>
           <div className={styles.solunarPhaseName}>{solunar.moonPhaseName}</div>
-          <div className={styles.solunarPct}>{moonPct}% belyst</div>
+          <div className={styles.solunarPct}>{t('solunar.illuminated', { pct: moonPct })}</div>
         </div>
       </div>
 
       <div className={styles.solunarRight}>
         <div className={styles.solunarPeriod}>{periodLabel}</div>
         <div className={styles.solunarMult}>
-          ×{solunar.multiplier.toFixed(2)} bite-multiplikator
+          {t('solunar.multiplier', { value: solunar.multiplier.toFixed(2) })}
         </div>
         <LightLabel lux={solunar.lightLux} />
       </div>
@@ -278,20 +264,22 @@ function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
 }
 
 function LightLabel({ lux }: { lux: number }) {
-  let label = '';
-  if (lux === 0)          label = 'Natt';
-  else if (lux < 100)     label = 'Astronomisk tusmørke';
-  else if (lux < 1000)    label = 'Nautisk tusmørke';
-  else if (lux < 10_000)  label = 'Borgerlig tusmørke';
-  else if (lux < 30_000)  label = 'Soloppgang / -nedgang';
-  else if (lux < 80_000)  label = 'Dagslys';
-  else                     label = 'Fullt dagslys';
-  return <div className={styles.solunarLight}>{label}</div>;
+  const { t } = useTranslation();
+  let key = '';
+  if (lux === 0)          key = 'light.night';
+  else if (lux < 100)     key = 'light.astronomical';
+  else if (lux < 1000)    key = 'light.nautical';
+  else if (lux < 10_000)  key = 'light.civil';
+  else if (lux < 30_000)  key = 'light.sunrise';
+  else if (lux < 80_000)  key = 'light.daylight';
+  else                     key = 'light.fullDaylight';
+  return <div className={styles.solunarLight}>{t(key)}</div>;
 }
 
 // ─── Species score card ───────────────────────────────────────────────────────
 
 function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: number; onClick: () => void }) {
+  const { t } = useTranslation();
   const pct   = Math.round(score.score * 100);
   const color = score.outOfSeason ? 'var(--color-warning)' : scoreColor(score.score);
 
@@ -303,11 +291,11 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
           <span className={styles.speciesName}>
             {score.name}
             {score.method && (
-              <span className={styles.methodTag}>{score.method === 'land' ? 'fra land' : 'fra båt'}</span>
+              <span className={styles.methodTag}>{score.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}</span>
             )}
           </span>
           <span className={styles.speciesLabel} style={{ color }}>
-            {score.outOfSeason ? 'Ikke i sesong' : score.label}
+            {score.outOfSeason ? t('predictions.outOfSeason') : score.label}
           </span>
           <span className={styles.speciesPct} style={{ color }}>
             {pct}%

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import styles from './LoginPage.module.css';
 
 interface LoginPageProps {
@@ -7,6 +8,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onSignIn, error, loading }: LoginPageProps) {
+  const { t } = useTranslation();
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -26,7 +28,7 @@ export function LoginPage({ onSignIn, error, loading }: LoginPageProps) {
         </div>
 
         <h1 className={styles.title}>BiteCheck</h1>
-        <p className={styles.subtitle}>Sportsfiske med databaserte prediksjoner</p>
+        <p className={styles.subtitle}>{t('auth.subtitle')}</p>
 
         {error && <p className={styles.error}>{error}</p>}
 
@@ -34,15 +36,13 @@ export function LoginPage({ onSignIn, error, loading }: LoginPageProps) {
           className={styles.googleBtn}
           onClick={onSignIn}
           disabled={loading}
-          aria-label="Logg inn med Google"
+          aria-label={t('auth.signIn')}
         >
           <GoogleIcon />
-          <span>{loading ? 'Logger inn…' : 'Logg inn med Google'}</span>
+          <span>{loading ? t('auth.signingIn') : t('auth.signIn')}</span>
         </button>
 
-        <p className={styles.legal}>
-          Ved å logge inn godtar du at GPS-posisjon og fangstdata lagres i henhold til GDPR.
-        </p>
+        <p className={styles.legal}>{t('auth.gdpr')}</p>
       </div>
     </div>
   );

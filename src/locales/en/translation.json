@@ -1,0 +1,161 @@
+{
+  "nav": {
+    "log": "Log",
+    "map": "Map",
+    "biteScore": "Bite Score",
+    "history": "History",
+    "ariaLabel": "Main navigation"
+  },
+  "conditions": {
+    "title": "Conditions",
+    "pressure": "Air pressure",
+    "seaTemp": "Sea temperature (°C)",
+    "freshTemp": "Water temperature (°C)",
+    "tide": "Tide",
+    "current": "Current",
+    "fetching": "fetching…",
+    "auto": "auto"
+  },
+  "pressure": {
+    "falling_rapidly": "Falling fast",
+    "falling": "Falling",
+    "stable": "Stable",
+    "rising": "Rising",
+    "rising_rapidly": "Rising fast"
+  },
+  "tide": {
+    "rising": "Rising",
+    "high": "High tide",
+    "falling": "Falling",
+    "low": "Low tide",
+    "slack": "Slack water"
+  },
+  "current": {
+    "stille": "Calm",
+    "moderat": "Moderate",
+    "sterk": "Strong",
+    "sterkest": "Strongest"
+  },
+  "predictions": {
+    "title": "Predictions",
+    "saltwater": "Saltwater",
+    "freshwater": "Freshwater",
+    "fromShore": "from shore",
+    "fromBoat": "from boat",
+    "outOfSeason": "Out of season"
+  },
+  "solunar": {
+    "majorActive": "Major period active",
+    "minorActive": "Minor period active",
+    "nextMajor": "Next: major in {{minutes}} min",
+    "nextMinor": "Next: minor in {{minutes}} min",
+    "illuminated": "{{pct}}% illuminated",
+    "multiplier": "×{{value}} bite multiplier"
+  },
+  "light": {
+    "night": "Night",
+    "astronomical": "Astronomical twilight",
+    "nautical": "Nautical twilight",
+    "civil": "Civil twilight",
+    "sunrise": "Sunrise / Sunset",
+    "daylight": "Daylight",
+    "fullDaylight": "Full daylight"
+  },
+  "history": {
+    "title": "History",
+    "count": "{{count}} catches",
+    "empty": "No catches yet",
+    "emptyHint": "Tap the Log tab to record your first catch",
+    "noMeasurements": "No measurements",
+    "deleted": "{{name}} deleted",
+    "undo": "Undo"
+  },
+  "editModal": {
+    "title": "Edit catch",
+    "species": "Species",
+    "weight": "Weight (kg)",
+    "length": "Length (cm)",
+    "lockedFields": "GPS and timestamp cannot be changed",
+    "delete": "Delete catch",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "map": {
+    "depthLabel": "Depth",
+    "depthTitle": "Depth contours (Geonorge)",
+    "bottomLabel": "Bottom",
+    "bottomTitle": "Bottom sediments (NGU)",
+    "seamarksLabel": "Seamarks",
+    "seamarksTitle": "Seamarks (OpenSeaMap)",
+    "protectedLabel": "Protected",
+    "protectedTitle": "Protected areas (Environment Agency)",
+    "spawningLabel": "Spawning",
+    "spawningTitle": "Spawning areas (Directorate of Fisheries)",
+    "zoomForBottom": "Zoom in to see bottom data",
+    "goToPosition": "Go to my position",
+    "mine": "Mine",
+    "others": "Others"
+  },
+  "log": {
+    "whichSpecies": "Which species?",
+    "searchPlaceholder": "Search for species…",
+    "addCustom": "+ Add \"{{name}}\"",
+    "back": "Back",
+    "change": "Change",
+    "weight": "Weight (kg)",
+    "length": "Length (cm)",
+    "save": "Save catch",
+    "saving": "Saving…",
+    "logNew": "Log new catch",
+    "saved": "Catch saved!",
+    "gpsRecorded": "GPS recorded",
+    "noGps": "No GPS position",
+    "logSpecies": "Log catch of {{name}}"
+  },
+  "gps": {
+    "acquiring": "Getting position…",
+    "ok": "GPS ±{{accuracy}} m",
+    "okReady": "GPS ready",
+    "denied": "Location denied",
+    "unavailable": "GPS unavailable"
+  },
+  "auth": {
+    "subtitle": "Data-driven sport fishing predictions",
+    "signIn": "Sign in with Google",
+    "signingIn": "Signing in…",
+    "gdpr": "By signing in, you agree to GPS location and catch data being stored in accordance with GDPR."
+  },
+  "location": {
+    "myPosition": "My position (GPS)",
+    "searchPlaceholder": "Search location…",
+    "searching": "Searching…",
+    "useGps": "Use my GPS position",
+    "useCurrentTime": "Use current time"
+  },
+  "species": {
+    "scoreNow": "Score now",
+    "total": "Total",
+    "primaryDriver": "Primary driver",
+    "secondaryDriver": "Secondary driver",
+    "solunarMultiplier": "Solunar multiplier: ×{{value}}",
+    "bestConditions": "Best conditions",
+    "temperature": "Temperature",
+    "pressure": "Pressure",
+    "light": "Light",
+    "tide": "Tide",
+    "baitAndLures": "Bait & lures",
+    "naturalBait": "Natural bait",
+    "lures": "Lures & attractors",
+    "catchTips": "Fishing tips",
+    "fromShore": "From shore",
+    "fromBoat": "From boat",
+    "about": "About this species",
+    "myCatches": "My catches ({{count}})",
+    "saltwater": "Saltwater",
+    "freshwater": "Freshwater"
+  },
+  "update": {
+    "available": "New version available",
+    "update": "Update"
+  }
+}

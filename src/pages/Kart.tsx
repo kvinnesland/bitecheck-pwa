@@ -1,6 +1,7 @@
 import maplibregl, { type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { usePublicCatches } from '../hooks/usePublicCatches';
@@ -38,6 +39,7 @@ const GYTE_WMS =
 interface Props { user: User; }
 
 export function Kart({ user }: Props) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -313,71 +315,71 @@ export function Kart({ user }: Props) {
         <button
           className={`${styles.layerBtn} ${depthOn ? styles.layerActive : ''}`}
           onClick={toggleDepth}
-          title="Dybdekonturer (Geonorge)"
+          title={t('map.depthTitle')}
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 17c3-4 5-4 9 0s6 4 9 0" />
             <path d="M3 12c3-4 5-4 9 0s6 4 9 0" />
             <path d="M3 7c3-4 5-4 9 0s6 4 9 0" />
           </svg>
-          Dybde
+          {t('map.depthLabel')}
         </button>
         <button
           className={`${styles.layerBtn} ${sedimentOn ? styles.layerActive : ''}`}
           onClick={toggleSediment}
-          title="Bunnsedimenter (NGU)"
+          title={t('map.bottomTitle')}
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="14" width="18" height="7" rx="1" />
             <path d="M3 14c2-3 4-5 9-5s7 2 9 5" />
           </svg>
-          Bunn
+          {t('map.bottomLabel')}
         </button>
         <button
           className={`${styles.layerBtn} ${seaMarksOn ? styles.layerActive : ''}`}
           onClick={toggleSeaMarks}
-          title="Sjømerker (OpenSeaMap)"
+          title={t('map.seamarksTitle')}
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2v14M5 20h14M8 14l4-4 4 4" />
             <circle cx="12" cy="20" r="2" />
           </svg>
-          Sjømerker
+          {t('map.seamarksLabel')}
         </button>
         <button
           className={`${styles.layerBtn} ${vernOn ? styles.layerActive : ''}`}
           onClick={toggleVern}
-          title="Verneområder (Miljødirektoratet)"
+          title={t('map.protectedTitle')}
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3L4 7v6c0 5 4 8.5 8 10 4-1.5 8-5 8-10V7l-8-4z" />
           </svg>
-          Vern
+          {t('map.protectedLabel')}
         </button>
         <button
           className={`${styles.layerBtn} ${gyteOn ? styles.layerActive : ''}`}
           onClick={toggleGyte}
-          title="Gyteområder (Fiskeridirektoratet)"
+          title={t('map.spawningTitle')}
         >
           <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 12c2-5 6-7 10-7s8 2 10 7c-2 5-6 7-10 7S4 17 2 12z" />
             <circle cx="16" cy="10" r="1.5" fill="currentColor" stroke="none" />
             <path d="M20 8c1-2 2.5-3 3.5-3" />
           </svg>
-          Gyting
+          {t('map.spawningLabel')}
         </button>
       </div>
 
       {sedimentOn && zoom < SEDIMENT_MIN_ZOOM && (
         <div className={styles.zoomHint}>
-          Zoom inn for å se bunndata
+          {t('map.zoomForBottom')}
         </div>
       )}
 
       <button
         className={`${styles.locateBtn} ${position ? '' : styles.locateDisabled}`}
         onClick={locateMe}
-        aria-label="Gå til min posisjon"
+        aria-label={t('map.goToPosition')}
       >
         <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
@@ -387,9 +389,9 @@ export function Kart({ user }: Props) {
 
       <div className={styles.legend}>
         <span className={styles.legendOwn} />
-        <span>Mine</span>
+        <span>{t('map.mine')}</span>
         <span className={styles.legendPublic} />
-        <span>Andre</span>
+        <span>{t('map.others')}</span>
       </div>
     </div>
   );

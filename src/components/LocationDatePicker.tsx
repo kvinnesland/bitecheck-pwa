@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import styles from './LocationDatePicker.module.css';
@@ -32,17 +33,17 @@ function toDatetimeLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatDatetime(d: Date): string {
+function formatDatetime(d: Date, locale: string, todayLabel: string): string {
   const now = new Date();
   const isToday =
     d.getDate() === now.getDate() &&
     d.getMonth() === now.getMonth() &&
     d.getFullYear() === now.getFullYear();
 
-  const timeStr = d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
-  if (isToday) return `I dag · ${timeStr}`;
+  const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return `${todayLabel} · ${timeStr}`;
 
-  return d.toLocaleDateString('nb-NO', {
+  return d.toLocaleDateString(locale, {
     weekday: 'short', day: 'numeric', month: 'short',
   }) + ' · ' + timeStr;
 }
@@ -51,6 +52,10 @@ export function LocationDatePicker({
   location, datetime, gpsLat, gpsLng, weatherLoading,
   onLocationChange, onDatetimeChange,
 }: Props) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language.startsWith('nb') ? 'nb-NO' : 'en-US';
+  const todayLabel = i18n.language.startsWith('nb') ? 'I dag' : 'Today';
+
   const [locOpen, setLocOpen]   = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
   const [query, setQuery]       = useState('');
@@ -147,7 +152,7 @@ export function LocationDatePicker({
     mapRef.current?.flyTo({ center: [gpsLng, gpsLat], zoom: 10, duration: 500 });
   }
 
-  const displayName = location?.name ?? 'Min posisjon (GPS)';
+  const displayName = location?.name ?? t('location.myPosition');
   const isCustomLocation = location !== null;
 
   return (
@@ -158,7 +163,7 @@ export function LocationDatePicker({
         <span className={`${styles.rowText} ${!isCustomLocation ? styles.rowMuted : ''}`}>
           {displayName}
         </span>
-        {weatherLoading && <span className={styles.autoTag}>henter…</span>}
+        {weatherLoading && <span className={styles.autoTag}>{t('conditions.fetching')}</span>}
         <ChevronIcon className={`${styles.rowChevron} ${locOpen ? styles.rowChevronOpen : ''}`} />
       </div>
 
@@ -167,13 +172,13 @@ export function LocationDatePicker({
           <SearchIcon className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Søk på sted…"
+            placeholder={t('location.searchPlaceholder')}
             value={query}
             onChange={handleQueryChange}
           />
         </div>
 
-        {searching && <div style={{ padding: '4px 12px', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Søker…</div>}
+        {searching && <div style={{ padding: '4px 12px', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{t('location.searching')}</div>}
 
         {geoResults.length > 0 && (
           <div className={styles.results}>
@@ -190,7 +195,7 @@ export function LocationDatePicker({
         {isCustomLocation && (
           <button className={styles.resetBtn} onClick={resetLocation}>
             <CrosshairIcon className={styles.resetIcon} />
-            Bruk min GPS-posisjon
+            {t('location.useGps')}
           </button>
         )}
       </div>
@@ -198,7 +203,7 @@ export function LocationDatePicker({
       {/* ── Datetime row ── */}
       <div className={styles.row} onClick={() => { setTimeOpen((o) => !o); setLocOpen(false); }}>
         <ClockIcon className={styles.rowIcon} />
-        <span className={styles.rowText}>{formatDatetime(datetime)}</span>
+        <span className={styles.rowText}>{formatDatetime(datetime, dateLocale, todayLabel)}</span>
         <ChevronIcon className={`${styles.rowChevron} ${timeOpen ? styles.rowChevronOpen : ''}`} />
       </div>
 
@@ -219,7 +224,7 @@ export function LocationDatePicker({
             onClick={() => onDatetimeChange(new Date())}
           >
             <CrosshairIcon className={styles.resetIcon} />
-            Bruk nåværende tidspunkt
+            {t('location.useCurrentTime')}
           </button>
         </div>
       </div>

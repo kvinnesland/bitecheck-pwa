@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { SPECIES_WATER } from '../../lib/biteScore';
 import { FishSvg } from './FishSvg';
 import styles from './SpeciesCardHeader.module.css';
@@ -8,7 +9,10 @@ interface Props {
 }
 
 export function SpeciesCardHeader({ name, action }: Props) {
-  const water = SPECIES_WATER.get(name) === 'salt' ? 'Saltvann' : 'Ferskvann';
+  const { t } = useTranslation();
+  const water = SPECIES_WATER.get(name) === 'salt'
+    ? t('species.saltwater')
+    : t('species.freshwater');
   return (
     <>
       <FishSvg name={name} className={styles.fishIllustration} />
