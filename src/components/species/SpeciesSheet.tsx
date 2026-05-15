@@ -6,8 +6,6 @@ import { KNOWN_SPECIES } from '../../lib/speciesInfo';
 import { useUnits } from '../../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../../lib/units';
 import { SpeciesCardHeader } from './SpeciesCardHeader';
-import styles from './SpeciesSheet.module.css';
-
 interface Props {
   score: SpeciesScore;
   datetime: Date;
@@ -17,15 +15,17 @@ interface Props {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 0.75) return '#0066CC';
+  if (score >= 0.75) return 'var(--color-accent)';
   if (score >= 0.5)  return '#22c55e';
   if (score >= 0.25) return '#f59e0b';
   return '#ef4444';
 }
 
+const iconCls = 'w-3.5 h-3.5 shrink-0 text-text-muted';
+
 function CalendarIcon() {
   return (
-    <svg className={styles.bestIcon} viewBox="0 0 14 14">
+    <svg className={iconCls} viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <rect x="1" y="2" width="12" height="11" rx="1" />
       <path d="M1 6h12M4 1v2M10 1v2" />
     </svg>
@@ -34,7 +34,7 @@ function CalendarIcon() {
 
 function ThermoIcon() {
   return (
-    <svg className={styles.bestIcon} viewBox="0 0 14 14">
+    <svg className={iconCls} viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M7 1v7.5M7 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
       <path d="M5 4h1M5 6h1" />
     </svg>
@@ -43,7 +43,7 @@ function ThermoIcon() {
 
 function PressureIcon() {
   return (
-    <svg className={styles.bestIcon} viewBox="0 0 14 14">
+    <svg className={iconCls} viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M7 13V5M4 8l3-3 3 3" />
       <path d="M2 3h10" />
     </svg>
@@ -52,7 +52,7 @@ function PressureIcon() {
 
 function LightIcon() {
   return (
-    <svg className={styles.bestIcon} viewBox="0 0 14 14">
+    <svg className={iconCls} viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="7" cy="7" r="2.5" />
       <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M3 3l1 1M10 10l1 1M10 3l-1 1M3 10l1-1" />
     </svg>
@@ -61,7 +61,7 @@ function LightIcon() {
 
 function TideIcon() {
   return (
-    <svg className={styles.bestIcon} viewBox="0 0 14 14">
+    <svg className={iconCls} viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 9c2-2 3-2 5 0s3 2 5 0M1 6c2-2 3-2 5 0s3 2 5 0" />
     </svg>
   );
@@ -138,21 +138,19 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
   );
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-[1100] flex items-end" onClick={onClose}>
       <div
-        className={styles.sheet}
+        className="bg-surface rounded-t-2xl w-full max-h-[88dvh] flex flex-col overflow-hidden will-change-transform"
         style={{
           transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
           transition: isDragging ? 'none' : 'transform 0.25s ease',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className={styles.handle}
-        />
+        <div className="w-9 h-1 bg-divider rounded-full mx-auto mt-3 mb-1 shrink-0 cursor-grab touch-none" />
 
         <div
-          className={styles.header}
+          className="px-5 pb-3 border-b border-divider shrink-0 cursor-grab touch-pan-x"
           onTouchStart={onHandleTouchStart}
           onTouchMove={onHandleTouchMove}
           onTouchEnd={onHandleTouchEnd}
@@ -160,42 +158,38 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
           <SpeciesCardHeader name={score.name} />
         </div>
 
-        <div className={styles.content}>
+        <div className="flex-1 overflow-y-auto px-5 py-4 pb-8 flex flex-col gap-5">
           <section>
-            <h3 className={styles.sectionTitle}>{scoreTimeLabel(datetime)}</h3>
+            <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted mb-2">
+              {scoreTimeLabel(datetime)}
+            </h3>
 
-            <div className={styles.scoreBlock}>
-              <div className={styles.scoreTotalRow}>
-                <span className={styles.scoreTotalLabel}>{t('species.total')}</span>
-                <span className={styles.scoreTotalPct} style={{ color }}>{pct}%</span>
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[0.85rem] font-semibold text-text">{t('species.total')}</span>
+                <span className="text-base font-bold" style={{ color }}>{pct}%</span>
               </div>
-              <div className={styles.barTrack}>
-                <div className={styles.barFill} style={{ width: `${pct}%`, background: color }} />
+              <div className="h-1.5 bg-divider rounded-[3px] overflow-hidden mb-1">
+                <div className="h-full rounded-[3px] transition-[width] duration-[400ms] ease-in-out" style={{ width: `${pct}%`, background: color }} />
               </div>
 
-              <div className={styles.subScoreRow}>
+              <div className="flex items-center justify-between text-[0.8rem] text-text-muted mb-0.5">
                 <span>{hasInfo ? t(`${k}.primaryDriver`) : t('species.primaryDriver')}</span>
                 <span>{Math.round(score.primary * 100)}%</span>
               </div>
-              <div className={styles.barTrack}>
-                <div
-                  className={styles.barFill}
-                  style={{ width: `${Math.round(score.primary * 100)}%`, background: 'var(--color-text-muted)' }}
-                />
+              <div className="h-1.5 bg-divider rounded-[3px] overflow-hidden mb-1">
+                <div className="h-full rounded-[3px] transition-[width] duration-[400ms] ease-in-out" style={{ width: `${Math.round(score.primary * 100)}%`, background: 'var(--color-text-muted)' }} />
               </div>
 
-              <div className={styles.subScoreRow}>
+              <div className="flex items-center justify-between text-[0.8rem] text-text-muted mb-0.5">
                 <span>{hasInfo ? t(`${k}.secondaryDriver`) : t('species.secondaryDriver')}</span>
                 <span>{Math.round(score.secondary * 100)}%</span>
               </div>
-              <div className={styles.barTrack}>
-                <div
-                  className={styles.barFill}
-                  style={{ width: `${Math.round(score.secondary * 100)}%`, background: 'var(--color-text-muted)' }}
-                />
+              <div className="h-1.5 bg-divider rounded-[3px] overflow-hidden mb-1">
+                <div className="h-full rounded-[3px] transition-[width] duration-[400ms] ease-in-out" style={{ width: `${Math.round(score.secondary * 100)}%`, background: 'var(--color-text-muted)' }} />
               </div>
 
-              <div className={styles.solunarRow}>
+              <div className="text-[0.8rem] text-text-muted pt-1 border-t border-divider">
                 {t('species.solunarMultiplier', { value: score.solunar.toFixed(2) })}
               </div>
             </div>
@@ -203,31 +197,33 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {hasInfo && (
             <section>
-              <h3 className={styles.sectionTitle}>{t('species.bestConditions')}</h3>
-              <div className={styles.conditionRows}>
-                <div className={styles.bestRow}>
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted mb-2">
+                {t('species.bestConditions')}
+              </h3>
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2.5 text-sm text-text">
                   <ThermoIcon />
-                  <span className={styles.bestLabel}>{t('species.temperature')}</span>
+                  <span className="text-text-muted text-[0.8rem] min-w-[80px]">{t('species.temperature')}</span>
                   <span>{t(`${k}.tempLabel`)}</span>
                 </div>
-                <div className={styles.bestRow}>
+                <div className="flex items-center gap-2.5 text-sm text-text">
                   <PressureIcon />
-                  <span className={styles.bestLabel}>{t('species.pressure')}</span>
+                  <span className="text-text-muted text-[0.8rem] min-w-[80px]">{t('species.pressure')}</span>
                   <span>{t(`${k}.bestPressure`)}</span>
                 </div>
-                <div className={styles.bestRow}>
+                <div className="flex items-center gap-2.5 text-sm text-text">
                   <LightIcon />
-                  <span className={styles.bestLabel}>{t('species.light')}</span>
+                  <span className="text-text-muted text-[0.8rem] min-w-[80px]">{t('species.light')}</span>
                   <span>{t(`${k}.bestLight`)}</span>
                 </div>
                 {bestTide !== '—' && (
-                  <div className={styles.bestRow}>
+                  <div className="flex items-center gap-2.5 text-sm text-text">
                     <TideIcon />
-                    <span className={styles.bestLabel}>{t('species.tide')}</span>
+                    <span className="text-text-muted text-[0.8rem] min-w-[80px]">{t('species.tide')}</span>
                     <span>{bestTide}</span>
                   </div>
                 )}
-                <div className={styles.seasonRow}>
+                <div className="flex items-start gap-2.5 text-[0.82rem] text-text-muted leading-relaxed mt-1">
                   <CalendarIcon />
                   <span>{t(`${k}.season`)}</span>
                 </div>
@@ -237,40 +233,54 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {hasInfo && (agn.length > 0 || sluk.length > 0) && (
             <section>
-              <h3 className={styles.sectionTitle}>{t('species.baitAndLures')}</h3>
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted mb-2">
+                {t('species.baitAndLures')}
+              </h3>
               {agn.length > 0 && (
-                <div className={styles.chipGroup}>
-                  <span className={styles.chipGroupLabel}>{t('species.naturalBait')}</span>
-                  <div className={styles.chips}>
-                    {agn.map((a) => <span key={a} className={styles.chip}>{a}</span>)}
+                <div className="flex flex-col gap-1.5 mb-3">
+                  <span className="text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
+                    {t('species.naturalBait')}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {agn.map((a) => (
+                      <span key={a} className="text-[0.78rem] font-medium px-2.5 py-1 rounded-full border border-divider text-text bg-bg whitespace-nowrap">
+                        {a}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
               {sluk.length > 0 && (
-                <div className={styles.chipGroup}>
-                  <span className={styles.chipGroupLabel}>{t('species.lures')}</span>
-                  <div className={styles.chips}>
-                    {sluk.map((s) => <span key={s} className={`${styles.chip} ${styles.chipSluk}`}>{s}</span>)}
+                <div className="flex flex-col gap-1.5 mb-3">
+                  <span className="text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
+                    {t('species.lures')}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sluk.map((s) => (
+                      <span key={s} className="text-[0.78rem] font-medium px-2.5 py-1 rounded-full border border-accent text-accent bg-accent/[0.06] whitespace-nowrap">
+                        {s}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
-              <div className={styles.tipsRow}>
-                <svg className={styles.tipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <div className="flex items-start gap-2 text-[0.82rem] text-text leading-relaxed mt-1 mb-2">
+                <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-text-muted" viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="7" cy="7" r="6" />
                   <path d="M7 5v4M7 3.5v.5" />
                 </svg>
                 <span>{t(`${k}.teknikktips`)}</span>
               </div>
               {fargetips && (
-                <div className={styles.tipsRow}>
-                  <svg className={styles.tipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="flex items-start gap-2 text-[0.82rem] text-text leading-relaxed mt-1 mb-2">
+                  <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-text-muted" viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="7" cy="7" r="5" />
                     <path d="M7 2a5 5 0 0 1 0 10" fill="currentColor" fillOpacity="0.2" stroke="none" />
                     <circle cx="4.5" cy="5" r="1" fill="currentColor" stroke="none" />
                     <circle cx="9.5" cy="5" r="1" fill="currentColor" stroke="none" />
                     <circle cx="7" cy="10" r="1" fill="currentColor" stroke="none" />
                   </svg>
-                  <span className={styles.fargetips}>{fargetips}</span>
+                  <span className="text-text-muted italic">{fargetips}</span>
                 </div>
               )}
             </section>
@@ -278,27 +288,33 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {hasInfo && (
             <section>
-              <h3 className={styles.sectionTitle}>{t('species.catchTips')}</h3>
-              <div className={styles.catchTipsRow}>
-                <svg className={styles.catchTipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted mb-2">
+                {t('species.catchTips')}
+              </h3>
+              <div className="flex items-start gap-2.5 mt-2 px-3 py-2.5 bg-bg rounded-[var(--radius-sm)] border-l-[3px] border-l-accent">
+                <svg className="w-[18px] h-[18px] shrink-0 mt-px text-accent" viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 11 C3 9 5 8 7 9 C9 10 11 9 12 7" />
                   <path d="M12 7 L12 5 L10 7" />
                   <circle cx="2" cy="11" r="1" fill="currentColor" stroke="none" />
                 </svg>
                 <div>
-                  <span className={styles.catchTipsLabel}>{t('species.fromShore')}</span>
-                  <p className={styles.catchTipsText}>{t(`${k}.fraLandTips`)}</p>
+                  <span className="block text-[0.68rem] font-bold uppercase tracking-[0.07em] text-text-muted mb-0.5">
+                    {t('species.fromShore')}
+                  </span>
+                  <p className="text-[0.82rem] text-text leading-[1.55]">{t(`${k}.fraLandTips`)}</p>
                 </div>
               </div>
-              <div className={styles.catchTipsRow}>
-                <svg className={styles.catchTipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <div className="flex items-start gap-2.5 mt-2 px-3 py-2.5 bg-bg rounded-[var(--radius-sm)] border-l-[3px] border-l-divider">
+                <svg className="w-[18px] h-[18px] shrink-0 mt-px text-text-muted" viewBox="0 0 14 14" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 9 h10 l-1.5 3 H3.5 Z" />
                   <path d="M4 9 V6 Q7 4 10 6 V9" />
                   <path d="M7 4 V2" />
                 </svg>
                 <div>
-                  <span className={styles.catchTipsLabel}>{t('species.fromBoat')}</span>
-                  <p className={styles.catchTipsText}>{t(`${k}.fraBåtTips`)}</p>
+                  <span className="block text-[0.68rem] font-bold uppercase tracking-[0.07em] text-text-muted mb-0.5">
+                    {t('species.fromBoat')}
+                  </span>
+                  <p className="text-[0.82rem] text-text leading-[1.55]">{t(`${k}.fraBåtTips`)}</p>
                 </div>
               </div>
             </section>
@@ -306,33 +322,40 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
 
           {hasInfo && (
             <section>
-              <h3 className={styles.sectionTitle}>{t('species.about')}</h3>
-              <p className={styles.description}>{t(`${k}.description`)}</p>
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted mb-2">
+                {t('species.about')}
+              </h3>
+              <p className="text-[0.9rem] leading-relaxed text-text">{t(`${k}.description`)}</p>
             </section>
           )}
 
           {relevant.length > 0 && (
             <section>
-              <h3 className={styles.sectionTitle}>{t('species.myCatches', { count: relevant.length })}</h3>
-              <div className={styles.catchList}>
+              <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted mb-2">
+                {t('species.myCatches', { count: relevant.length })}
+              </h3>
+              <div className="flex flex-col">
                 {relevant.slice(0, 10).map((c) => (
-                  <div key={c.catch_id} className={styles.catchRow}>
+                  <div key={c.catch_id} className="flex justify-between py-2 border-b border-divider text-[0.85rem]">
                     <div>
-                      <div className={styles.catchSpecies}>{c.species.name}</div>
-                      <div className={styles.catchMeta}>
+                      <div className="font-semibold text-text">{c.species.name}</div>
+                      <div className="text-text-muted text-[0.8rem]">
                         {c.species.weight_kg != null ? formatWeight(c.species.weight_kg, prefs.weight) : ''}
                         {c.species.weight_kg != null && c.species.length_cm != null ? ' · ' : ''}
                         {c.species.length_cm != null ? formatLength(c.species.length_cm, prefs.length) : ''}
                       </div>
                     </div>
-                    <div className={styles.catchDate}>{formatDate(c.created_at, dateLocale)}</div>
+                    <div className="text-text-muted text-[0.8rem]">{formatDate(c.created_at, dateLocale)}</div>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          <button className={styles.logBtn} onClick={onNavigateToLog}>
+          <button
+            onClick={onNavigateToLog}
+            className="w-full py-3.5 bg-accent text-white rounded-[var(--radius-md)] text-[0.95rem] font-bold mt-auto shrink-0 active:opacity-85"
+          >
             {t('log.logSpecies', { name: t(`speciesNames.${score.name}`, { defaultValue: score.name }) })}
           </button>
         </div>
