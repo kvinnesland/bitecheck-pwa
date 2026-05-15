@@ -57,13 +57,17 @@ Ingen CI/CD — alt deployes manuelt. Firebase-prosjekt: `fishing-projects`. URL
 - `src/components/DailyScoreChart.tsx` — daglig scorekurve. Bruker `hourlyWeather[]` per time. Viser ikke "nå"-kursoren for fremtidige datoer.
 - `src/pages/Kart.tsx` — kartside med 5 togglebare lag
 
-## UI-språk
-Hele appen er på norsk. Fortsett med norske labels, knapper og meldinger.
+## UI-språk og i18n
+Appen migreres til internasjonalisering (i18next + react-i18next). **Engelsk er default locale og kildespr åk i koden.** Norsk (nb) er en full oversettelse. Ikke legg til hardkodede norske strings — bruk `t('key')` og legg oversettelser i `public/locales/en/translation.json` og `public/locales/nb/translation.json`. Eksisterende norske strings skal ekstraheres som del av i18n-migreringen.
+
+## Design
+Full redesign pågår. Komponentbibliotek: **shadcn/ui + Tailwind**. Alle eksisterende `.module.css`-filer skal erstattes. Design tokens (farger, spacing, typografi) mappes fra `global.css` CSS-variabler til `tailwind.config.ts`. Ikke introduser nye CSS Module-komponenter — skriv nye komponenter med Tailwind-klasser og shadcn/ui som base.
 
 ## Åpne issues / TODO
 
 ### Utsatt (bevisst)
 - **Firestore privacy-regler** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Krever design-beslutning: hva skal være privat vs. offentlig? Relevant når brukerbase vokser.
+- **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Ideer ikke startet
 - Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)

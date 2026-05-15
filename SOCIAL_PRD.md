@@ -1,13 +1,15 @@
 # BiteCheck Social — Product Requirements Document
 
 > Scope: Social feed, following graph, reactions, comments, profiles, notifications, discovery.
-> Challenges, leaderboards, verified badges, photos, and Contact Picker API are explicitly out of scope (see Todo).
+> Challenges, leaderboards, verified badges, photos (requires Firebase Blaze), and Contact Picker API are explicitly out of scope for v1 (see Todo).
+>
+> **Core social unit: the fishing trip, not the individual catch.** A trip is published immediately when the first catch is logged and updates live as more catches are added. Trips auto-close after 8 hours of inactivity.
 
 ---
 
 ## 1. Vision
 
-BiteCheck becomes the Strava of fishing. Every logged catch is a potential social moment. Users follow friends and notable anglers, react to catches, leave comments, and discover new fishing spots and people through an engagement-ranked feed.
+BiteCheck becomes the Strava of fishing. Every fishing trip is a social moment — whether you land ten mackerel or nothing at all. Users follow friends and notable anglers, react to trips, leave comments, and discover new fishing spots and people through an engagement-ranked feed.
 
 ---
 
@@ -15,13 +17,15 @@ BiteCheck becomes the Strava of fishing. Every logged catch is a potential socia
 
 | Concept | Description |
 |---|---|
-| **Catch** | A logged fishing event. Already exists. Extended with social fields. |
-| **Feed** | Mixed stream of catches from followed users + discover content. |
+| **Trip** | The primary social unit. One fishing outing = one feed post. Contains 0–N catches. Publishes immediately on first catch or explicit start. Auto-closes after 8h of inactivity. |
+| **Catch** | A logged fish. Always belongs to a trip. Not a standalone feed item. |
+| **Feed** | Mixed stream of trips from followed users + discover content. |
 | **Social Graph** | One-way follow relationships. Private accounts require approval. |
-| **Reaction** | One of 👍 ✋ 😁 😭 😯 per catch per user. |
-| **Comment** | Flat text comment on a catch. Supports @mentions. |
+| **Reaction** | One of 👍 ✋ 😁 😭 😯 per trip per user. |
+| **Comment** | Flat text comment on a trip. Supports @mentions. |
+| **Companion** | A person tagged as present on the trip. BiteCheck users link to their profile and get a notification; non-users are stored as a display name only. |
 | **Notification** | In-app + push event triggered by social actions. |
-| **Profile** | Public page per user with stats, PRs, recent catches. |
+| **Profile** | Public page per user with stats, PRs, recent trips. |
 | **Username** | Unique handle chosen on first login. Used for search and @mentions. |
 
 ---
@@ -67,22 +71,48 @@ BiteCheck becomes the Strava of fishing. Every logged catch is a potential socia
 }
 ```
 
-### 3.4 `catches/{catchId}` (extended)
+### 3.4 `trips/{tripId}`
 
-Existing fields kept. New social fields added:
+The primary social entity. One trip = one feed post.
+
+```
+{
+  tripId: string,
+  uid: string,                          // owner
+  status: 'open' | 'closed',           // open = still accepting catches; closed = final
+  startedAt: Timestamp,
+  closedAt: Timestamp | null,           // null while open; set on manual close or auto-close
+  location: GeoPoint | null,            // location of first catch, or user's location at start
+  locationShare: 'exact' | 'approximate' | 'hidden',
+  approximateLocationName: string | null,
+  catchCount: number,                   // denormalized
+  species: string[],                    // denormalized list of distinct species caught
+  companions: [                         // people on the trip
+    { uid: string | null, displayName: string, username: string | null }
+  ],
+  note: string | null,                  // free text trip note
+  weatherSnapshot: object | null,       // conditions at trip start (from useWeather)
+  reactionCounts: { [emoji: string]: number },
+  commentCount: number,
+}
+```
+
+> **Auto-close rule:** A Cloud Function checks for open trips with no activity for 8 hours and sets `status: 'closed'`, `closedAt: now`.
+
+### 3.5 `catches/{catchId}` (extended)
+
+Existing fields kept. New fields:
 
 ```
 {
   // ... existing fields ...
-  isPublic: boolean,                    // false = hidden from everyone
-  locationShare: 'exact' | 'approximate' | 'hidden',  // overrides account default
-  approximateLocationName: string | null,   // e.g. "Mjøsa", user-editable
-  reactionCounts: { [emoji: string]: number },  // denormalized
-  commentCount: number,                 // denormalized
+  tripId: string,                       // always set — every catch belongs to a trip
+  locationShare: 'exact' | 'approximate' | 'hidden',
+  approximateLocationName: string | null,
 }
 ```
 
-### 3.5 `catches/{catchId}/reactions/{userId}`
+### 3.6 `trips/{tripId}/reactions/{userId}`
 
 ```
 {
@@ -92,7 +122,7 @@ Existing fields kept. New social fields added:
 }
 ```
 
-### 3.6 `catches/{catchId}/comments/{commentId}`
+### 3.7 `trips/{tripId}/comments/{commentId}`
 
 ```
 {
@@ -107,15 +137,15 @@ Existing fields kept. New social fields added:
 }
 ```
 
-### 3.7 `notifications/{uid}/items/{notificationId}`
+### 3.8 `notifications/{uid}/items/{notificationId}`
 
 ```
 {
-  type: 'follow' | 'follow_request' | 'follow_accepted' | 'reaction' | 'comment' | 'mention',
+  type: 'follow' | 'follow_request' | 'follow_accepted' | 'reaction' | 'comment' | 'mention' | 'companion_tag',
   fromUid: string,
   fromUsername: string,       // denormalized
   fromPhotoURL: string | null,
-  catchId: string | null,     // null for follow notifications
+  tripId: string | null,      // null for follow notifications
   emoji: string | null,       // for reaction notifications
   commentSnippet: string | null,
   read: boolean,
@@ -123,23 +153,25 @@ Existing fields kept. New social fields added:
 }
 ```
 
-### 3.8 `feed/{uid}/items/{catchId}`
+### 3.9 `feed/{uid}/items/{tripId}`
 
-Fan-out-on-write feed. Written to by Cloud Functions when a catch is created/updated.
+Fan-out-on-write feed. Written to by Cloud Functions when a trip is created/updated.
 
 ```
 {
-  catchId: string,
+  tripId: string,
   authorUid: string,
   authorUsername: string,
-  species: string,
-  createdAt: Timestamp,
+  species: string[],          // distinct species on the trip
+  catchCount: number,
+  status: 'open' | 'closed',
+  startedAt: Timestamp,
   engagementScore: number,    // updated on reactions/comments
   seenBy: string[],           // array of uids who have seen this item (capped)
 }
 ```
 
-> **Note:** Fan-out on write is the right pattern at this scale. When a user posts, a Cloud Function writes to each follower's feed collection. For large follower counts (future "celeb" accounts) this may need a hybrid approach — defer to Todo.
+> **Note:** Fan-out on write is the right pattern at this scale. When a trip is first published (first catch logged), a Cloud Function writes to each follower's feed. Subsequent catch additions update the existing feed item in place — followers see the live update without a new post appearing. For large follower counts (future "celeb" accounts) this may need a hybrid approach — defer to Todo.
 
 ### 3.9 `usernames/{username}` (lookup index)
 
@@ -552,15 +584,15 @@ match /personalRecords/{uid} {
 
 ## 8. Todo (Out of Scope Now)
 
+- **Photos on trips** — requires upgrading to Firebase Blaze plan + Storage setup. Users attach photos of scenery, weather, or companions to a trip. Deliberately excluded from v1.
 - **Challenges** — community goals and competitions
 - **Leaderboards** — biggest fish / most catches by species, area, time window
 - **Verified/celeb badge** — ✓ on notable angler profiles
-- **Photos on catches** — requires Firebase Blaze plan + Storage setup
 - **Feed discover algorithm** — "people followed by your friends" graph traversal
 - **Contact Picker API** — full phone contact invite (browser support patchy)
 - **Push notifications** — bundle with solunar push work; needs service worker integration
 - **Fan-out scaling** — hybrid approach for accounts with large follower counts
-- **Reporting/moderation** — report a catch, block a user
+- **Reporting/moderation** — report a trip, block a user
 - **Code-splitting** — MapLibre + SunCalc dynamic import (already in main Todo)
 - **Map: tide forecast layer** — time-scrubber-aware, shows predicted tide level across map
 - **Map: temperature forecast layer** — time-scrubber-aware, shows SST or air temp across map
