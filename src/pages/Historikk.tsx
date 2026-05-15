@@ -4,6 +4,13 @@ import { type User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { getUserCatches } from '../lib/db';
 import { updateCatch, softDeleteCatch, undoDeleteCatch } from '../lib/catches';
+import { useUnits } from '../contexts/UnitsContext';
+import {
+  formatWeight, formatLength,
+  weightUnitLabel, lengthUnitLabel,
+  weightToDisplay, lengthToDisplay,
+  parseWeightToKg, parseLengthToCm,
+} from '../lib/units';
 import type { CatchRecord } from '../types';
 import styles from './Historikk.module.css';
 
@@ -12,6 +19,7 @@ interface Props { user: User; }
 export function Historikk({ user }: Props) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language.startsWith('nb') ? 'no-NO' : 'en-US';
+  const { prefs } = useUnits();
   const rawCatches = useUserCatches(user.uid);
   const [catches, setCatches] = useState<CatchRecord[]>([]);
   const [undoItem, setUndoItem] = useState<{ id: string; name: string; timer: ReturnType<typeof setTimeout> } | null>(null);
@@ -93,6 +101,8 @@ export function Historikk({ user }: Props) {
               key={c.catch_id}
               record={c}
               dateLocale={dateLocale}
+              weightUnit={prefs.weight}
+              lengthUnit={prefs.length}
               onDelete={() => handleDelete(c)}
               onEdit={() => setEditTarget(c)}
             />
@@ -112,6 +122,8 @@ export function Historikk({ user }: Props) {
       {editTarget && (
         <EditModal
           record={editTarget}
+          weightUnit={prefs.weight}
+          lengthUnit={prefs.length}
           onSave={(updates) => handleEdit(editTarget.catch_id, updates)}
           onDelete={() => { handleDelete(editTarget); setEditTarget(null); }}
           onClose={() => setEditTarget(null)}
@@ -128,11 +140,15 @@ function CatchRow({
   onDelete,
   onEdit,
   dateLocale,
+  weightUnit,
+  lengthUnit,
 }: {
   record: CatchRecord;
   onDelete: () => void;
   onEdit: () => void;
   dateLocale: string;
+  weightUnit: import('../lib/units').WeightUnit;
+  lengthUnit: import('../lib/units').LengthUnit;
 }) {
   const { t } = useTranslation();
   const [offset, setOffset] = useState(0);
@@ -192,8 +208,8 @@ function CatchRow({
           <span className={styles.species}>{t(`speciesNames.${record.species.name}`, { defaultValue: record.species.name })}</span>
           <span className={styles.meta}>
             {[
-              record.species.weight_kg != null && `${record.species.weight_kg} kg`,
-              record.species.length_cm != null && `${record.species.length_cm} cm`,
+              record.species.weight_kg != null && formatWeight(record.species.weight_kg, weightUnit),
+              record.species.length_cm != null && formatLength(record.species.length_cm, lengthUnit),
             ].filter(Boolean).join(' · ') || t('history.noMeasurements')}
           </span>
           <span className={styles.datetime}>{dateStr} {timeStr}</span>
@@ -220,25 +236,29 @@ function CatchRow({
 
 function EditModal({
   record,
+  weightUnit,
+  lengthUnit,
   onSave,
   onDelete,
   onClose,
 }: {
   record: CatchRecord;
+  weightUnit: import('../lib/units').WeightUnit;
+  lengthUnit: import('../lib/units').LengthUnit;
   onSave: (u: { species_name?: string; weight_kg?: number | null; length_cm?: number | null }) => void;
   onDelete: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
   const [name,   setName]   = useState(record.species.name);
-  const [weight, setWeight] = useState(record.species.weight_kg?.toString() ?? '');
-  const [length, setLength] = useState(record.species.length_cm?.toString() ?? '');
+  const [weight, setWeight] = useState(weightToDisplay(record.species.weight_kg, weightUnit));
+  const [length, setLength] = useState(lengthToDisplay(record.species.length_cm, lengthUnit));
 
   function handleSave() {
     onSave({
       species_name: name.trim() || record.species.name,
-      weight_kg: weight ? parseFloat(weight) : null,
-      length_cm: length ? parseFloat(length) : null,
+      weight_kg: weight ? parseWeightToKg(weight, weightUnit) : null,
+      length_cm: length ? parseLengthToCm(length, lengthUnit) : null,
     });
   }
 
@@ -258,7 +278,7 @@ function EditModal({
         </label>
 
         <label className={styles.modalField}>
-          <span>{t('editModal.weight')}</span>
+          <span>{t('editModal.weight')} ({weightUnitLabel(weightUnit)})</span>
           <input
             className={styles.modalInput}
             type="number"
@@ -271,7 +291,7 @@ function EditModal({
         </label>
 
         <label className={styles.modalField}>
-          <span>{t('editModal.length')}</span>
+          <span>{t('editModal.length')} ({lengthUnitLabel(lengthUnit)})</span>
           <input
             className={styles.modalInput}
             type="number"

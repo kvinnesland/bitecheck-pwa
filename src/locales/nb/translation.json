@@ -9,8 +9,8 @@
   "conditions": {
     "title": "Miljøforhold",
     "pressure": "Lufttrykk",
-    "seaTemp": "Sjøtemperatur (°C)",
-    "freshTemp": "Vanntemperatur (°C)",
+    "seaTemp": "Sjøtemperatur",
+    "freshTemp": "Vanntemperatur",
     "tide": "Tidevann",
     "current": "Strøm",
     "fetching": "henter…",
@@ -161,6 +161,10 @@
   "settings": {
     "title": "Innstillinger",
     "language": "Språk",
+    "units": "Enheter",
+    "weight": "Vekt",
+    "length": "Lengde",
+    "temperature": "Temperatur",
     "signOut": "Logg ut"
   },
   "speciesNames": {

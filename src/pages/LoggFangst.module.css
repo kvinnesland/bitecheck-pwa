@@ -194,6 +194,12 @@
   color: var(--color-text-muted);
 }
 
+.unitHint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .input {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);

@@ -7,6 +7,8 @@ import { useWeather } from '../hooks/useWeather';
 import { useTide } from '../hooks/useTide';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { setPendingSpecies } from '../lib/navigationStore';
+import { useUnits } from '../contexts/UnitsContext';
+import { celsiusToDisplay, displayToCelsius, tempUnitLabel } from '../lib/units';
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
 import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
 import { DailyScoreChart } from '../components/DailyScoreChart';
@@ -27,13 +29,15 @@ export function BiteScore({ user, navigate }: Props) {
   const { t } = useTranslation();
   const { position } = useGeolocation();
   const userCatches = useUserCatches(user.uid);
+  const { prefs } = useUnits();
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesScore | null>(null);
 
   const [customLocation, setCustomLocation] = useState<SelectedLocation | null>(null);
   const [datetime, setDatetime]             = useState<Date>(() => new Date());
 
   const [pressure,         setPressure]         = useState<PressureTrend>('stable');
-  const [waterTemp,        setWaterTemp]        = useState('8');
+  const [waterTempC,       setWaterTempC]       = useState(8);
+  const [waterTempStr,     setWaterTempStr]     = useState(() => String(celsiusToDisplay(8, prefs.temp)));
   const [tide,             setTide]             = useState<TidePhase>('rising');
   const [currentStrength,  setCurrentStrength]  = useState<CurrentStrength>('moderat');
   const [waterFilter,      setWaterFilter]      = useState<'salt' | 'fresh'>('salt');
@@ -48,8 +52,19 @@ export function BiteScore({ user, navigate }: Props) {
   // Auto-fill pressure and water temp from weather API
   useEffect(() => {
     if (weather.pressureTrend) setPressure(weather.pressureTrend);
-    if (weather.waterTemp !== null) setWaterTemp(String(weather.waterTemp));
+    if (weather.waterTemp !== null) {
+      setWaterTempC(weather.waterTemp);
+      setWaterTempStr(String(celsiusToDisplay(weather.waterTemp, prefs.temp)));
+    }
+  // prefs.temp intentionally omitted — only re-sync on new API data, not on unit change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weather.pressureTrend, weather.waterTemp]);
+
+  // When unit changes, re-express display string without losing the °C value
+  useEffect(() => {
+    setWaterTempStr(String(celsiusToDisplay(waterTempC, prefs.temp)));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.temp]);
 
   // Auto-fill tide phase and current strength from Kartverket API
   useEffect(() => {
@@ -60,7 +75,7 @@ export function BiteScore({ user, navigate }: Props) {
   const { scores, solunar } = useMemo(() => {
     const inputs: EnvInputs = {
       pressure_trend:   pressure,
-      water_temp:       parseFloat(waterTemp) || 8,
+      water_temp:       waterTempC,
       tide_phase:       tide,
       current_strength: currentStrength,
       wind_speed_ms:    weather.windSpeed ?? 5,
@@ -69,7 +84,7 @@ export function BiteScore({ user, navigate }: Props) {
       date: datetime,
     };
     return computeAllScores(inputs);
-  }, [pressure, waterTemp, tide, currentStrength, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
+  }, [pressure, waterTempC, tide, currentStrength, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
 
   function handleSpeciesClick(s: SpeciesScore) {
     setSelectedSpecies(s);
@@ -111,7 +126,7 @@ export function BiteScore({ user, navigate }: Props) {
         hourlyTide={hourlyTide}
         hourlyWeather={weather.hourlyWeather}
         pressure={pressure}
-        waterTemp={parseFloat(waterTemp) || 8}
+        waterTemp={waterTempC}
         windSpeed={weather.windSpeed ?? 5}
         lat={effectiveLat}
         lng={effectiveLng}
@@ -136,16 +151,23 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.fieldLabel}>{waterFilter === 'fresh' ? t('conditions.freshTemp') : t('conditions.seaTemp')}</span>
+            <span className={styles.fieldLabel}>
+              {waterFilter === 'fresh' ? t('conditions.freshTemp') : t('conditions.seaTemp')}
+              {' '}({tempUnitLabel(prefs.temp)})
+            </span>
             <input
               className={styles.input}
               type="number"
               inputMode="decimal"
-              value={waterTemp}
-              min="-2"
-              max="30"
+              value={waterTempStr}
+              min={prefs.temp === 'f' ? '28' : '-2'}
+              max={prefs.temp === 'f' ? '86' : '30'}
               step="0.5"
-              onChange={(e) => setWaterTemp(e.target.value)}
+              onChange={(e) => {
+                setWaterTempStr(e.target.value);
+                const n = parseFloat(e.target.value);
+                if (!isNaN(n)) setWaterTempC(displayToCelsius(n, prefs.temp));
+              }}
             />
           </label>
 

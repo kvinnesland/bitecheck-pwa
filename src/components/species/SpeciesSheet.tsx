@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { SpeciesScore } from '../../lib/biteScore';
 import type { CatchRecord } from '../../types';
 import { KNOWN_SPECIES } from '../../lib/speciesInfo';
+import { useUnits } from '../../contexts/UnitsContext';
+import { formatWeight, formatLength } from '../../lib/units';
 import { SpeciesCardHeader } from './SpeciesCardHeader';
 import styles from './SpeciesSheet.module.css';
 
@@ -76,6 +78,7 @@ const DISMISS_THRESHOLD = 80;
 export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigateToLog }: Props) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language.startsWith('nb') ? 'nb-NO' : 'en-US';
+  const { prefs } = useUnits();
   const hasInfo = KNOWN_SPECIES.has(score.name);
   const k = `speciesInfo.${score.name}` as const;
 
@@ -317,9 +320,9 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                     <div>
                       <div className={styles.catchSpecies}>{c.species.name}</div>
                       <div className={styles.catchMeta}>
-                        {c.species.weight_kg != null ? `${c.species.weight_kg} kg` : ''}
+                        {c.species.weight_kg != null ? formatWeight(c.species.weight_kg, prefs.weight) : ''}
                         {c.species.weight_kg != null && c.species.length_cm != null ? ' · ' : ''}
-                        {c.species.length_cm != null ? `${c.species.length_cm} cm` : ''}
+                        {c.species.length_cm != null ? formatLength(c.species.length_cm, prefs.length) : ''}
                       </div>
                     </div>
                     <div className={styles.catchDate}>{formatDate(c.created_at, dateLocale)}</div>

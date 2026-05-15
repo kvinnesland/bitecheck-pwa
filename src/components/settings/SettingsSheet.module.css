@@ -39,11 +39,24 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.sectionLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.rowSpaced {
+  margin-top: 10px;
 }
 
 .rowLabel {

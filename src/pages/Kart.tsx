@@ -6,6 +6,8 @@ import { type User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { usePublicCatches } from '../hooks/usePublicCatches';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useUnits } from '../contexts/UnitsContext';
+import { formatWeight, formatLength, type UnitPrefs } from '../lib/units';
 import styles from './Kart.module.css';
 
 const BASE_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
@@ -40,6 +42,10 @@ interface Props { user: User; }
 
 export function Kart({ user }: Props) {
   const { t } = useTranslation();
+  const { prefs } = useUnits();
+  const prefsRef = useRef<UnitPrefs>(prefs);
+  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -194,8 +200,9 @@ export function Kart({ user }: Props) {
             timeStyle: 'short',
           });
 
-          const weight = props.weight_kg ? `${props.weight_kg} kg` : '';
-          const len = props.length_cm ? `${props.length_cm} cm` : '';
+          const unitPrefs = prefsRef.current;
+          const weight = props.weight_kg ? formatWeight(props.weight_kg as number, unitPrefs.weight) : '';
+          const len = props.length_cm ? formatLength(props.length_cm as number, unitPrefs.length) : '';
           const measurements = [weight, len].filter(Boolean).join(' · ');
 
           const html = `

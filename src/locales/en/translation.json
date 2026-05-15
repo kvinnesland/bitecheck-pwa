@@ -9,8 +9,8 @@
   "conditions": {
     "title": "Conditions",
     "pressure": "Air pressure",
-    "seaTemp": "Sea temperature (°C)",
-    "freshTemp": "Water temperature (°C)",
+    "seaTemp": "Sea temperature",
+    "freshTemp": "Water temperature",
     "tide": "Tide",
     "current": "Current",
     "fetching": "fetching…",
@@ -161,6 +161,10 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "units": "Units",
+    "weight": "Weight",
+    "length": "Length",
+    "temperature": "Temperature",
     "signOut": "Sign out"
   },
   "speciesNames": {

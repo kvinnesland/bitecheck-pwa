@@ -4,6 +4,8 @@ import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createCatch } from '../lib/catches';
 import { consumePendingSpecies } from '../lib/navigationStore';
+import { useUnits } from '../contexts/UnitsContext';
+import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } from '../lib/units';
 import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import styles from './LoggFangst.module.css';
@@ -28,6 +30,7 @@ interface Props { user: User; }
 
 export function LoggFangst({ user }: Props) {
   const { t } = useTranslation();
+  const { prefs } = useUnits();
   const [step, setStep] = useState<Step>('species');
   const [species, setSpecies] = useState('');
   const [weight, setWeight] = useState('');
@@ -68,8 +71,8 @@ export function LoggFangst({ user }: Props) {
       await createCatch({
         userId: user.uid,
         species,
-        weight_kg: weight ? parseFloat(weight) : null,
-        length_cm: length ? parseFloat(length) : null,
+        weight_kg: weight ? parseWeightToKg(weight, prefs.weight) : null,
+        length_cm: length ? parseLengthToCm(length, prefs.length) : null,
         location: position,
       });
       setStep('success');
@@ -97,7 +100,7 @@ export function LoggFangst({ user }: Props) {
         </div>
         <h2>{t('log.saved')}</h2>
         <p className={styles.successSpecies}>{t(`speciesNames.${species}`, { defaultValue: species })}</p>
-        {weight && <p className={styles.successMeta}>{weight} kg{length ? ` · ${length} cm` : ''}</p>}
+        {weight && <p className={styles.successMeta}>{weight} {weightUnitLabel(prefs.weight)}{length ? ` · ${length} ${lengthUnitLabel(prefs.length)}` : ''}</p>}
         <p className={styles.successSync}>
           {geoStatus === 'ok' ? t('log.gpsRecorded') : t('log.noGps')}
         </p>
@@ -131,7 +134,7 @@ export function LoggFangst({ user }: Props) {
           <div className={styles.cardBody}>
             <div className={styles.fields}>
               <label className={styles.fieldGroup}>
-                <span className={styles.fieldLabel}>{t('log.weight')}</span>
+                <span className={styles.fieldLabel}>{t('log.weight')} <span className={styles.unitHint}>({weightUnitLabel(prefs.weight)})</span></span>
                 <input
                   ref={weightRef}
                   className={styles.input}
@@ -146,7 +149,7 @@ export function LoggFangst({ user }: Props) {
               </label>
 
               <label className={styles.fieldGroup}>
-                <span className={styles.fieldLabel}>{t('log.length')}</span>
+                <span className={styles.fieldLabel}>{t('log.length')} <span className={styles.unitHint}>({lengthUnitLabel(prefs.length)})</span></span>
                 <input
                   className={styles.input}
                   type="number"

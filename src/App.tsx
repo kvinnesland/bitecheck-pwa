@@ -4,6 +4,7 @@ import { LoginPage } from './components/auth/LoginPage';
 import { AppShell } from './components/layout/AppShell';
 import { UpdateToast } from './components/common/UpdateToast';
 import { LanguagePicker } from './components/onboarding/LanguagePicker';
+import { UnitsProvider } from './contexts/UnitsContext';
 import { LoggFangst } from './pages/LoggFangst';
 import { Kart } from './pages/Kart';
 import { BiteScore } from './pages/BiteScore';
@@ -34,7 +35,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <UnitsProvider>
       <AppShell user={user} onSignOut={signOutUser}>
         {(view: AppView, navigate: (v: AppView) => void) => {
           switch (view) {
@@ -46,7 +47,7 @@ export default function App() {
         }}
       </AppShell>
       <UpdateToast />
-    </>
+    </UnitsProvider>
   );
 }
 
