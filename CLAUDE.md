@@ -63,6 +63,50 @@ Appen migreres til internasjonalisering (i18next + react-i18next). **Engelsk er 
 ## Design
 Full redesign pågår. Komponentbibliotek: **shadcn/ui + Tailwind**. Alle eksisterende `.module.css`-filer skal erstattes. Design tokens (farger, spacing, typografi) mappes fra `global.css` CSS-variabler til `tailwind.config.ts`. Ikke introduser nye CSS Module-komponenter — skriv nye komponenter med Tailwind-klasser og shadcn/ui som base.
 
+## Kodestandarder
+
+### Separasjon av ansvar
+Følg dette mønsteret konsekvent — det er prosjektets ekvivalent til en tre-lags arkitektur:
+
+- **`src/lib/`** — rene funksjoner uten React, uten side effects. Konverteringer, scoringslogikk, storage-helpers. Kan testes isolert.
+- **`src/hooks/`** — datahenting, subscriptions, avledet state. Kaller lib-funksjoner og ekstern state. Ingen JSX.
+- **`src/pages/` + `src/components/`** — UI-lag. Kaller hooks og lib. Ingen direkte Firestore-kall eller fetch-logikk.
+
+Aldri kall Firestore direkte fra en komponent — legg det i en hook eller `lib/db.ts`.
+
+### TypeScript
+- Unngå `any` og `unknown`. Spør om nødvendig type er uklar.
+- Bruk typer fra npm-pakker fremfor egne ekvivalenter der de finnes.
+- Typer som brukes på tvers av lag legges i `src/types.ts`.
+
+### Avhengigheter
+- Ikke legg til nye npm-pakker uten å spørre først.
+- Begrunn behovet — foretrekk innebygde browser-API-er eller eksisterende pakker.
+
+### Kommentarer
+- Bare kommenter *hvorfor*, ikke *hva*. Koden selv dokumenterer hva.
+- Ingen kommentarer for åpenbare ting. En god funksjonsnavn er bedre enn en kommentar.
+
+### Ferdighetskriterier
+- `tsc -b` og `npm run build` skal passere uten feil før en oppgave er ferdig.
+- Ingen ubrukte importer eller variabler.
+
+---
+
+## Change-impact sjekkliste
+Når en feature berører noen av disse, verifiser det eksplisitt:
+
+| Hva endres | Hva må sjekkes |
+|---|---|
+| Visningstekst / labels | Begge locale-filer (`en` + `nb`) |
+| Måleenheter (vekt, lengde, temp) | Alle steder som viser eller lagrer verdien (`lib/units.ts`, Historikk, LoggFangst, BiteScore, SpeciesSheet, Kart) |
+| Firestore-feltnavn | Feltnavn er permanente nøkler — endre aldri eksisterende felt uten migreringsplan |
+| Ny art eller nytt artsnavn | `SPECIES_DEFS` (biteScore.ts), `KNOWN_SPECIES` (speciesInfo.ts), begge locale-filer (`speciesNames.*`) |
+| Ny side / navigasjon | `AppView` type i BottomNav, switch-case i App.tsx |
+| localStorage-nøkler | Ikke endre eksisterende nøkkelnavn — det bryter lagret brukerdata |
+
+---
+
 ## Åpne issues / TODO
 
 ### Utsatt (bevisst)
