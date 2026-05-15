@@ -114,6 +114,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Ideer ikke startet
+- **Profilside** — Strava-inspirert. Avatar + navn, totalfangst, antall arter, personlig rekord, fangst-trendkurve per måned, topp-arter. Åpent spørsmål: kun personlig statistikk, eller sosiale funksjoner (følge andre fiskere, leaderboard)? Sosiale funksjoner krever at Firestore privacy-regler fikses først. Bilder krever Firebase Blaze-plan.
 - Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)
 - Push-varslinger når solunarperiode starter (krever Notification API + service worker-integrasjon)
 - ~~Code-splitting av bundle~~ — gjort. React.lazy på alle sider.
