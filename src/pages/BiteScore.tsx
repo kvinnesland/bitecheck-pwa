@@ -12,13 +12,15 @@ import { celsiusToDisplay, displayToCelsius, tempUnitLabel } from '../lib/units'
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
 import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
 import { DailyScoreChart } from '../components/DailyScoreChart';
+import { cn } from '@/lib/utils';
 import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
-import styles from './BiteScore.module.css';
 
 const PRESSURE_VALUES: PressureTrend[] = ['falling_rapidly', 'falling', 'stable', 'rising', 'rising_rapidly'];
 const TIDE_VALUES: TidePhase[] = ['rising', 'high', 'falling', 'low', 'slack'];
 const CURRENT_VALUES: CurrentStrength[] = ['stille', 'moderat', 'sterk', 'sterkest'];
+
+const fieldInputCls = 'bg-bg border border-divider rounded-[var(--radius-sm)] text-text text-sm font-medium px-2.5 py-2 outline-none w-full transition-colors duration-150 focus:border-accent appearance-none';
 
 interface Props {
   user: User;
@@ -49,24 +51,20 @@ export function BiteScore({ user, navigate }: Props) {
   const { tidePhase: autoTide, currentStrength: autoCurrentStrength, hourlyTide, tideLoading } =
     useTide(effectiveLat, effectiveLng, datetime, waterFilter);
 
-  // Auto-fill pressure and water temp from weather API
   useEffect(() => {
     if (weather.pressureTrend) setPressure(weather.pressureTrend);
     if (weather.waterTemp !== null) {
       setWaterTempC(weather.waterTemp);
       setWaterTempStr(String(celsiusToDisplay(weather.waterTemp, prefs.temp)));
     }
-  // prefs.temp intentionally omitted — only re-sync on new API data, not on unit change
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weather.pressureTrend, weather.waterTemp]);
 
-  // When unit changes, re-express display string without losing the °C value
   useEffect(() => {
     setWaterTempStr(String(celsiusToDisplay(waterTempC, prefs.temp)));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefs.temp]);
 
-  // Auto-fill tide phase and current strength from Kartverket API
   useEffect(() => {
     if (autoTide) setTide(autoTide);
     if (autoCurrentStrength) setCurrentStrength(autoCurrentStrength);
@@ -99,7 +97,7 @@ export function BiteScore({ user, navigate }: Props) {
   }
 
   return (
-    <div className={styles.page}>
+    <div className="flex flex-col h-full overflow-y-auto">
       {selectedSpecies && (
         <SpeciesSheet
           score={selectedSpecies}
@@ -109,6 +107,7 @@ export function BiteScore({ user, navigate }: Props) {
           onNavigateToLog={handleNavigateToLog}
         />
       )}
+
       <LocationDatePicker
         location={customLocation}
         datetime={datetime}
@@ -133,14 +132,18 @@ export function BiteScore({ user, navigate }: Props) {
         waterFilter={waterFilter}
       />
 
-      <section className={styles.inputs}>
-        <h3 className={styles.sectionTitle}>{t('conditions.title')}</h3>
+      <section className="border-b border-divider shrink-0">
+        <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-text-muted px-4 pt-3 pb-2">
+          {t('conditions.title')}
+        </h3>
 
-        <div className={styles.inputGrid}>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t('conditions.pressure')}</span>
+        <div className="grid grid-cols-2 gap-2.5 px-4 pb-3.5">
+          <label className="flex flex-col gap-[5px]">
+            <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
+              {t('conditions.pressure')}
+            </span>
             <select
-              className={styles.select}
+              className={fieldInputCls}
               value={pressure}
               onChange={(e) => setPressure(e.target.value as PressureTrend)}
             >
@@ -150,13 +153,13 @@ export function BiteScore({ user, navigate }: Props) {
             </select>
           </label>
 
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>
+          <label className="flex flex-col gap-[5px]">
+            <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
               {waterFilter === 'fresh' ? t('conditions.freshTemp') : t('conditions.seaTemp')}
               {' '}({tempUnitLabel(prefs.temp)})
             </span>
             <input
-              className={styles.input}
+              className={fieldInputCls}
               type="number"
               inputMode="decimal"
               value={waterTempStr}
@@ -172,17 +175,17 @@ export function BiteScore({ user, navigate }: Props) {
           </label>
 
           {waterFilter === 'salt' && (
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>
+            <label className="flex flex-col gap-[5px]">
+              <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
                 {t('conditions.tide')}
                 {tideLoading
-                  ? <span className={styles.autoTag}>{t('conditions.fetching')}</span>
+                  ? <AutoTag>{t('conditions.fetching')}</AutoTag>
                   : autoTide
-                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>{t('conditions.auto')}</span>
+                    ? <AutoTag ready>{t('conditions.auto')}</AutoTag>
                     : null}
               </span>
               <select
-                className={styles.select}
+                className={fieldInputCls}
                 value={tide}
                 onChange={(e) => setTide(e.target.value as TidePhase)}
               >
@@ -194,17 +197,17 @@ export function BiteScore({ user, navigate }: Props) {
           )}
 
           {waterFilter === 'salt' && (
-            <label className={styles.field}>
-              <span className={styles.fieldLabel}>
+            <label className="flex flex-col gap-[5px]">
+              <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
                 {t('conditions.current')}
                 {tideLoading
-                  ? <span className={styles.autoTag}>{t('conditions.fetching')}</span>
+                  ? <AutoTag>{t('conditions.fetching')}</AutoTag>
                   : autoCurrentStrength
-                    ? <span className={`${styles.autoTag} ${styles.autoTagReady}`}>{t('conditions.auto')}</span>
+                    ? <AutoTag ready>{t('conditions.auto')}</AutoTag>
                     : null}
               </span>
               <select
-                className={styles.select}
+                className={fieldInputCls}
                 value={currentStrength}
                 onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
               >
@@ -217,25 +220,27 @@ export function BiteScore({ user, navigate }: Props) {
         </div>
       </section>
 
-      <section className={styles.results}>
-        <div className={styles.resultsHeader}>
-          <h3 className={styles.sectionTitle}>{t('predictions.title')}</h3>
-          <div className={styles.waterToggle}>
+      <section className="flex-1">
+        <div className="flex items-center justify-between pr-4">
+          <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-text-muted px-4 pt-3 pb-2">
+            {t('predictions.title')}
+          </h3>
+          <div className="flex bg-bg border border-divider rounded-[var(--radius-sm)] overflow-hidden shrink-0">
             <button
-              className={`${styles.waterBtn} ${waterFilter === 'salt' ? styles.waterActive : ''}`}
+              className={cn('text-[0.72rem] font-semibold px-3 py-[5px] transition-colors duration-150', waterFilter === 'salt' ? 'bg-accent text-white' : 'text-text-muted')}
               onClick={() => setWaterFilter('salt')}
             >
               {t('predictions.saltwater')}
             </button>
             <button
-              className={`${styles.waterBtn} ${waterFilter === 'fresh' ? styles.waterActive : ''}`}
+              className={cn('text-[0.72rem] font-semibold px-3 py-[5px] transition-colors duration-150', waterFilter === 'fresh' ? 'bg-accent text-white' : 'text-text-muted')}
               onClick={() => setWaterFilter('fresh')}
             >
               {t('predictions.freshwater')}
             </button>
           </div>
         </div>
-        <div className={styles.list}>
+        <div className="flex flex-col gap-[1px] bg-divider border-t border-divider">
           {scores
             .filter((s) => s.water === waterFilter)
             .map((s, i) => (
@@ -247,7 +252,18 @@ export function BiteScore({ user, navigate }: Props) {
   );
 }
 
-// ─── Solunar card ────────────────────────────────────────────────────────────
+function AutoTag({ children, ready }: { children: React.ReactNode; ready?: boolean }) {
+  return (
+    <span className={cn(
+      'text-[0.6rem] font-semibold uppercase tracking-[0.04em] px-[5px] py-[1px] rounded-[3px]',
+      ready ? 'bg-accent/10 text-accent' : 'bg-divider text-text-muted',
+    )}>
+      {children}
+    </span>
+  );
+}
+
+// ─── Solunar card ─────────────────────────────────────────────────────────────
 
 function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
   const { t } = useTranslation();
@@ -264,19 +280,27 @@ function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
       : (1 - solunar.moonPhase) * 200,
   );
 
+  const borderColor =
+    solunar.type === 'major' ? 'var(--color-accent)' :
+    solunar.type === 'minor' ? '#22c55e' :
+    'var(--color-divider)';
+
   return (
-    <div className={`${styles.solunarCard} ${styles[`solunar_${solunar.type}`]}`}>
-      <div className={styles.solunarLeft}>
+    <div
+      className="flex items-center justify-between gap-4 px-4 py-4 border-b border-divider bg-surface shrink-0"
+      style={{ borderLeft: `3px solid ${borderColor}` }}
+    >
+      <div className="flex items-center gap-2.5 shrink-0">
         <MoonIcon phase={solunar.moonPhase} />
         <div>
-          <div className={styles.solunarPhaseName}>{solunar.moonPhaseName}</div>
-          <div className={styles.solunarPct}>{t('solunar.illuminated', { pct: moonPct })}</div>
+          <div className="text-[0.8rem] font-semibold text-text">{solunar.moonPhaseName}</div>
+          <div className="text-[0.7rem] text-text-muted">{t('solunar.illuminated', { pct: moonPct })}</div>
         </div>
       </div>
 
-      <div className={styles.solunarRight}>
-        <div className={styles.solunarPeriod}>{periodLabel}</div>
-        <div className={styles.solunarMult}>
+      <div className="text-right flex flex-col gap-0.5">
+        <div className="text-[0.8rem] font-semibold text-text">{periodLabel}</div>
+        <div className="text-[0.7rem] text-accent font-semibold">
           {t('solunar.multiplier', { value: solunar.multiplier.toFixed(2) })}
         </div>
         <LightLabel lux={solunar.lightLux} />
@@ -295,7 +319,7 @@ function LightLabel({ lux }: { lux: number }) {
   else if (lux < 30_000)  key = 'light.sunrise';
   else if (lux < 80_000)  key = 'light.daylight';
   else                     key = 'light.fullDaylight';
-  return <div className={styles.solunarLight}>{t(key)}</div>;
+  return <div className="text-[0.68rem] text-text-muted">{t(key)}</div>;
 }
 
 // ─── Species score card ───────────────────────────────────────────────────────
@@ -307,26 +331,28 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
   const displayName = t(`speciesNames.${score.name}`, { defaultValue: score.name });
 
   return (
-    <div className={styles.speciesCard} onClick={onClick} style={{ cursor: 'pointer' }}>
-      <div className={styles.speciesRank}>{rank}</div>
-      <div className={styles.speciesBody}>
-        <div className={styles.speciesTop}>
-          <span className={styles.speciesName}>
+    <div className="flex items-center gap-2.5 bg-bg px-4 py-2.5 cursor-pointer" onClick={onClick}>
+      <div className="text-[0.72rem] font-bold text-text-muted w-[18px] text-right shrink-0">{rank}</div>
+      <div className="flex-1 flex flex-col gap-[5px]">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[0.9rem] font-semibold text-text flex-1 flex items-baseline gap-[5px]">
             {displayName}
             {score.method && (
-              <span className={styles.methodTag}>{score.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}</span>
+              <span className="text-[0.65rem] font-medium text-text-muted lowercase">
+                {score.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}
+              </span>
             )}
           </span>
-          <span className={styles.speciesLabel} style={{ color }}>
+          <span className="text-[0.68rem] font-semibold uppercase tracking-[0.04em]" style={{ color }}>
             {score.outOfSeason ? t('predictions.outOfSeason') : score.label}
           </span>
-          <span className={styles.speciesPct} style={{ color }}>
+          <span className="text-[0.85rem] font-bold min-w-[36px] text-right" style={{ color }}>
             {pct}%
           </span>
         </div>
-        <div className={styles.barTrack}>
+        <div className="h-1 bg-divider rounded-[2px] overflow-hidden">
           <div
-            className={styles.barFill}
+            className="h-full rounded-[2px] transition-[width] duration-[400ms] ease-in-out"
             style={{ width: `${pct}%`, background: color }}
           />
         </div>
@@ -336,35 +362,31 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
 }
 
 function scoreColor(score: number): string {
-  if (score >= 0.75) return '#0066CC';
+  if (score >= 0.75) return 'var(--color-accent)';
   if (score >= 0.5)  return '#22c55e';
   if (score >= 0.25) return '#f59e0b';
   return '#ef4444';
 }
 
-// ─── Moon icon ───────────────────────────────────────────────────────────────
+// ─── Moon icon ────────────────────────────────────────────────────────────────
 
 function MoonIcon({ phase }: { phase: number }) {
-  // phase: 0=new, 0.5=full, 1=new
   const isWaxing = phase < 0.5;
-  const pct      = isWaxing ? phase * 2 : (1 - phase) * 2; // 0–1 lit fraction
+  const pct      = isWaxing ? phase * 2 : (1 - phase) * 2;
 
-  // SVG moon: clip between two circles to draw a crescent or gibbous
   const r = 14;
   const cx = 16;
   const cy = 16;
-  const offset = r * (1 - pct * 2); // offset of inner circle
+  const offset = r * (1 - pct * 2);
 
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" className={styles.moonSvg}>
+    <svg width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
       <defs>
         <clipPath id="moon-clip">
           <circle cx={cx} cy={cy} r={r} />
         </clipPath>
       </defs>
-      {/* Dark disk */}
-      <circle cx={cx} cy={cy} r={r} fill="var(--color-border)" />
-      {/* Lit area */}
+      <circle cx={cx} cy={cy} r={r} fill="var(--color-divider)" />
       <ellipse
         cx={cx + (isWaxing ? offset : -offset)}
         cy={cy}

@@ -8,7 +8,7 @@ import { useUnits } from '../contexts/UnitsContext';
 import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } from '../lib/units';
 import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
-import styles from './LoggFangst.module.css';
+import { cn } from '@/lib/utils';
 
 const SPECIES_GROUPS = [
   {
@@ -91,20 +91,27 @@ export function LoggFangst({ user }: Props) {
 
   if (step === 'success') {
     return (
-      <div className={styles.success}>
-        <div className={styles.successIcon}>
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="flex flex-col items-center justify-center h-full px-6 py-8 gap-2.5 text-center">
+        <div className="w-16 h-16 bg-success/10 border-2 border-success rounded-full flex items-center justify-center mb-2">
+          <svg className="w-8 h-8 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <polyline points="9 12 11 14 15 10" />
           </svg>
         </div>
-        <h2>{t('log.saved')}</h2>
-        <p className={styles.successSpecies}>{t(`speciesNames.${species}`, { defaultValue: species })}</p>
-        {weight && <p className={styles.successMeta}>{weight} {weightUnitLabel(prefs.weight)}{length ? ` · ${length} ${lengthUnitLabel(prefs.length)}` : ''}</p>}
-        <p className={styles.successSync}>
+        <h2 className="text-[1.4rem] font-bold">{t('log.saved')}</h2>
+        <p className="text-[1.1rem] font-semibold text-accent">{t(`speciesNames.${species}`, { defaultValue: species })}</p>
+        {weight && (
+          <p className="text-[0.9rem] text-text-muted">
+            {weight} {weightUnitLabel(prefs.weight)}{length ? ` · ${length} ${lengthUnitLabel(prefs.length)}` : ''}
+          </p>
+        )}
+        <p className="text-xs text-text-muted mb-4">
           {geoStatus === 'ok' ? t('log.gpsRecorded') : t('log.noGps')}
         </p>
-        <button className={styles.btnPrimary} onClick={reset}>
+        <button
+          onClick={reset}
+          className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-accent/80"
+        >
           {t('log.logNew')}
         </button>
       </div>
@@ -112,32 +119,51 @@ export function LoggFangst({ user }: Props) {
   }
 
   if (step === 'details') {
+    const gpsColors: Record<string, string> = {
+      ok:         'text-success border-success',
+      acquiring:  'text-warning border-warning',
+    };
+    const gpsRowCls = cn(
+      'flex items-center gap-2 text-[0.8rem] px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-surface border shrink-0',
+      gpsColors[geoStatus] ?? 'text-text-muted border-divider',
+    );
+
     return (
-      <div className={styles.page}>
-        <button className={styles.back} onClick={() => setStep('species')}>
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
+        <button
+          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 shrink-0 hover:text-text transition-colors duration-150"
+          onClick={() => setStep('species')}
+        >
+          <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           {t('log.back')}
         </button>
 
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
+        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden flex flex-col flex-1">
+          <div className="px-5 py-4 border-b border-divider">
             <SpeciesCardHeader
               name={species}
               action={
-                <button className={styles.changeBtn} onClick={() => setStep('species')}>{t('log.change')}</button>
+                <button
+                  className="bg-transparent text-accent text-[0.8rem] p-0"
+                  onClick={() => setStep('species')}
+                >
+                  {t('log.change')}
+                </button>
               }
             />
           </div>
 
-          <div className={styles.cardBody}>
-            <div className={styles.fields}>
-              <label className={styles.fieldGroup}>
-                <span className={styles.fieldLabel}>{t('log.weight')} <span className={styles.unitHint}>({weightUnitLabel(prefs.weight)})</span></span>
+          <div className="px-5 py-5 flex flex-col gap-4 flex-1">
+            <div className="flex flex-col gap-3 shrink-0">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
+                  {t('log.weight')} <span className="font-normal normal-case tracking-normal">({weightUnitLabel(prefs.weight)})</span>
+                </span>
                 <input
                   ref={weightRef}
-                  className={styles.input}
+                  className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[1.2rem] font-semibold px-4 py-3.5 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-divider placeholder:font-normal"
                   type="number"
                   inputMode="decimal"
                   placeholder="0.0"
@@ -148,10 +174,12 @@ export function LoggFangst({ user }: Props) {
                 />
               </label>
 
-              <label className={styles.fieldGroup}>
-                <span className={styles.fieldLabel}>{t('log.length')} <span className={styles.unitHint}>({lengthUnitLabel(prefs.length)})</span></span>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
+                  {t('log.length')} <span className="font-normal normal-case tracking-normal">({lengthUnitLabel(prefs.length)})</span>
+                </span>
                 <input
-                  className={styles.input}
+                  className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[1.2rem] font-semibold px-4 py-3.5 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-divider placeholder:font-normal"
                   type="number"
                   inputMode="decimal"
                   placeholder="0"
@@ -163,13 +191,13 @@ export function LoggFangst({ user }: Props) {
               </label>
             </div>
 
-            <div className={`${styles.gpsRow} ${styles[`gps_${geoStatus}`]}`}>
+            <div className={gpsRowCls}>
               <GpsIcon status={geoStatus} />
               <GpsLabel status={geoStatus} accuracy={position?.accuracy_m} />
             </div>
 
             <button
-              className={styles.btnPrimary}
+              className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-[background,opacity] duration-150 shrink-0 mt-auto disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent/80"
               onClick={handleSave}
               disabled={saving}
             >
@@ -182,15 +210,18 @@ export function LoggFangst({ user }: Props) {
   }
 
   return (
-    <div className={styles.page}>
-      <h2 className={styles.title}>{t('log.whichSpecies')}</h2>
+    <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
+      <h2 className="text-[1.25rem] font-bold tracking-tight shrink-0">{t('log.whichSpecies')}</h2>
 
-      <div className={styles.searchWrap}>
-        <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="relative shrink-0">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
-          className={styles.search}
+          className="w-full bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] py-2.5 pl-[38px] pr-3 outline-none transition-colors duration-150 focus:border-accent placeholder:text-text-muted"
           type="text"
           placeholder={t('log.searchPlaceholder')}
           value={query}
@@ -199,18 +230,22 @@ export function LoggFangst({ user }: Props) {
         />
       </div>
 
-      <div className={styles.grid}>
+      <div className="grid grid-cols-2 gap-2 flex-1">
         {isSearching ? (
           <>
             {(filtered ?? []).map((name) => (
-              <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
-                <FishSvg name={name} className={styles.speciesFish} />
+              <button
+                key={name}
+                className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.85rem] font-semibold pt-2.5 pb-3 px-2 text-center flex flex-col items-center gap-1.5 transition-[border-color,background,transform] duration-150 leading-tight hover:border-accent hover:bg-bg active:scale-[0.96]"
+                onClick={() => selectSpecies(name)}
+              >
+                <FishSvg name={name} className="w-full h-14 text-text-muted" />
                 <span>{t(`speciesNames.${name}`, { defaultValue: name })}</span>
               </button>
             ))}
             {(filtered ?? []).length === 0 && (
               <button
-                className={`${styles.speciesBtn} ${styles.customSpecies}`}
+                className="col-span-2 bg-surface border border-dashed border-accent rounded-[var(--radius-md)] text-accent text-[0.85rem] font-semibold pt-2.5 pb-3 px-2 text-center flex flex-col items-center gap-1.5 transition-colors duration-150 leading-tight"
                 onClick={() => selectSpecies(query.trim())}
               >
                 {t('log.addCustom', { name: query.trim() })}
@@ -220,10 +255,16 @@ export function LoggFangst({ user }: Props) {
         ) : (
           SPECIES_GROUPS.map((group) => (
             <React.Fragment key={group.labelKey}>
-              <span className={styles.groupLabel}>{t(group.labelKey)}</span>
+              <span className="col-span-2 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted pt-1 pb-0.5 mt-1">
+                {t(group.labelKey)}
+              </span>
               {group.names.map((name) => (
-                <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
-                  <FishSvg name={name} className={styles.speciesFish} />
+                <button
+                  key={name}
+                  className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.85rem] font-semibold pt-2.5 pb-3 px-2 text-center flex flex-col items-center gap-1.5 transition-[border-color,background,transform] duration-150 leading-tight hover:border-accent hover:bg-bg active:scale-[0.96]"
+                  onClick={() => selectSpecies(name)}
+                >
+                  <FishSvg name={name} className="w-full h-14 text-text-muted" />
                   <span>{t(`speciesNames.${name}`, { defaultValue: name })}</span>
                 </button>
               ))}
@@ -237,7 +278,7 @@ export function LoggFangst({ user }: Props) {
 
 function GpsIcon({ status }: { status: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       {status === 'ok' ? (
         <>
           <circle cx="12" cy="12" r="3" />

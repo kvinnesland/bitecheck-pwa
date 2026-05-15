@@ -57,6 +57,20 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   SHARED ANIMATIONS
+───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes slideModal {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    BASE STYLES
 ───────────────────────────────────────────────────────────────────────────── */
 
