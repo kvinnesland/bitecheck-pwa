@@ -330,7 +330,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
           )}
 
           <button className={styles.logBtn} onClick={onNavigateToLog}>
-            {t('log.logSpecies', { name: score.name })}
+            {t('log.logSpecies', { name: t(`speciesNames.${score.name}`, { defaultValue: score.name }) })}
           </button>
         </div>
       </div>

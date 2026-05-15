@@ -163,6 +163,29 @@
     "language": "Språk",
     "signOut": "Logg ut"
   },
+  "speciesNames": {
+    "Torsk": "Torsk",
+    "Kveite": "Kveite",
+    "Sei": "Sei",
+    "Hyse": "Hyse",
+    "Lange": "Lange",
+    "Brosme": "Brosme",
+    "Uer": "Uer",
+    "Steinbit": "Steinbit",
+    "Makrell": "Makrell",
+    "Rødspette": "Rødspette",
+    "Lomre": "Lomre",
+    "Sandflyndre": "Sandflyndre",
+    "Sild": "Sild",
+    "Laks": "Laks",
+    "Sjøørret": "Sjøørret",
+    "Sjørøye": "Sjørøye",
+    "Ørret": "Ørret",
+    "Røye": "Røye",
+    "Abbor": "Abbor",
+    "Gjedde": "Gjedde",
+    "Harr": "Harr"
+  },
   "speciesInfo": {
     "Torsk": {
       "description": "Torsken er Norges viktigste matfisk og finnes langs hele kysten. Den er mest aktiv når trykket faller, noe som utløser beiteatferd i stimer. Beste fiske skjer i kaldt vann mellom 4 og 8 °C, særlig på dypt vann om vinteren.",

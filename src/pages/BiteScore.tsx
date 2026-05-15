@@ -282,6 +282,7 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
   const { t } = useTranslation();
   const pct   = Math.round(score.score * 100);
   const color = score.outOfSeason ? 'var(--color-warning)' : scoreColor(score.score);
+  const displayName = t(`speciesNames.${score.name}`, { defaultValue: score.name });
 
   return (
     <div className={styles.speciesCard} onClick={onClick} style={{ cursor: 'pointer' }}>
@@ -289,7 +290,7 @@ function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: numb
       <div className={styles.speciesBody}>
         <div className={styles.speciesTop}>
           <span className={styles.speciesName}>
-            {score.name}
+            {displayName}
             {score.method && (
               <span className={styles.methodTag}>{score.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}</span>
             )}

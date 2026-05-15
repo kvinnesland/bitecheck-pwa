@@ -49,7 +49,10 @@ export function LoggFangst({ user }: Props) {
   const searchQuery = query.trim().toLowerCase();
   const isSearching = searchQuery.length > 0;
   const filtered = isSearching
-    ? ALL_SPECIES.filter((s) => s.toLowerCase().includes(searchQuery))
+    ? ALL_SPECIES.filter((s) =>
+        s.toLowerCase().includes(searchQuery) ||
+        t(`speciesNames.${s}`, { defaultValue: s }).toLowerCase().includes(searchQuery),
+      )
     : null;
 
   function selectSpecies(name: string) {
@@ -93,7 +96,7 @@ export function LoggFangst({ user }: Props) {
           </svg>
         </div>
         <h2>{t('log.saved')}</h2>
-        <p className={styles.successSpecies}>{species}</p>
+        <p className={styles.successSpecies}>{t(`speciesNames.${species}`, { defaultValue: species })}</p>
         {weight && <p className={styles.successMeta}>{weight} kg{length ? ` · ${length} cm` : ''}</p>}
         <p className={styles.successSync}>
           {geoStatus === 'ok' ? t('log.gpsRecorded') : t('log.noGps')}
@@ -199,7 +202,7 @@ export function LoggFangst({ user }: Props) {
             {(filtered ?? []).map((name) => (
               <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
                 <FishSvg name={name} className={styles.speciesFish} />
-                <span>{name}</span>
+                <span>{t(`speciesNames.${name}`, { defaultValue: name })}</span>
               </button>
             ))}
             {(filtered ?? []).length === 0 && (
@@ -218,7 +221,7 @@ export function LoggFangst({ user }: Props) {
               {group.names.map((name) => (
                 <button key={name} className={styles.speciesBtn} onClick={() => selectSpecies(name)}>
                   <FishSvg name={name} className={styles.speciesFish} />
-                  <span>{name}</span>
+                  <span>{t(`speciesNames.${name}`, { defaultValue: name })}</span>
                 </button>
               ))}
             </React.Fragment>

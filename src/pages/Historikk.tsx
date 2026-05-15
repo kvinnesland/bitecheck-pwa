@@ -189,7 +189,7 @@ function CatchRow({
         onClick={() => offset === 0 && onEdit()}
       >
         <div className={styles.rowLeft}>
-          <span className={styles.species}>{record.species.name}</span>
+          <span className={styles.species}>{t(`speciesNames.${record.species.name}`, { defaultValue: record.species.name })}</span>
           <span className={styles.meta}>
             {[
               record.species.weight_kg != null && `${record.species.weight_kg} kg`,

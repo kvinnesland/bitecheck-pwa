@@ -163,6 +163,29 @@
     "language": "Language",
     "signOut": "Sign out"
   },
+  "speciesNames": {
+    "Torsk": "Cod",
+    "Kveite": "Halibut",
+    "Sei": "Coalfish",
+    "Hyse": "Haddock",
+    "Lange": "Ling",
+    "Brosme": "Cusk",
+    "Uer": "Redfish",
+    "Steinbit": "Wolffish",
+    "Makrell": "Mackerel",
+    "Rødspette": "Plaice",
+    "Lomre": "Witch flounder",
+    "Sandflyndre": "Dab",
+    "Sild": "Herring",
+    "Laks": "Salmon",
+    "Sjøørret": "Sea trout",
+    "Sjørøye": "Arctic char",
+    "Ørret": "Brown trout",
+    "Røye": "Arctic char",
+    "Abbor": "Perch",
+    "Gjedde": "Pike",
+    "Harr": "Grayling"
+  },
   "speciesInfo": {
     "Torsk": {
       "description": "Atlantic cod is Norway's most important food fish, found along the entire coast. It is most active when pressure is falling, which triggers feeding behavior in schools. Best fishing occurs in cold water between 4 and 8 °C, particularly in deep water during winter.",
