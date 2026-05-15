@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SpeciesScore } from '../../lib/biteScore';
 import type { CatchRecord } from '../../types';
-import { SPECIES_INFO } from '../../lib/speciesInfo';
+import { KNOWN_SPECIES } from '../../lib/speciesInfo';
 import { SpeciesCardHeader } from './SpeciesCardHeader';
 import styles from './SpeciesSheet.module.css';
 
@@ -76,6 +76,8 @@ const DISMISS_THRESHOLD = 80;
 export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigateToLog }: Props) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language.startsWith('nb') ? 'nb-NO' : 'en-US';
+  const hasInfo = KNOWN_SPECIES.has(score.name);
+  const k = `speciesInfo.${score.name}` as const;
 
   function scoreTimeLabel(dt: Date): string {
     const now = new Date();
@@ -87,9 +89,13 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
     return dt.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
-  const info = SPECIES_INFO[score.name];
   const pct = Math.round(score.score * 100);
   const color = scoreColor(score.score);
+
+  const agn = hasInfo ? t(`${k}.agn`, { returnObjects: true }) as string[] : [];
+  const sluk = hasInfo ? t(`${k}.sluk`, { returnObjects: true }) as string[] : [];
+  const fargetips = hasInfo ? t(`${k}.fargetips`) : '';
+  const bestTide = hasInfo ? t(`${k}.bestTide`) : '';
 
   const [visible, setVisible] = useState(false);
   const [dragY, setDragY] = useState(0);
@@ -165,7 +171,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
               </div>
 
               <div className={styles.subScoreRow}>
-                <span>{info?.primaryDriver ?? t('species.primaryDriver')}</span>
+                <span>{hasInfo ? t(`${k}.primaryDriver`) : t('species.primaryDriver')}</span>
                 <span>{Math.round(score.primary * 100)}%</span>
               </div>
               <div className={styles.barTrack}>
@@ -176,7 +182,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
               </div>
 
               <div className={styles.subScoreRow}>
-                <span>{info?.secondaryDriver ?? t('species.secondaryDriver')}</span>
+                <span>{hasInfo ? t(`${k}.secondaryDriver`) : t('species.secondaryDriver')}</span>
                 <span>{Math.round(score.secondary * 100)}%</span>
               </div>
               <div className={styles.barTrack}>
@@ -192,56 +198,56 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
             </div>
           </section>
 
-          {info && (
+          {hasInfo && (
             <section>
               <h3 className={styles.sectionTitle}>{t('species.bestConditions')}</h3>
               <div className={styles.conditionRows}>
                 <div className={styles.bestRow}>
                   <ThermoIcon />
                   <span className={styles.bestLabel}>{t('species.temperature')}</span>
-                  <span>{info.tempLabel}</span>
+                  <span>{t(`${k}.tempLabel`)}</span>
                 </div>
                 <div className={styles.bestRow}>
                   <PressureIcon />
                   <span className={styles.bestLabel}>{t('species.pressure')}</span>
-                  <span>{info.bestPressure}</span>
+                  <span>{t(`${k}.bestPressure`)}</span>
                 </div>
                 <div className={styles.bestRow}>
                   <LightIcon />
                   <span className={styles.bestLabel}>{t('species.light')}</span>
-                  <span>{info.bestLight}</span>
+                  <span>{t(`${k}.bestLight`)}</span>
                 </div>
-                {info.bestTide !== '—' && (
+                {bestTide !== '—' && (
                   <div className={styles.bestRow}>
                     <TideIcon />
                     <span className={styles.bestLabel}>{t('species.tide')}</span>
-                    <span>{info.bestTide}</span>
+                    <span>{bestTide}</span>
                   </div>
                 )}
                 <div className={styles.seasonRow}>
                   <CalendarIcon />
-                  <span>{info.season}</span>
+                  <span>{t(`${k}.season`)}</span>
                 </div>
               </div>
             </section>
           )}
 
-          {info && (info.agn.length > 0 || info.sluk.length > 0) && (
+          {hasInfo && (agn.length > 0 || sluk.length > 0) && (
             <section>
               <h3 className={styles.sectionTitle}>{t('species.baitAndLures')}</h3>
-              {info.agn.length > 0 && (
+              {agn.length > 0 && (
                 <div className={styles.chipGroup}>
                   <span className={styles.chipGroupLabel}>{t('species.naturalBait')}</span>
                   <div className={styles.chips}>
-                    {info.agn.map((a) => <span key={a} className={styles.chip}>{a}</span>)}
+                    {agn.map((a) => <span key={a} className={styles.chip}>{a}</span>)}
                   </div>
                 </div>
               )}
-              {info.sluk.length > 0 && (
+              {sluk.length > 0 && (
                 <div className={styles.chipGroup}>
                   <span className={styles.chipGroupLabel}>{t('species.lures')}</span>
                   <div className={styles.chips}>
-                    {info.sluk.map((s) => <span key={s} className={`${styles.chip} ${styles.chipSluk}`}>{s}</span>)}
+                    {sluk.map((s) => <span key={s} className={`${styles.chip} ${styles.chipSluk}`}>{s}</span>)}
                   </div>
                 </div>
               )}
@@ -250,9 +256,9 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                   <circle cx="7" cy="7" r="6" />
                   <path d="M7 5v4M7 3.5v.5" />
                 </svg>
-                <span>{info.teknikktips}</span>
+                <span>{t(`${k}.teknikktips`)}</span>
               </div>
-              {info.fargetips && (
+              {fargetips && (
                 <div className={styles.tipsRow}>
                   <svg className={styles.tipsIcon} viewBox="0 0 14 14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="7" cy="7" r="5" />
@@ -261,13 +267,13 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                     <circle cx="9.5" cy="5" r="1" fill="currentColor" stroke="none" />
                     <circle cx="7" cy="10" r="1" fill="currentColor" stroke="none" />
                   </svg>
-                  <span className={styles.fargetips}>{info.fargetips}</span>
+                  <span className={styles.fargetips}>{fargetips}</span>
                 </div>
               )}
             </section>
           )}
 
-          {info && (
+          {hasInfo && (
             <section>
               <h3 className={styles.sectionTitle}>{t('species.catchTips')}</h3>
               <div className={styles.catchTipsRow}>
@@ -278,7 +284,7 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                 </svg>
                 <div>
                   <span className={styles.catchTipsLabel}>{t('species.fromShore')}</span>
-                  <p className={styles.catchTipsText}>{info.fraLandTips}</p>
+                  <p className={styles.catchTipsText}>{t(`${k}.fraLandTips`)}</p>
                 </div>
               </div>
               <div className={styles.catchTipsRow}>
@@ -289,16 +295,16 @@ export function SpeciesSheet({ score, datetime, userCatches, onClose, onNavigate
                 </svg>
                 <div>
                   <span className={styles.catchTipsLabel}>{t('species.fromBoat')}</span>
-                  <p className={styles.catchTipsText}>{info.fraBåtTips}</p>
+                  <p className={styles.catchTipsText}>{t(`${k}.fraBåtTips`)}</p>
                 </div>
               </div>
             </section>
           )}
 
-          {info && (
+          {hasInfo && (
             <section>
               <h3 className={styles.sectionTitle}>{t('species.about')}</h3>
-              <p className={styles.description}>{info.description}</p>
+              <p className={styles.description}>{t(`${k}.description`)}</p>
             </section>
           )}
 
