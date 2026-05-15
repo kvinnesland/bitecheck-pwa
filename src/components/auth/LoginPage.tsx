@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import styles from './LoginPage.module.css';
+import { cn } from '@/lib/utils';
 
 interface LoginPageProps {
   onSignIn: () => void;
@@ -10,9 +10,12 @@ interface LoginPageProps {
 export function LoginPage({ onSignIn, error, loading }: LoginPageProps) {
   const { t } = useTranslation();
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.logo}>
+    <div
+      className="min-h-[100dvh] flex items-center justify-center p-6"
+      style={{ background: 'radial-gradient(ellipse at top, #0a2540 0%, #001529 60%)' }}
+    >
+      <div className="bg-surface border border-divider rounded-[var(--radius-lg)] py-12 px-10 w-full max-w-sm flex flex-col items-center gap-4 shadow-lg">
+        <div className="mb-2">
           <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden="true">
             <circle cx="28" cy="28" r="28" fill="#0a2540" />
             <path
@@ -27,22 +30,33 @@ export function LoginPage({ onSignIn, error, loading }: LoginPageProps) {
           </svg>
         </div>
 
-        <h1 className={styles.title}>BiteCheck</h1>
-        <p className={styles.subtitle}>{t('auth.subtitle')}</p>
+        <h1 className="text-[2rem] font-bold tracking-tight text-text font-display">BiteCheck</h1>
+        <p className="text-[0.95rem] text-text-muted text-center mb-2">{t('auth.subtitle')}</p>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p className="bg-error/10 border border-error rounded-[var(--radius-sm)] px-3.5 py-2.5 text-sm text-error w-full text-center">
+            {error}
+          </p>
+        )}
 
         <button
-          className={styles.googleBtn}
           onClick={onSignIn}
           disabled={loading}
           aria-label={t('auth.signIn')}
+          className={cn(
+            'flex items-center justify-center gap-3 mt-2 w-full',
+            'bg-white text-gray-800 text-[0.95rem] font-medium',
+            'py-3 px-6 rounded-[var(--radius-md)]',
+            'transition-colors duration-150',
+            'hover:bg-slate-100 hover:shadow-md',
+            'disabled:opacity-60 disabled:cursor-not-allowed',
+          )}
         >
           <GoogleIcon />
           <span>{loading ? t('auth.signingIn') : t('auth.signIn')}</span>
         </button>
 
-        <p className={styles.legal}>{t('auth.gdpr')}</p>
+        <p className="text-xs text-text-muted text-center leading-relaxed mt-2">{t('auth.gdpr')}</p>
       </div>
     </div>
   );
