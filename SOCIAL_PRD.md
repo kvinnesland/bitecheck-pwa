@@ -117,6 +117,12 @@ Existing fields kept. New fields:
 ```
 
 > **Photos:** Each catch supports 0–10 photos stored in Firebase Storage at `catches/{catchId}/{filename}`. Photos can be added at log time (camera capture) or after the fact (camera roll). Requires Firebase Blaze plan — `photoRefs` is written as `[]` until Storage is enabled. The UI shows a photo add button that is visible but shows an "upgrade required" message until Blaze is active. This ensures the data model is in place before Storage is enabled.
+>
+> **Photo caching strategy (implement at upload time):**
+> 1. **CDN cache header** — set `Cache-Control: public, max-age=31536000` on every upload. Firebase Storage serves via Google's CDN; this header makes the CDN cache the image for a year so repeat requests are served from edge at zero egress cost.
+> 2. **Browser cache** — automatic once the CDN header is set. Same photo opened twice costs nothing after the first load.
+> 3. **Service worker cache** — add a Workbox `CacheFirst` runtime strategy on `firebasestorage.googleapis.com` in `vite.config.ts`. Photos then work offline and survive app restarts without re-downloading.
+> 4. **Compress on upload** — resize to max 1080px on the long edge, JPEG at 80% quality before uploading. Reduces a typical phone photo from 3–5 MB to 200–400 KB, cutting egress cost by ~10×.
 
 ### 3.6 `trips/{tripId}/reactions/{userId}`
 
