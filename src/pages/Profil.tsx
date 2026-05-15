@@ -10,7 +10,7 @@ import type { CatchRecord } from '../types';
 interface Props { user: User; }
 
 // Replace with a real image path (e.g. '/images/banner-default.jpg') once the asset is added to public/
-const BANNER_SRC: string | null = null;
+const BANNER_SRC: string | null = '/banner-default.jpg';
 
 function computeStats(catches: CatchRecord[]) {
   const active = catches.filter(c => !c.deleted);
