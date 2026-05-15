@@ -158,6 +158,11 @@
     "available": "New version available",
     "update": "Update"
   },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "signOut": "Sign out"
+  },
   "speciesInfo": {
     "Torsk": {
       "description": "Atlantic cod is Norway's most important food fish, found along the entire coast. It is most active when pressure is falling, which triggers feeding behavior in schools. Best fishing occurs in cold water between 4 and 8 °C, particularly in deep water during winter.",

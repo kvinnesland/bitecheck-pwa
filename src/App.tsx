@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { LoginPage } from './components/auth/LoginPage';
 import { AppShell } from './components/layout/AppShell';
 import { UpdateToast } from './components/common/UpdateToast';
+import { LanguagePicker } from './components/onboarding/LanguagePicker';
 import { LoggFangst } from './pages/LoggFangst';
 import { Kart } from './pages/Kart';
 import { BiteScore } from './pages/BiteScore';
@@ -10,11 +12,25 @@ import type { AppView } from './components/layout/BottomNav';
 
 export default function App() {
   const { user, loading, error, signInWithGoogle, signOutUser } = useAuth();
+  const [onboardingDone, setOnboardingDone] = useState(
+    () => localStorage.getItem('bc_onboarding') === '1',
+  );
 
   if (loading) return <LoadingScreen />;
 
   if (!user) {
     return <LoginPage onSignIn={signInWithGoogle} error={error} />;
+  }
+
+  if (!onboardingDone) {
+    return (
+      <LanguagePicker
+        onDone={() => {
+          localStorage.setItem('bc_onboarding', '1');
+          setOnboardingDone(true);
+        }}
+      />
+    );
   }
 
   return (

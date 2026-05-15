@@ -158,6 +158,11 @@
     "available": "Ny versjon tilgjengelig",
     "update": "Oppdater"
   },
+  "settings": {
+    "title": "Innstillinger",
+    "language": "Språk",
+    "signOut": "Logg ut"
+  },
   "speciesInfo": {
     "Torsk": {
       "description": "Torsken er Norges viktigste matfisk og finnes langs hele kysten. Den er mest aktiv når trykket faller, noe som utløser beiteatferd i stimer. Beste fiske skjer i kaldt vann mellom 4 og 8 °C, særlig på dypt vann om vinteren.",
