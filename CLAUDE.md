@@ -45,7 +45,7 @@ Ingen CI/CD — alt deployes manuelt. Firebase-prosjekt: `fishing-projects`. URL
 - Gyteområder: Fiskeridirektoratet WMS (`gyteomraader`) — sjø, sesongrestriksjoner
 - Ingen dedikert "fiskeforbudt"-lag finnes nasjonalt — verneområder + gyteområder er beste tilnærming
 
-**Bundle-størrelse** — produksjonsbuilden er ~1,7 MB (482 KB gzipped). Vite advarer om chunk-størrelse. Ikke kritisk, men code-splitting med dynamic `import()` bør vurderes på sikt.
+**Bundle-størrelse** — code-splitting implementert med `React.lazy`. Første last er ~230 KB gzipped (main bundle + logg-chunk). MapLibre (273 KB gz) lastes kun ved første besøk på Score- eller Kart-fanen. Eneste gjenværende store chunk er `maplibre-gl.js` (~1 MB / 273 KB gz) — kan ikke splittes videre.
 
 ## Nøkkelfiler
 - `src/lib/biteScore.ts` — all scoringslogikk + `SPECIES_DEFS` (enkelt sannhetskilde for alle arter). Eksporterer `SPECIES_WATER` map.
@@ -116,5 +116,5 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 ### Ideer ikke startet
 - Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)
 - Push-varslinger når solunarperiode starter (krever Notification API + service worker-integrasjon)
-- Code-splitting av bundle (1,7 MB → dynamisk import av tunge libs som MapLibre, SunCalc)
+- ~~Code-splitting av bundle~~ — gjort. React.lazy på alle sider.
 - Kartside: vurder å vise bitesjanse-heatmap for brukerens posisjon direkte på kartet
