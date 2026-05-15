@@ -72,6 +72,6 @@ function PageSpinner() {
 
 function Spinner() {
   return (
-    <div style={{ width: 36, height: 36, border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    <div style={{ width: 36, height: 36, border: '3px solid var(--color-divider)', borderTopColor: 'var(--color-accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
   );
 }
