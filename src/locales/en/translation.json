@@ -1,11 +1,30 @@
 {
   "nav": {
+    "feed": "Feed",
     "log": "Log",
     "map": "Map",
     "score": "Score",
     "history": "History",
     "profile": "Profile",
     "ariaLabel": "Main navigation"
+  },
+  "feed": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "angler": "Angler",
+    "recentUpdates": "Recent updates",
+    "empty": "No catches yet — be the first to log one!",
+    "weather": {
+      "clear": "Clear sky",
+      "cloudy": "Partly cloudy",
+      "fog": "Fog",
+      "rain": "Rain",
+      "snow": "Snow",
+      "showers": "Rain showers",
+      "storm": "Thunderstorm",
+      "unknown": "—"
+    }
   },
   "conditions": {
     "title": "Conditions",

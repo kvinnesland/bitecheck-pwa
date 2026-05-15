@@ -1,11 +1,30 @@
 {
   "nav": {
+    "feed": "Feed",
     "log": "Logg",
     "map": "Kart",
     "score": "Score",
     "history": "Historikk",
     "profile": "Profil",
     "ariaLabel": "Hovednavigasjon"
+  },
+  "feed": {
+    "morning": "God morgen",
+    "afternoon": "God ettermiddag",
+    "evening": "God kveld",
+    "angler": "Fisker",
+    "recentUpdates": "Siste oppdateringer",
+    "empty": "Ingen fangster ennå — bli den første til å logge!",
+    "weather": {
+      "clear": "Klart",
+      "cloudy": "Delvis skyet",
+      "fog": "Tåke",
+      "rain": "Regn",
+      "snow": "Snø",
+      "showers": "Regnbyger",
+      "storm": "Tordenvær",
+      "unknown": "—"
+    }
   },
   "conditions": {
     "title": "Miljøforhold",

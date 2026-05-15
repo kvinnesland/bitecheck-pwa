@@ -14,12 +14,12 @@ interface AppShellProps {
 
 export function AppShell({ user, onSignOut, children }: AppShellProps) {
   const { t } = useTranslation();
-  const [view, setView] = useState<AppView>('logg');
+  const [view, setView] = useState<AppView>('feed');
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden">
-      {view !== 'profil' && (
+      {view !== 'profil' && view !== 'feed' && (
         <header
           className="bg-surface border-b border-divider shrink-0 z-[100]"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
