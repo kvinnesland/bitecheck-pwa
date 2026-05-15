@@ -2,8 +2,9 @@
   "nav": {
     "log": "Log",
     "map": "Map",
-    "biteScore": "Bite Score",
+    "score": "Score",
     "history": "History",
+    "profile": "Profile",
     "ariaLabel": "Main navigation"
   },
   "conditions": {
@@ -153,6 +154,16 @@
     "myCatches": "My catches ({{count}})",
     "saltwater": "Saltwater",
     "freshwater": "Freshwater"
+  },
+  "profile": {
+    "title": "Profile",
+    "catches": "Catches",
+    "species": "Species",
+    "personalBest": "Personal best",
+    "noRecord": "No record yet",
+    "monthlyTrend": "Last 6 months",
+    "topSpecies": "Top species",
+    "emptyHint": "Start logging catches to see your stats"
   },
   "update": {
     "available": "New version available",

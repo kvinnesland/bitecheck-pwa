@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Plus, Map, Activity, BookOpen } from 'lucide-react';
+import { Plus, Map, Activity, BookOpen, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AppView = 'logg' | 'kart' | 'score' | 'historikk';
+export type AppView = 'logg' | 'kart' | 'score' | 'historikk' | 'profil';
 
 interface Props {
   active: AppView;
@@ -10,10 +10,11 @@ interface Props {
 }
 
 const NAV_ITEMS = [
-  { view: 'logg'      as const, labelKey: 'nav.log',       Icon: Plus     },
-  { view: 'kart'      as const, labelKey: 'nav.map',       Icon: Map      },
-  { view: 'score'     as const, labelKey: 'nav.biteScore', Icon: Activity },
-  { view: 'historikk' as const, labelKey: 'nav.history',   Icon: BookOpen },
+  { view: 'logg'      as const, labelKey: 'nav.log',      Icon: Plus     },
+  { view: 'kart'      as const, labelKey: 'nav.map',      Icon: Map      },
+  { view: 'score'     as const, labelKey: 'nav.score',    Icon: Activity },
+  { view: 'historikk' as const, labelKey: 'nav.history',  Icon: BookOpen },
+  { view: 'profil'    as const, labelKey: 'nav.profile',  Icon: User     },
 ] as const;
 
 export function BottomNav({ active, onChange }: Props) {

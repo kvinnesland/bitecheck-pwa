@@ -11,6 +11,7 @@ const LoggFangst = lazy(() => import('./pages/LoggFangst').then((m) => ({ defaul
 const Kart       = lazy(() => import('./pages/Kart').then((m) => ({ default: m.Kart })));
 const BiteScore  = lazy(() => import('./pages/BiteScore').then((m) => ({ default: m.BiteScore })));
 const Historikk  = lazy(() => import('./pages/Historikk').then((m) => ({ default: m.Historikk })));
+const Profil     = lazy(() => import('./pages/Profil').then((m) => ({ default: m.Profil })));
 
 export default function App() {
   const { user, loading, error, signInWithGoogle, signOutUser } = useAuth();
@@ -44,6 +45,7 @@ export default function App() {
             {view === 'kart'      && <Kart user={user} />}
             {view === 'score'     && <BiteScore user={user} navigate={navigate} />}
             {view === 'historikk' && <Historikk user={user} />}
+            {view === 'profil'    && <Profil user={user} />}
           </Suspense>
         )}
       </AppShell>

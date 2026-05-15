@@ -2,8 +2,9 @@
   "nav": {
     "log": "Logg",
     "map": "Kart",
-    "biteScore": "Bite Score",
+    "score": "Score",
     "history": "Historikk",
+    "profile": "Profil",
     "ariaLabel": "Hovednavigasjon"
   },
   "conditions": {
@@ -153,6 +154,16 @@
     "myCatches": "Mine fangster ({{count}})",
     "saltwater": "Saltvann",
     "freshwater": "Ferskvann"
+  },
+  "profile": {
+    "title": "Profil",
+    "catches": "Fangster",
+    "species": "Arter",
+    "personalBest": "Personlig rekord",
+    "noRecord": "Ingen rekord ennå",
+    "monthlyTrend": "Siste 6 måneder",
+    "topSpecies": "Topp arter",
+    "emptyHint": "Begynn å logge fangster for å se statistikken din"
   },
   "update": {
     "available": "Ny versjon tilgjengelig",
