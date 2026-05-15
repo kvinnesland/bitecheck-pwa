@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useUnits } from '../../contexts/UnitsContext';
+import { useTheme } from '../../hooks/useTheme';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -47,6 +48,7 @@ export function SettingsSheet({ user, onClose, onSignOut }: Props) {
   const { t, i18n } = useTranslation();
   const activeLang = i18n.language.startsWith('nb') ? 'nb' : 'en';
   const { prefs, update } = useUnits();
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[1200] flex items-end" onClick={onClose}>
@@ -65,6 +67,29 @@ export function SettingsSheet({ user, onClose, onSignOut }: Props) {
               onChange={(code) => i18n.changeLanguage(code)}
               label={(v) => LANGS.find((l) => l.code === v)?.label ?? v}
             />
+          </div>
+        </div>
+
+        <div className="px-5 py-4 border-b border-divider">
+          <div className="text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-text-muted mb-2.5">
+            {t('settings.appearance')}
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[0.95rem] text-text">{t('settings.darkMode')}</span>
+            <button
+              role="switch"
+              aria-checked={isDark}
+              onClick={toggleTheme}
+              className={cn(
+                'relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0',
+                isDark ? 'bg-accent' : 'bg-divider',
+              )}
+            >
+              <span className={cn(
+                'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200',
+                isDark && 'translate-x-5',
+              )} />
+            </button>
           </div>
         </div>
 

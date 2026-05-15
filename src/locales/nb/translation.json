@@ -172,6 +172,8 @@
   "settings": {
     "title": "Innstillinger",
     "language": "Språk",
+    "appearance": "Utseende",
+    "darkMode": "Mørk modus",
     "units": "Enheter",
     "weight": "Vekt",
     "length": "Lengde",

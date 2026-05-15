@@ -114,7 +114,8 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Ideer ikke startet
-- **Profilside** — Strava-inspirert. Avatar + navn, totalfangst, antall arter, personlig rekord, fangst-trendkurve per måned, topp-arter. Åpent spørsmål: kun personlig statistikk, eller sosiale funksjoner (følge andre fiskere, leaderboard)? Sosiale funksjoner krever at Firestore privacy-regler fikses først. Bilder krever Firebase Blaze-plan.
+- **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
+- **Utstyrsliste (gear)** — mulighet til å logge hvilket utstyr som ble brukt per fangst (stang, sluk, agn, snøre). Åpne spørsmål: fri tekst vs. forhåndsdefinerte kategorier? Lagres i CatchRecord (nytt felt, krever migreringsstrategi) eller separat? Nyttig for å koble utstyr mot fangstresultat over tid.
 - Legg til flere ferskvannsarter (abbor er geografisk begrenset til Østlandet, vurder brasme, lake, suter)
 - Push-varslinger når solunarperiode starter (krever Notification API + service worker-integrasjon)
 - ~~Code-splitting av bundle~~ — gjort. React.lazy på alle sider.

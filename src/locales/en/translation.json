@@ -172,6 +172,8 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "appearance": "Appearance",
+    "darkMode": "Dark mode",
     "units": "Units",
     "weight": "Weight",
     "length": "Length",
