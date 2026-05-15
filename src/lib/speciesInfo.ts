@@ -18,7 +18,7 @@ export interface SpeciesInfo {
 
 export const SPECIES_INFO: Record<string, SpeciesInfo> = {
   Torsk: {
-    description: 'Torsken er Norges viktigste matfisk og finnes langs hele kysten. Den er mest aktiv når trykket faller, noe som utløser beiteatferd i stimer. Beste fiske skjer i kaldt vann mellom 4 og 8 °C, særlig på dypt vann om vinteren.',
+    description: 'Torsken er Norges viktigste matfisk og finnes langs hele kysten. Den er mest aktiv når trykket faller, noe som utløser beiteatferd i stimer. Beste fiske skjer i kaldt vann mellom 4 og 8 °C, særlig på dypt vann om vinteren. 🐟 Test-oppdatering v2.',
     tempRange: [4, 8], tempLabel: '4–8 °C', bestPressure: 'Fallende', bestLight: 'Lavt lys', bestTide: 'Stigende',
     season: 'Finnes langs hele kysten året rundt. Biter best januar–mars under gytevandringen når torsken samler seg på grunne banker.',
     primaryDriver: 'Lufttrykk', secondaryDriver: 'Vanntemperatur',
