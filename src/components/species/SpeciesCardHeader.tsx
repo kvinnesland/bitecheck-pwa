@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { SPECIES_WATER } from '../../lib/biteScore';
+import { SPECIES_WATER } from '../../lib/speciesInfo';
 import { FishSvg } from './FishSvg';
 import styles from './SpeciesCardHeader.module.css';
 
