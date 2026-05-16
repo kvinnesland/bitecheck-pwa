@@ -1,5 +1,22 @@
 export type SyncStatus = 'pending' | 'synced' | 'failed';
 
+export type LocationPref = 'exact' | 'approximate' | 'hidden';
+
+export interface UserProfile {
+  uid: string;
+  username: string;
+  displayName: string;
+  photoURL: string | null;
+  mainLocation: string;
+  memberSince: string;       // ISO string, converted from Firestore Timestamp on read
+  isPrivate: boolean;
+  locationPref: LocationPref;
+  followersCount: number;
+  followingCount: number;
+  catchCount: number;
+  speciesCount: number;
+}
+
 export type CurrentStrength = 'stille' | 'moderat' | 'sterk' | 'sterkest';
 
 export type PressureTrend =
@@ -56,9 +73,3 @@ export interface PublicCatchRecord {
   species: Pick<CatchSpecies, 'name'>;
 }
 
-export interface UserProfile {
-  uid: string;
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-}

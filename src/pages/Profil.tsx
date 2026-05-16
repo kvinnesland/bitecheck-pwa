@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings } from 'lucide-react';
+import { Settings, Pencil, X } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { updateUserProfile } from '../lib/userProfile';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { cn } from '@/lib/utils';
-import type { CatchRecord } from '../types';
+import type { CatchRecord, LocationPref } from '../types';
 
 interface Props {
   user: User;
@@ -56,9 +58,38 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const { t } = useTranslation();
   const { prefs } = useUnits();
   const catches = useUserCatches(user.uid);
+  const { profile } = useUserProfile(user.uid);
   const stats = useMemo(() => computeStats(catches), [catches]);
 
-  const initials = (user.displayName ?? user.email ?? '?')
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<{ displayName: string; mainLocation: string; isPrivate: boolean; locationPref: LocationPref }>({
+    displayName: '', mainLocation: '', isPrivate: false, locationPref: 'approximate',
+  });
+  const [saving, setSaving] = useState(false);
+
+  function startEdit() {
+    setDraft({
+      displayName: profile?.displayName ?? user.displayName ?? '',
+      mainLocation: profile?.mainLocation ?? '',
+      isPrivate: profile?.isPrivate ?? false,
+      locationPref: profile?.locationPref ?? 'approximate',
+    });
+    setEditing(true);
+  }
+
+  async function saveEdit() {
+    setSaving(true);
+    try {
+      await updateUserProfile(user.uid, draft);
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  }
+
+  const displayName = profile?.displayName ?? user.displayName ?? '';
+
+  const initials = (displayName || user.email || '?')
     .split(' ')
     .map(w => w[0])
     .slice(0, 2)
@@ -146,15 +177,107 @@ export function Profil({ user, onSettingsOpen }: Props) {
       {/* ── Profile body ──────────────────────────────────────────── */}
       <div className="px-5 pb-8 space-y-4" style={{ paddingTop: 40 }}>
 
-        {/* Name + email */}
-        <div>
-          <h1 className="text-[1.35rem] font-bold text-text leading-tight tracking-tight">
-            {user.displayName ?? t('profile.title')}
-          </h1>
-          {user.email && (
-            <p className="text-sm text-text-muted mt-0.5">{user.email}</p>
+        {/* Name + username + edit */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[1.35rem] font-bold text-text leading-tight tracking-tight">
+              {displayName || t('profile.title')}
+            </h1>
+            {profile?.username && (
+              <p className="text-sm text-text-muted mt-0.5">@{profile.username}</p>
+            )}
+          </div>
+          {!editing && (
+            <button
+              onClick={startEdit}
+              aria-label={t('profileEdit.edit')}
+              className="mt-1 w-8 h-8 flex items-center justify-center rounded-full bg-surface border border-divider text-text-muted"
+            >
+              <Pencil size={14} strokeWidth={1.75} />
+            </button>
           )}
         </div>
+
+        {/* Edit card */}
+        {editing && (
+          <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-widest text-text-muted">{t('profileEdit.title')}</span>
+              <button onClick={() => setEditing(false)} className="text-text-muted">
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Display name */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-muted">{t('profileEdit.displayName')}</label>
+              <input
+                className="w-full bg-bg border border-divider rounded-[var(--radius-md)] text-text text-sm px-3 py-2 outline-none focus:border-accent"
+                value={draft.displayName}
+                onChange={(e) => setDraft(d => ({ ...d, displayName: e.target.value }))}
+              />
+            </div>
+
+            {/* Main location */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-muted">{t('profileEdit.location')}</label>
+              <input
+                className="w-full bg-bg border border-divider rounded-[var(--radius-md)] text-text text-sm px-3 py-2 outline-none focus:border-accent"
+                placeholder={t('profileEdit.locationPlaceholder')}
+                value={draft.mainLocation}
+                onChange={(e) => setDraft(d => ({ ...d, mainLocation: e.target.value }))}
+              />
+            </div>
+
+            {/* Private account */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-text">{t('profileEdit.privateAccount')}</span>
+              <button
+                role="switch"
+                aria-checked={draft.isPrivate}
+                onClick={() => setDraft(d => ({ ...d, isPrivate: !d.isPrivate }))}
+                className={cn(
+                  'relative w-11 h-6 rounded-full transition-colors duration-200',
+                  draft.isPrivate ? 'bg-accent' : 'bg-divider',
+                )}
+              >
+                <span className={cn(
+                  'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200',
+                  draft.isPrivate ? 'translate-x-5' : 'translate-x-0',
+                )} />
+              </button>
+            </div>
+
+            {/* Location precision */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs text-text-muted">{t('profileEdit.locationPref')}</span>
+              <div className="flex gap-2">
+                {(['exact', 'approximate', 'hidden'] as LocationPref[]).map((pref) => (
+                  <button
+                    key={pref}
+                    onClick={() => setDraft(d => ({ ...d, locationPref: pref }))}
+                    className={cn(
+                      'flex-1 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-150',
+                      draft.locationPref === pref
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-bg text-text-muted border-divider',
+                    )}
+                  >
+                    {t(`log.location${pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={saveEdit}
+              disabled={saving}
+              className="w-full bg-accent text-white text-sm font-semibold py-2.5 rounded-[var(--radius-md)] disabled:opacity-40"
+            >
+              {saving ? t('profileEdit.saving') : t('profileEdit.save')}
+            </button>
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="flex items-start gap-5">

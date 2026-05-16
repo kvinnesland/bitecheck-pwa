@@ -1,11 +1,14 @@
 import { useState, lazy, Suspense } from 'react';
 import { useAuth } from './hooks/useAuth';
+import { useUserProfile } from './hooks/useUserProfile';
 import { LoginPage } from './components/auth/LoginPage';
 import { AppShell } from './components/layout/AppShell';
 import { UpdateToast } from './components/common/UpdateToast';
 import { LanguagePicker } from './components/onboarding/LanguagePicker';
+import { UsernameModal } from './components/onboarding/UsernameModal';
 import { UnitsProvider } from './contexts/UnitsContext';
 import type { AppView } from './components/layout/BottomNav';
+import type { User } from 'firebase/auth';
 
 const Feed       = lazy(() => import('./pages/Feed').then((m) => ({ default: m.Feed })));
 const LoggFangst = lazy(() => import('./pages/LoggFangst').then((m) => ({ default: m.LoggFangst })));
@@ -38,7 +41,21 @@ export default function App() {
 
   return (
     <UnitsProvider>
-      <AppShell user={user} onSignOut={signOutUser}>
+      <AuthenticatedApp user={user} onSignOut={signOutUser} />
+      <UpdateToast />
+    </UnitsProvider>
+  );
+}
+
+function AuthenticatedApp({ user, onSignOut }: { user: User; onSignOut: () => void }) {
+  const { profile, loading } = useUserProfile(user.uid);
+
+  if (loading) return <LoadingScreen />;
+  if (!profile) return <UsernameModal user={user} />;
+
+  return (
+    <>
+      <AppShell user={user} onSignOut={onSignOut}>
         {(view: AppView, navigate: (v: AppView) => void, openSettings: () => void) => (
           <Suspense fallback={<PageSpinner />}>
             {view === 'feed'   && <Feed user={user} onSettingsOpen={openSettings} />}
@@ -49,8 +66,7 @@ export default function App() {
           </Suspense>
         )}
       </AppShell>
-      <UpdateToast />
-    </UnitsProvider>
+    </>
   );
 }
 

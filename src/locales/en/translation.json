@@ -191,6 +191,32 @@
     "topSpecies": "Top species",
     "emptyHint": "Start logging catches to see your stats"
   },
+  "profileEdit": {
+    "edit": "Edit profile",
+    "title": "Edit profile",
+    "displayName": "Display name",
+    "location": "Home waters",
+    "locationPlaceholder": "e.g. Oslo Fjord",
+    "privateAccount": "Private account",
+    "locationPref": "Default catch location",
+    "save": "Save",
+    "saving": "Saving…"
+  },
+  "username": {
+    "title": "Choose a username",
+    "subtitle": "This is how other anglers will find you.",
+    "placeholder": "username",
+    "hint": "3–20 characters: a–z, 0–9, underscore",
+    "checking": "Checking…",
+    "available": "@{{username}} is available",
+    "taken": "That username is taken",
+    "tooShort": "At least 3 characters",
+    "tooLong": "Max 20 characters",
+    "invalid": "Only a–z, 0–9 and _ allowed",
+    "confirm": "Confirm",
+    "claiming": "Claiming…",
+    "error": "Something went wrong — please try again"
+  },
   "update": {
     "available": "New version available",
     "update": "Update"

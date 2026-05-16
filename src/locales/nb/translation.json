@@ -191,6 +191,32 @@
     "topSpecies": "Topp arter",
     "emptyHint": "Begynn å logge fangster for å se statistikken din"
   },
+  "profileEdit": {
+    "edit": "Rediger profil",
+    "title": "Rediger profil",
+    "displayName": "Visningsnavn",
+    "location": "Hjemmefarvann",
+    "locationPlaceholder": "f.eks. Oslofjorden",
+    "privateAccount": "Privat konto",
+    "locationPref": "Standard posisjonsvisning",
+    "save": "Lagre",
+    "saving": "Lagrer…"
+  },
+  "username": {
+    "title": "Velg brukernavn",
+    "subtitle": "Slik finner andre fiskere deg.",
+    "placeholder": "brukernavn",
+    "hint": "3–20 tegn: a–z, 0–9, understrek",
+    "checking": "Sjekker…",
+    "available": "@{{username}} er ledig",
+    "taken": "Det brukernavnet er tatt",
+    "tooShort": "Minst 3 tegn",
+    "tooLong": "Maks 20 tegn",
+    "invalid": "Kun a–z, 0–9 og _ er tillatt",
+    "confirm": "Bekreft",
+    "claiming": "Lagrer…",
+    "error": "Noe gikk galt — prøv igjen"
+  },
   "update": {
     "available": "Ny versjon tilgjengelig",
     "update": "Oppdater"
