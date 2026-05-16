@@ -90,7 +90,9 @@ function DemoSection() {
             <div key={p.id} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[0.9rem] text-text truncate">{p.name}</p>
-                <p className="text-[11px] text-text-muted">{p.posts.length} posts</p>
+                <p className="text-[11px] text-text-muted">
+                  {p.trips.length} trips · {p.trips.reduce((n, t) => n + t.catches.filter(c => !c.isMoment).length, 0)} catches
+                </p>
               </div>
               <button
                 onClick={() => toggle(p.id)}
