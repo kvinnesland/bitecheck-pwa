@@ -84,6 +84,17 @@ export function LoggFangst({ user }: Props) {
     }
   }, []);
 
+  // Pre-fill title/notes/waterType from an existing open trip (runs once when trip loads).
+  const tripLoaded = activeTrip !== 'loading';
+  useEffect(() => {
+    if (typeof activeTrip === 'object' && activeTrip !== null && !titleEdited) {
+      if (activeTrip.title) { setTripTitle(activeTrip.title); setTitleEdited(true); }
+      if (activeTrip.note) setNotes(activeTrip.note);
+      if (activeTrip.waterType) setWaterType(activeTrip.waterType);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripLoaded]);
+
   const searchQuery = query.trim().toLowerCase();
   const isSearching = searchQuery.length > 0;
   const displayedSpecies = isSearching
@@ -329,17 +340,6 @@ export function LoggFangst({ user }: Props) {
   }
 
   // ─── Trip (step 1) ────────────────────────────────────────────────────────────
-
-  // When an existing open trip loads, pre-fill title/notes from it (once).
-  const tripLoaded = activeTrip !== 'loading';
-  useEffect(() => {
-    if (typeof activeTrip === 'object' && activeTrip !== null && !titleEdited) {
-      if (activeTrip.title) { setTripTitle(activeTrip.title); setTitleEdited(true); }
-      if (activeTrip.note) setNotes(activeTrip.note);
-      if (activeTrip.waterType) setWaterType(activeTrip.waterType);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tripLoaded]);
 
   const zoom = LOCATION_ZOOM[locationPref];
 
