@@ -51,7 +51,7 @@ export async function claimUsername(
 
 export async function updateUserProfile(
   uid: string,
-  updates: Partial<Pick<UserProfile, 'displayName' | 'mainLocation' | 'isPrivate' | 'locationPref'>>,
+  updates: Partial<Pick<UserProfile, 'displayName' | 'mainLocation' | 'isPrivate' | 'locationPref' | 'biome'>>,
 ): Promise<void> {
   await setDoc(doc(db, 'users', uid), updates, { merge: true });
   if (updates.locationPref) {

@@ -1,4 +1,15 @@
 {
+  "biome": {
+    "label": "Biome",
+    "chooseBiome": "Choose biome",
+    "arctic_salt": "Arctic Saltwater",
+    "arctic_fresh": "Arctic Freshwater",
+    "ice": "Ice Fishing",
+    "tropical_fresh": "Tropical Freshwater",
+    "tropical_salt": "Tropical Saltwater",
+    "temperate_fresh": "Temperate Freshwater",
+    "temperate_salt": "Temperate Saltwater"
+  },
   "nav": {
     "feed": "Feed",
     "log": "Log",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Trip, LocationPref, TripVisibility, WaterType, CatchLocation } from '../types';
+import type { Trip, LocationPref, TripVisibility, WaterType, CatchLocation, Biome } from '../types';
 
 export function tripFromDoc(d: Record<string, unknown>): Trip {
   return {
@@ -19,6 +19,7 @@ export function tripFromDoc(d: Record<string, unknown>): Trip {
     catchCount: (d.catchCount as number) ?? 0,
     species: (d.species as string[]) ?? [],
     waterType: (d.waterType as WaterType) ?? 'salt',
+    biome: (d.biome as Biome | undefined) ?? undefined,
   };
 }
 

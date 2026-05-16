@@ -3,15 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useReverseGeocode } from '../hooks/useReverseGeocode';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { createCatch } from '../lib/catches';
 import { startTrip, addCatchToTrip, closeTrip, fetchOpenTrip } from '../lib/trips';
+import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { useUnits } from '../contexts/UnitsContext';
 import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } from '../lib/units';
 import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import { cn } from '@/lib/utils';
-import type { Trip } from '../types';
+import type { Trip, Biome } from '../types';
 
 const TripMapSnippet = React.lazy(() => import('../components/TripMapSnippet'));
 
@@ -39,10 +41,13 @@ export function LoggFangst({ user }: Props) {
   const { t, i18n } = useTranslation();
   const { prefs } = useUnits();
   const { status: geoStatus, position } = useGeolocation();
+  const { profile } = useUserProfile(user.uid);
   const weightRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>('trip');
   const [activeTrip, setActiveTrip] = useState<TripState>('loading');
+  const [biome, setBiome] = useState<Biome>(DEFAULT_BIOME);
+  const [biomeEdited, setBiomeEdited] = useState(false);
 
   const [locationPref, setLocationPref] = useState<LocationPref>(
     () => (localStorage.getItem('bc_location_pref') as LocationPref) ?? 'approximate',
@@ -85,16 +90,25 @@ export function LoggFangst({ user }: Props) {
     }
   }, []);
 
-  // Pre-fill title/notes/waterType from an existing open trip (runs once when trip loads).
+  // Pre-fill title/notes/waterType/biome from an existing open trip (runs once when trip loads).
   const tripLoaded = activeTrip !== 'loading';
   useEffect(() => {
     if (typeof activeTrip === 'object' && activeTrip !== null && !titleEdited) {
       if (activeTrip.title) { setTripTitle(activeTrip.title); setTitleEdited(true); }
       if (activeTrip.note) setNotes(activeTrip.note);
       if (activeTrip.waterType) setWaterType(activeTrip.waterType);
+      if (activeTrip.biome) { setBiome(activeTrip.biome); setBiomeEdited(true); }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripLoaded]);
+
+  // Set default biome from profile when it loads (unless user already changed it).
+  useEffect(() => {
+    if (profile?.biome && !biomeEdited) {
+      setBiome(profile.biome);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.biome]);
 
   const searchQuery = query.trim().toLowerCase();
   const isSearching = searchQuery.length > 0;
@@ -132,6 +146,7 @@ export function LoggFangst({ user }: Props) {
           firstSpecies: species,
           waterType,
           visibility: 'everyone',
+          biome,
         });
         setActiveTrip({
           tripId,
@@ -148,6 +163,7 @@ export function LoggFangst({ user }: Props) {
           catchCount: 1,
           species: [species],
           waterType,
+          biome,
         });
       }
 
@@ -184,6 +200,8 @@ export function LoggFangst({ user }: Props) {
     setNotes('');
     setCaption('');
     setTitleEdited(false);
+    setBiomeEdited(false);
+    setBiome(profile?.biome ?? DEFAULT_BIOME);
   }
 
   async function handleSaveMoment() {
@@ -207,6 +225,7 @@ export function LoggFangst({ user }: Props) {
           firstSpecies: '',
           waterType,
           visibility: 'everyone',
+          biome,
         });
         setActiveTrip({
           tripId,
@@ -223,6 +242,7 @@ export function LoggFangst({ user }: Props) {
           catchCount: 1,
           species: [],
           waterType,
+          biome,
         });
       }
 
@@ -546,6 +566,35 @@ export function LoggFangst({ user }: Props) {
               {t(wt === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
             </button>
           ))}
+        </div>
+
+        {/* Biome picker */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+          {BIOMES.map(b => {
+            const def = getBiome(b.id);
+            const selected = biome === b.id;
+            return (
+              <button
+                key={b.id}
+                onClick={() => { setBiome(b.id); setBiomeEdited(true); }}
+                className="flex flex-col items-center gap-1 shrink-0"
+              >
+                <div
+                  className={cn(
+                    'w-10 h-10 rounded-lg overflow-hidden transition-all duration-150 relative',
+                    selected ? 'ring-2 ring-accent ring-offset-1' : 'opacity-60',
+                  )}
+                  style={{ background: def.gradient }}
+                />
+                <span className={cn(
+                  'text-[9px] text-center w-10 leading-tight',
+                  selected ? 'text-accent font-semibold' : 'text-text-muted',
+                )}>
+                  {t(`biome.${b.id}`)}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Search */}

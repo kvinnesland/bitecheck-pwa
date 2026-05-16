@@ -7,6 +7,7 @@ import { useUserCatches } from '../hooks/useUserCatches';
 import { useUserPublicTrips } from '../hooks/useUserPublicTrips';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
+import { getBiome } from '../lib/biomes';
 import { TripCard } from '../components/social/TripCard';
 import { cn } from '@/lib/utils';
 import type { CatchRecord, Trip } from '../types';
@@ -18,7 +19,6 @@ interface Props {
   onTripClick: (trip: Trip) => void;
 }
 
-const BANNER_SRC: string | null = '/banner-default.jpg';
 
 function computeStats(catches: CatchRecord[]) {
   const active = catches.filter(c => !c.deleted);
@@ -110,14 +110,20 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick }: Pro
 
       {/* Hero banner */}
       <div className="relative" style={{ height: 220 }}>
-        {BANNER_SRC ? (
-          <img src={BANNER_SRC} className="absolute inset-0 w-full h-full object-cover" alt="" />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(150deg, #0c2330 0%, #1a4a5e 45%, #2d7a8a 80%, #3a9aaa 100%)' }}
-          />
-        )}
+        {(() => {
+          const def = getBiome(profile?.biome);
+          return (
+            <>
+              <div className="absolute inset-0" style={{ background: def.gradient }} />
+              <img
+                src={def.image}
+                className="absolute inset-0 w-full h-full object-cover"
+                alt=""
+                onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+              />
+            </>
+          );
+        })()}
 
         {/* Back button */}
         <button

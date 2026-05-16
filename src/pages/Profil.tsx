@@ -7,16 +7,15 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { updateUserProfile } from '../lib/userProfile';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
+import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
 import { cn } from '@/lib/utils';
-import type { CatchRecord, LocationPref } from '../types';
+import type { CatchRecord, LocationPref, Biome } from '../types';
 
 interface Props {
   user: User;
   onSettingsOpen: () => void;
 }
 
-// Replace with real path once asset is in public/
-const BANNER_SRC: string | null = '/banner-default.jpg';
 
 function computeStats(catches: CatchRecord[]) {
   const active = catches.filter(c => !c.deleted);
@@ -62,8 +61,8 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const stats = useMemo(() => computeStats(catches), [catches]);
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<{ displayName: string; mainLocation: string; isPrivate: boolean; locationPref: LocationPref }>({
-    displayName: '', mainLocation: '', isPrivate: false, locationPref: 'approximate',
+  const [draft, setDraft] = useState<{ displayName: string; mainLocation: string; isPrivate: boolean; locationPref: LocationPref; biome: Biome }>({
+    displayName: '', mainLocation: '', isPrivate: false, locationPref: 'approximate', biome: DEFAULT_BIOME,
   });
   const [saving, setSaving] = useState(false);
 
@@ -73,6 +72,7 @@ export function Profil({ user, onSettingsOpen }: Props) {
       mainLocation: profile?.mainLocation ?? '',
       isPrivate: profile?.isPrivate ?? false,
       locationPref: profile?.locationPref ?? 'approximate',
+      biome: profile?.biome ?? DEFAULT_BIOME,
     });
     setEditing(true);
   }
@@ -114,19 +114,21 @@ export function Profil({ user, onSettingsOpen }: Props) {
       ──────────────────────────────────────────────────────────── */}
       <div className="relative" style={{ height: 220 }}>
 
-        {/* Banner image / fallback gradient */}
-        {BANNER_SRC ? (
-          <img
-            src={BANNER_SRC}
-            className="absolute inset-0 w-full h-full object-cover"
-            alt=""
-          />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(150deg, #0c2330 0%, #1a4a5e 45%, #2d7a8a 80%, #3a9aaa 100%)' }}
-          />
-        )}
+        {/* Biome banner */}
+        {(() => {
+          const def = getBiome(profile?.biome);
+          return (
+            <>
+              <div className="absolute inset-0" style={{ background: def.gradient }} />
+              <img
+                src={def.image}
+                className="absolute inset-0 w-full h-full object-cover"
+                alt=""
+                onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+              />
+            </>
+          );
+        })()}
 
         {/* Settings button — top-right, respects status bar */}
         <button
@@ -264,6 +266,31 @@ export function Profil({ user, onSettingsOpen }: Props) {
                     )}
                   >
                     {t(`log.location${pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Biome picker */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs text-text-muted">{t('biome.label')}</span>
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {BIOMES.map(b => (
+                  <button
+                    key={b.id}
+                    onClick={() => setDraft(d => ({ ...d, biome: b.id }))}
+                    className="flex flex-col items-center gap-1 shrink-0"
+                  >
+                    <div
+                      className={cn(
+                        'w-11 h-11 rounded-lg transition-all duration-150 overflow-hidden',
+                        draft.biome === b.id ? 'ring-2 ring-accent ring-offset-1' : 'opacity-70',
+                      )}
+                      style={{ background: b.gradient }}
+                    />
+                    <span className="text-[9px] text-text-muted text-center w-11 leading-tight line-clamp-2">
+                      {t(`biome.${b.id}`)}
+                    </span>
                   </button>
                 ))}
               </div>

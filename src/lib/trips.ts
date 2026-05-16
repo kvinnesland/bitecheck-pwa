@@ -4,7 +4,7 @@ import {
   increment, arrayUnion, serverTimestamp, Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Trip, LocationPref, TripVisibility, WaterType, CatchLocation } from '../types';
+import type { Trip, LocationPref, TripVisibility, WaterType, CatchLocation, Biome } from '../types';
 
 export function startTrip(params: {
   uid: string;
@@ -16,6 +16,7 @@ export function startTrip(params: {
   firstSpecies: string;
   waterType: WaterType;
   visibility: TripVisibility;
+  biome?: Biome;
 }): string {
   const tripId = crypto.randomUUID();
   setDoc(doc(db, 'trips', tripId), {
@@ -33,6 +34,7 @@ export function startTrip(params: {
     catchCount: 1,
     species: [params.firstSpecies],
     waterType: params.waterType,
+    ...(params.biome && { biome: params.biome }),
   }).catch(() => {});
   return tripId;
 }
@@ -81,5 +83,6 @@ export async function fetchOpenTrip(uid: string): Promise<Trip | null> {
     catchCount: (d.catchCount as number) ?? 0,
     species: (d.species as string[]) ?? [],
     waterType: (d.waterType as WaterType) ?? 'salt',
+    biome: (d.biome as Biome | undefined) ?? undefined,
   };
 }

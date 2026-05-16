@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { MapPin } from 'lucide-react';
+import { getBiome } from '../../lib/biomes';
 import type { Trip } from '../../types';
 
 interface Props {
@@ -55,31 +56,55 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
       className="w-full bg-surface rounded-[var(--radius-md)] border border-divider overflow-hidden text-left transition-colors duration-150 active:bg-surface/70 cursor-pointer"
     >
-      {/* Header row */}
-      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
-        {onAvatarClick ? (
-          <button
-            onClick={e => { e.stopPropagation(); onAvatarClick(); }}
-            className="shrink-0 rounded-full"
-            aria-label={displayName}
-          >
+      {/* Header row — biome image/gradient strip */}
+      <div className="relative flex items-center gap-2.5 px-4 pt-3.5 pb-2.5 overflow-hidden">
+        {/* Biome background */}
+        {(() => {
+          const def = getBiome(trip.biome);
+          return (
+            <>
+              <div className="absolute inset-0" style={{ background: def.gradient }} />
+              <img
+                src={def.image}
+                className="absolute inset-0 w-full h-full object-cover"
+                alt=""
+                onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+              />
+              {/* Scrim so text reads cleanly over any photo */}
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.18) 100%)' }}
+              />
+            </>
+          );
+        })()}
+
+        {/* Content sits above the background */}
+        <div className="relative flex items-center gap-2.5 w-full">
+          {onAvatarClick ? (
+            <button
+              onClick={e => { e.stopPropagation(); onAvatarClick(); }}
+              className="shrink-0 rounded-full"
+              aria-label={displayName}
+            >
+              <Avatar displayName={displayName} photoUrl={photoUrl} />
+            </button>
+          ) : (
             <Avatar displayName={displayName} photoUrl={photoUrl} />
-          </button>
-        ) : (
-          <Avatar displayName={displayName} photoUrl={photoUrl} />
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text leading-tight truncate">
-            {isOwn ? t('feed.you') : displayName}
-          </p>
-          {trip.approximateLocationName && (
-            <p className="flex items-center gap-1 text-[11px] text-text-muted leading-tight mt-0.5">
-              <MapPin size={10} strokeWidth={2} />
-              {trip.approximateLocationName}
-            </p>
           )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white leading-tight truncate drop-shadow-sm">
+              {isOwn ? t('feed.you') : displayName}
+            </p>
+            {trip.approximateLocationName && (
+              <p className="flex items-center gap-1 text-[11px] text-white/75 leading-tight mt-0.5">
+                <MapPin size={10} strokeWidth={2} />
+                {trip.approximateLocationName}
+              </p>
+            )}
+          </div>
+          <span className="text-[11px] text-white/70 shrink-0">{timeAgo(trip.startedAt, locale)}</span>
         </div>
-        <span className="text-[11px] text-text-muted shrink-0">{timeAgo(trip.startedAt, locale)}</span>
       </div>
 
       {/* Body */}

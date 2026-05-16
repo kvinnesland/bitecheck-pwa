@@ -2,6 +2,15 @@ export type SyncStatus = 'pending' | 'synced' | 'failed';
 
 export type LocationPref = 'exact' | 'approximate' | 'hidden';
 
+export type Biome =
+  | 'arctic_salt'
+  | 'arctic_fresh'
+  | 'ice'
+  | 'tropical_fresh'
+  | 'tropical_salt'
+  | 'temperate_fresh'
+  | 'temperate_salt';
+
 export type TripVisibility = 'everyone' | 'followers' | 'only_me';
 export type WaterType = 'salt' | 'fresh';
 
@@ -20,6 +29,7 @@ export interface Trip {
   catchCount: number;
   species: string[];
   waterType: WaterType;
+  biome?: Biome;
 }
 
 export interface UserProfile {
@@ -31,6 +41,7 @@ export interface UserProfile {
   memberSince: string;       // ISO string, converted from Firestore Timestamp on read
   isPrivate: boolean;
   locationPref: LocationPref;
+  biome?: Biome;
   followersCount: number;
   followingCount: number;
   catchCount: number;

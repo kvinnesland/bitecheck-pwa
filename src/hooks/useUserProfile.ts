@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { UserProfile, LocationPref } from '../types';
+import type { UserProfile, LocationPref, Biome } from '../types';
 
 export function useUserProfile(uid: string): { profile: UserProfile | null; loading: boolean } {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -20,6 +20,7 @@ export function useUserProfile(uid: string): { profile: UserProfile | null; load
           memberSince: d.memberSince?.toDate?.()?.toISOString() ?? new Date().toISOString(),
           isPrivate: (d.isPrivate as boolean) ?? false,
           locationPref: ((d.locationPref as LocationPref) ?? 'approximate'),
+          biome: (d.biome as Biome | undefined) ?? undefined,
           followersCount: (d.followersCount as number) ?? 0,
           followingCount: (d.followingCount as number) ?? 0,
           catchCount: (d.catchCount as number) ?? 0,

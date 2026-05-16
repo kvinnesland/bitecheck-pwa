@@ -1,4 +1,15 @@
 {
+  "biome": {
+    "label": "Biom",
+    "chooseBiome": "Velg biom",
+    "arctic_salt": "Arktisk saltvann",
+    "arctic_fresh": "Arktisk ferskvann",
+    "ice": "Isfiske",
+    "tropical_fresh": "Tropisk ferskvann",
+    "tropical_salt": "Tropisk saltvann",
+    "temperate_fresh": "Temperert ferskvann",
+    "temperate_salt": "Temperert saltvann"
+  },
   "nav": {
     "feed": "Feed",
     "log": "Logg",
