@@ -25,8 +25,8 @@ type WaterType = 'salt' | 'fresh';
 type LocationPref = 'exact' | 'approximate' | 'hidden';
 
 const LOCATION_ZOOM: Record<LocationPref, number> = {
-  exact: 14,
-  approximate: 10,
+  exact: 12,
+  approximate: 9,
   hidden: 0,
 };
 
