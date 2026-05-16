@@ -125,17 +125,18 @@ export function LoggFangst({ user }: Props) {
     : (waterType === 'salt' ? SALT_SPECIES : FRESH_SPECIES);
 
   function selectSpecies(name: string) {
+    if (!tripLoaded) return;
     setSpecies(name);
     setStep('details');
     setTimeout(() => weightRef.current?.focus(), 100);
   }
 
   async function handleSave() {
-    if (!species) return;
+    if (!species || !tripLoaded) return;
     setSaving(true);
     try {
       let tripId: string;
-      const existingTrip = activeTrip !== 'loading' ? activeTrip : null;
+      const existingTrip = activeTrip; // tripLoaded guard above rules out 'loading'
 
       if (existingTrip) {
         tripId = existingTrip.tripId;
@@ -224,11 +225,11 @@ export function LoggFangst({ user }: Props) {
   }
 
   async function handleSaveMoment() {
-    if (!caption.trim()) return;
+    if (!caption.trim() || !tripLoaded) return;
     setSaving(true);
     try {
       let tripId: string;
-      const existingTrip = activeTrip !== 'loading' ? activeTrip : null;
+      const existingTrip = activeTrip; // tripLoaded guard above rules out 'loading'
 
       if (existingTrip) {
         tripId = existingTrip.tripId;
@@ -587,7 +588,17 @@ export function LoggFangst({ user }: Props) {
         </div>
       </div>
 
-      {/* Active trip indicator */}
+      {/* Active trip indicator / loading */}
+      {!tripLoaded && (
+        <div className="px-4 pt-3 shrink-0">
+          <div className="flex items-center gap-1.5 text-[0.72rem] text-text-muted">
+            <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+            {t('log.mapLoading')}
+          </div>
+        </div>
+      )}
       {typeof activeTrip === 'object' && activeTrip !== null && (
         <div className="px-4 pt-3 shrink-0">
           <div className="flex items-center gap-1.5 text-[0.72rem] text-accent font-semibold">
@@ -733,7 +744,8 @@ export function LoggFangst({ user }: Props) {
       <div className="px-4 pb-6">
         <button
           className="w-full flex items-center justify-center gap-2 text-text-muted text-sm py-3 border border-dashed border-divider rounded-[var(--radius-md)] hover:text-text hover:border-text-muted transition-colors duration-150"
-          onClick={() => setStep('moment')}
+          onClick={() => { if (tripLoaded) setStep('moment'); }}
+          disabled={!tripLoaded}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
