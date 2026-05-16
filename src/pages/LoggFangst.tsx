@@ -389,14 +389,14 @@ export function LoggFangst({ user }: Props) {
       acquiring: 'text-warning border-warning',
     };
     const gpsRowCls = cn(
-      'flex items-center gap-2 text-[0.8rem] px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-surface border shrink-0',
+      'flex items-center gap-2 text-[0.8rem] px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-surface border',
       gpsColors[geoStatus] ?? 'text-text-muted border-divider',
     );
 
     return (
-      <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
+      <div className="h-full overflow-y-auto px-4 py-5 pb-6 space-y-4">
         <button
-          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 shrink-0 hover:text-text transition-colors duration-150"
+          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 hover:text-text transition-colors duration-150"
           onClick={() => setStep('trip')}
         >
           <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -508,9 +508,9 @@ export function LoggFangst({ user }: Props) {
 
   if (step === 'moment') {
     return (
-      <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
+      <div className="h-full overflow-y-auto px-4 py-5 pb-6 space-y-4">
         <button
-          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 shrink-0 hover:text-text transition-colors duration-150"
+          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 hover:text-text transition-colors duration-150"
           onClick={() => setStep('trip')}
         >
           <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
