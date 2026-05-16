@@ -9,6 +9,7 @@ import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
 import { FollowListSheet } from '../components/social/FollowListSheet';
+import { useFollowCounts } from '../hooks/social/useFollowCounts';
 import { UserProfile } from './UserProfile';
 import { TripDetail } from './TripDetail';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,7 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const { profile } = useUserProfile(user.uid);
   const stats = useMemo(() => computeStats(catches), [catches]);
 
+  const { followersCount, followingCount } = useFollowCounts(user.uid);
   const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'own' }]);
   const [editing, setEditing] = useState(false);
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
@@ -357,7 +359,7 @@ export function Profil({ user, onSettingsOpen }: Props) {
             onClick={() => setFollowSheet('followers')}
           >
             <span className="text-2xl font-bold text-text leading-none">
-              {profile?.followersCount ?? 0}
+              {followersCount}
             </span>
             <span className="text-xs text-text-muted">{t('follow.followers')}</span>
           </button>
@@ -367,7 +369,7 @@ export function Profil({ user, onSettingsOpen }: Props) {
             onClick={() => setFollowSheet('following')}
           >
             <span className="text-2xl font-bold text-text leading-none">
-              {profile?.followingCount ?? 0}
+              {followingCount}
             </span>
             <span className="text-xs text-text-muted">{t('follow.following')}</span>
           </button>

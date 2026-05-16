@@ -63,7 +63,7 @@ function AuthenticatedApp({ user, onSignOut }: { user: User; onSignOut: () => vo
             {view === 'logg'    && <LoggFangst user={user} />}
             {view === 'kart'    && <Kart user={user} />}
             {view === 'score'   && <BiteScore user={user} navigate={navigate} />}
-            {view === 'varsler' && <Varsler uid={user.uid} onNavigate={navigate} />}
+            {view === 'varsler' && <Varsler uid={user.uid} currentUser={user} onNavigate={navigate} />}
             {view === 'profil'  && <Profil user={user} onSettingsOpen={openSettings} />}
           </Suspense>
         )}

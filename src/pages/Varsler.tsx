@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bell, UserPlus, UserCheck, MessageCircle, AtSign } from 'lucide-react';
+import type { User } from 'firebase/auth';
 import { useNotifications, type AppNotification } from '../hooks/useNotifications';
+import { UserProfile } from './UserProfile';
 import type { AppView } from '../components/layout/BottomNav';
+import type { Trip } from '../types';
 import { cn } from '@/lib/utils';
 
 interface Props {
   uid: string;
+  currentUser: User;
   onNavigate: (view: AppView) => void;
 }
 
@@ -121,19 +126,37 @@ function PushPermissionButton() {
   );
 }
 
-export function Varsler({ uid, onNavigate }: Props) {
+type NavEntry = { type: 'list' } | { type: 'profile'; uid: string };
+
+export function Varsler({ uid, currentUser, onNavigate }: Props) {
   const { t } = useTranslation();
   const { notifications, loading, markRead, markAllRead } = useNotifications(uid);
   const unreadCount = notifications.filter(n => !n.read).length;
+  const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'list' }]);
+  const currentView = navStack[navStack.length - 1];
+
+  const pushProfile = (targetUid: string) => setNavStack(s => [...s, { type: 'profile', uid: targetUid }]);
+  const pop = () => setNavStack(s => s.length > 1 ? s.slice(0, -1) : s);
 
   async function handleTap(n: AppNotification) {
     if (!n.read) await markRead(n.id).catch(() => {});
-    // Navigate to the relevant tab; full in-stack deep links require global nav (future)
     if (n.type === 'follow' || n.type === 'follow_request' || n.type === 'follow_accepted') {
-      onNavigate('profil');
+      pushProfile(n.fromUid);
     } else if (n.tripId) {
       onNavigate('feed');
     }
+  }
+
+  if (currentView.type === 'profile') {
+    return (
+      <UserProfile
+        targetUid={currentView.uid}
+        currentUser={currentUser}
+        onBack={pop}
+        onTripClick={(_trip: Trip) => onNavigate('feed')}
+        onUserClick={pushProfile}
+      />
+    );
   }
 
   return (
