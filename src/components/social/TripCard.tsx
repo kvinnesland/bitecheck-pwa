@@ -9,6 +9,7 @@ interface Props {
   isOwn: boolean;
   locale: string;
   onClick: () => void;
+  onAvatarClick?: () => void;
 }
 
 function timeAgo(isoString: string, locale: string): string {
@@ -42,7 +43,7 @@ function Avatar({ displayName, photoUrl }: { displayName: string; photoUrl: stri
   );
 }
 
-export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick }: Props) {
+export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, onAvatarClick }: Props) {
   const { t } = useTranslation();
   const isLive = trip.status === 'open';
 
@@ -53,7 +54,17 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick }
     >
       {/* Header row */}
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
-        <Avatar displayName={displayName} photoUrl={photoUrl} />
+        {onAvatarClick ? (
+          <button
+            onClick={e => { e.stopPropagation(); onAvatarClick(); }}
+            className="shrink-0 rounded-full"
+            aria-label={displayName}
+          >
+            <Avatar displayName={displayName} photoUrl={photoUrl} />
+          </button>
+        ) : (
+          <Avatar displayName={displayName} photoUrl={photoUrl} />
+        )}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-text leading-tight truncate">
             {isOwn ? t('feed.you') : displayName}

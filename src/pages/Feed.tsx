@@ -12,10 +12,16 @@ import { useFeedTrips } from '../hooks/useFeedTrips';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { TripCard } from '../components/social/TripCard';
 import { TripDetail } from './TripDetail';
+import { UserProfile } from './UserProfile';
 import { useUnits } from '../contexts/UnitsContext';
 import { celsiusToDisplay, tempUnitLabel } from '../lib/units';
 import { cn } from '@/lib/utils';
 import type { Trip } from '../types';
+
+type NavEntry =
+  | { type: 'feed' }
+  | { type: 'trip'; trip: Trip }
+  | { type: 'profile'; uid: string };
 
 interface Props {
   user: User;
@@ -50,7 +56,11 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
   const { prefs } = useUnits();
   const { position } = useGeolocation();
   const { profile } = useUserProfile(user.uid);
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'feed' }]);
+
+  const push = (entry: NavEntry) => setNavStack(s => [...s, entry]);
+  const pop = () => setNavStack(s => s.length > 1 ? s.slice(0, -1) : s);
+  const currentView = navStack[navStack.length - 1];
 
   const lat = position ? Math.round(position.lat * 100) / 100 : null;
   const lng = position ? Math.round(position.lng * 100) / 100 : null;
@@ -72,16 +82,28 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
 
   const displayName = profile?.displayName ?? user.displayName ?? user.email?.split('@')[0] ?? '';
 
-  // ── Trip detail drill-down ──────────────────────────────────────────────────
-  if (selectedTrip) {
+  // ── Trip detail ─────────────────────────────────────────────────────────────
+  if (currentView.type === 'trip') {
     return (
       <TripDetail
-        trip={selectedTrip}
-        isOwn={selectedTrip.uid === user.uid}
+        trip={currentView.trip}
+        isOwn={currentView.trip.uid === user.uid}
         displayName={displayName}
         photoUrl={user.photoURL}
-        onBack={() => setSelectedTrip(null)}
-        onAddCatch={() => { setSelectedTrip(null); onNavigate('logg'); }}
+        onBack={pop}
+        onAddCatch={() => { pop(); onNavigate('logg'); }}
+      />
+    );
+  }
+
+  // ── User profile ─────────────────────────────────────────────────────────────
+  if (currentView.type === 'profile') {
+    return (
+      <UserProfile
+        targetUid={currentView.uid}
+        currentUser={user}
+        onBack={pop}
+        onTripClick={trip => push({ type: 'trip', trip })}
       />
     );
   }
@@ -150,7 +172,8 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
               photoUrl={trip.uid === user.uid ? user.photoURL : null}
               isOwn={trip.uid === user.uid}
               locale={i18n.language}
-              onClick={() => setSelectedTrip(trip)}
+              onClick={() => push({ type: 'trip', trip })}
+              onAvatarClick={() => push({ type: 'profile', uid: trip.uid })}
             />
           ))
         )}
