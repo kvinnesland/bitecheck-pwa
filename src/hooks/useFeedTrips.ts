@@ -59,61 +59,68 @@ export function useFeedTrips(uid: string): {
     let cancelled = false;
 
     async function load() {
-      // Own trips (all visibilities)
-      const ownSnap = await getDocs(query(collection(db, 'trips'), where('uid', '==', uid)));
+      // Baseline — parallel, same queries that always worked in V4
+      const [ownSnap, publicSnap] = await Promise.all([
+        getDocs(query(collection(db, 'trips'), where('uid', '==', uid))),
+        getDocs(query(collection(db, 'trips'), where('visibility', '==', 'everyone'), limit(50))),
+      ]);
 
-      // Active following UIDs
-      const followSnap = await getDocs(collection(db, 'users', uid, 'following'));
-      const followedUids = followSnap.docs
-        .filter(d => d.data().status === 'active')
-        .map(d => d.id)
-        .filter(id => id !== uid);
+      // Attempt to load following-based pool; fail gracefully if rules reject
+      let followedUids: string[] = [];
+      try {
+        const followSnap = await getDocs(collection(db, 'users', uid, 'following'));
+        followedUids = followSnap.docs
+          .filter(d => d.data().status === 'active')
+          .map(d => d.id)
+          .filter(id => id !== uid);
+      } catch {
+        // following list unavailable — fall back to baseline only
+      }
 
-      // Following trips (batched by 30 for Firestore 'in' limit)
-      const followingSnaps = followedUids.length > 0
-        ? await Promise.all(
+      // Query following trips (only public — avoids permission errors on followers-only trips)
+      let followingTrips: Trip[] = [];
+      if (followedUids.length > 0) {
+        try {
+          const snaps = await Promise.all(
             chunk(followedUids, 30).map(batch =>
-              getDocs(query(collection(db, 'trips'), where('uid', 'in', batch), limit(50))),
+              getDocs(query(
+                collection(db, 'trips'),
+                where('uid', 'in', batch),
+                where('visibility', '==', 'everyone'),
+                limit(50),
+              )),
             ),
-          )
-        : [];
-
-      // Discover: public trips, capped at 30
-      const discoverSnap = await getDocs(
-        query(collection(db, 'trips'), where('visibility', '==', 'everyone'), limit(30)),
-      );
+          );
+          followingTrips = snaps.flatMap(s =>
+            s.docs.map(d => tripFromDoc(d.data() as Record<string, unknown>)),
+          );
+        } catch {
+          // following trips unavailable — proceed with baseline
+        }
+      }
 
       // Merge + deduplicate
-      const followedSet = new Set([uid, ...followedUids]);
-      const seenIds = new Set<string>();
+      const seen = new Set<string>();
       const merged: Trip[] = [];
 
       for (const d of ownSnap.docs) {
-        if (!seenIds.has(d.id)) {
-          seenIds.add(d.id);
+        if (!seen.has(d.id)) {
+          seen.add(d.id);
           merged.push(tripFromDoc(d.data() as Record<string, unknown>));
         }
       }
 
-      for (const snap of followingSnaps) {
-        for (const d of snap.docs) {
-          if (!seenIds.has(d.id)) {
-            const trip = tripFromDoc(d.data() as Record<string, unknown>);
-            if (trip.visibility !== 'only_me') {
-              seenIds.add(d.id);
-              merged.push(trip);
-            }
-          }
+      for (const trip of followingTrips) {
+        if (!seen.has(trip.tripId)) {
+          seen.add(trip.tripId);
+          merged.push(trip);
         }
       }
 
-      for (const d of discoverSnap.docs) {
-        if (!seenIds.has(d.id)) {
-          const trip = tripFromDoc(d.data() as Record<string, unknown>);
-          if (!followedSet.has(trip.uid)) {
-            seenIds.add(d.id);
-            merged.push(trip);
-          }
+      for (const d of publicSnap.docs) {
+        if (!seen.has(d.id)) {
+          seen.add(d.id);
+          merged.push(tripFromDoc(d.data() as Record<string, unknown>));
         }
       }
 
@@ -121,14 +128,18 @@ export function useFeedTrips(uid: string): {
       const nonSelfUids = [...new Set(merged.filter(t => t.uid !== uid).map(t => t.uid))];
       const profileEntries = await Promise.all(
         nonSelfUids.map(async targetUid => {
-          const snap = await getDoc(doc(db, 'users', targetUid));
-          if (!snap.exists()) return [targetUid, null] as const;
-          const pd = snap.data();
-          return [targetUid, {
-            displayName: (pd.displayName as string) ?? 'Angler',
-            photoURL: (pd.photoURL as string | null) ?? null,
-            username: (pd.username as string) ?? '',
-          }] as [string, AuthorInfo];
+          try {
+            const snap = await getDoc(doc(db, 'users', targetUid));
+            if (!snap.exists()) return [targetUid, null] as const;
+            const pd = snap.data();
+            return [targetUid, {
+              displayName: (pd.displayName as string) ?? 'Angler',
+              photoURL: (pd.photoURL as string | null) ?? null,
+              username: (pd.username as string) ?? '',
+            }] as [string, AuthorInfo];
+          } catch {
+            return [targetUid, null] as const;
+          }
         }),
       );
 
@@ -136,7 +147,6 @@ export function useFeedTrips(uid: string): {
         profileEntries.filter((e): e is [string, AuthorInfo] => e[1] !== null),
       );
 
-      // Load seen trip IDs from localStorage for ranking
       const viewedIds = new Set<string>(
         JSON.parse(localStorage.getItem(`bc_seen_trips_${uid}`) ?? '[]'),
       );
