@@ -31,6 +31,25 @@ export interface Trip {
   species: string[];
   waterType: WaterType;
   biome?: Biome;
+  reactionCounts?: Record<string, number>;
+  commentCount?: number;
+}
+
+export interface TripReaction {
+  userId: string;
+  emoji: string;
+  createdAt: string;
+}
+
+export interface TripComment {
+  commentId: string;
+  userId: string;
+  username: string;
+  photoURL: string | null;
+  text: string;
+  mentions: string[];
+  createdAt: string;
+  editedAt: string | null;
 }
 
 export interface UserProfile {

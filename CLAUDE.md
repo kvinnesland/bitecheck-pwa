@@ -113,6 +113,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **~~Vertical 1 — Identity~~** — UsernameModal, users/usernames-samlinger, profilside med redigering, privacy-innstillinger.
 - **~~Vertical 2 — Social Graph~~** — Follow/unfollow, follow-request-flyt (pending → accept/deny), FollowListSheet, UserSearchSheet. Merk: followersCount/followingCount oppdateres IKKE client-side — dette håndteres av Cloud Functions som legges til i V5/V6.
 - **~~Vertical 3 — Trip & Catch Layer~~** — Visibility-toggle (everyone/followers/only_me), isMultiDay-toggle, photoRefs-felt på CatchRecord, photo-placeholder-knapp med "krever Blaze"-melding, stale-state-fix for catchCount/species på activeTrip, fetchOpenTrip bruker nå Firestore-query i stedet for JS-filtrering.
+- **~~Vertical 4 — Reactions & Comments~~** — Reaction bar (5 emoji, toggle, real-time via onSnapshot), comment thread med flat liste + input med @mention-autocomplete (fra following-list). Notification-writes client-side til `notifications/{uid}/items/`. Denormaliserte counts (reactionCounts, commentCount) på Trip-doc oppdateres av Cloud Functions (V5/V6). Firestore-regler for reactions/comments-subsamlinger og notifications.
 
 ### Utsatt (bevisst)
 - **Firestore privacy-regler (tripIsVisible-funksjon)** — data-modellen er klar (visibility-felt på Trip), men server-side enforcement utsettes til V5/feeds.

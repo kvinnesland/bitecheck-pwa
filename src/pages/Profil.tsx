@@ -97,6 +97,9 @@ export function Profil({ user, onSettingsOpen }: Props) {
         isOwn={currentView.trip.uid === user.uid}
         displayName={user.displayName ?? ''}
         photoUrl={user.photoURL}
+        currentUserId={user.uid}
+        currentUsername={profile?.username ?? ''}
+        currentPhotoURL={user.photoURL ?? null}
         onBack={pop}
         onAddCatch={pop}
       />

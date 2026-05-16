@@ -66,6 +66,28 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
         && (resource.data.uid == request.auth.uid
             || resource.data.uid.matches('demo-.*'));
+
+      match /reactions/{userId} {
+        allow read: if request.auth != null;
+        allow create, update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.text.size() <= 500;
+        allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+        allow update: if false;
+      }
+    }
+
+    match /notifications/{uid}/items/{notifId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == uid;
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
   }

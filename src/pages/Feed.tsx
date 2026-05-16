@@ -92,6 +92,9 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
         isOwn={currentView.trip.uid === user.uid}
         displayName={displayName}
         photoUrl={user.photoURL}
+        currentUserId={user.uid}
+        currentUsername={profile?.username ?? ''}
+        currentPhotoURL={user.photoURL ?? null}
         onBack={pop}
         onAddCatch={() => { pop(); onNavigate('logg'); }}
       />

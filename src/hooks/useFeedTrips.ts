@@ -21,6 +21,8 @@ export function tripFromDoc(d: Record<string, unknown>): Trip {
     species: (d.species as string[]) ?? [],
     waterType: (d.waterType as WaterType) ?? 'salt',
     biome: (d.biome as Biome | undefined) ?? undefined,
+    reactionCounts: (d.reactionCounts as Record<string, number> | undefined) ?? undefined,
+    commentCount: (d.commentCount as number | undefined) ?? undefined,
   };
 }
 

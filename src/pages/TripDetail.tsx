@@ -4,6 +4,8 @@ import { ArrowLeft, Fish, Camera, MapPin } from 'lucide-react';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { useTripCatches } from '../hooks/useTripCatches';
+import { ReactionBar } from '../components/ReactionBar';
+import { CommentThread } from '../components/CommentThread';
 import type { Trip, CatchRecord } from '../types';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +16,9 @@ interface Props {
   isOwn: boolean;
   displayName: string;
   photoUrl: string | null;
+  currentUserId: string;
+  currentUsername: string;
+  currentPhotoURL: string | null;
   onBack: () => void;
   onAddCatch: () => void;
 }
@@ -71,7 +76,7 @@ function CatchEntry({ c, weightUnit, lengthUnit }: {
   );
 }
 
-export function TripDetail({ trip, isOwn, onBack, onAddCatch }: Props) {
+export function TripDetail({ trip, isOwn, currentUserId, currentUsername, currentPhotoURL, onBack, onAddCatch }: Props) {
   const { t, i18n } = useTranslation();
   const { prefs } = useUnits();
   const { catches, loading } = useTripCatches(trip.tripId);
@@ -161,6 +166,24 @@ export function TripDetail({ trip, isOwn, onBack, onAddCatch }: Props) {
               )}
             </div>
           </div>
+
+          {/* Reactions */}
+          <ReactionBar
+            tripId={trip.tripId}
+            tripOwnerId={trip.uid}
+            currentUserId={currentUserId}
+            currentUsername={currentUsername}
+            currentPhotoURL={currentPhotoURL}
+          />
+
+          {/* Comments */}
+          <CommentThread
+            tripId={trip.tripId}
+            tripOwnerId={trip.uid}
+            currentUserId={currentUserId}
+            currentUsername={currentUsername}
+            currentPhotoURL={currentPhotoURL}
+          />
 
           {/* Add catch / moment (own + open trips only) */}
           {isOwn && isLive && (

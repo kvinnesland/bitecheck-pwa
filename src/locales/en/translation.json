@@ -276,6 +276,16 @@
     "followers": "Followers",
     "only_me": "Only me"
   },
+  "reactions": {
+    "label": "Reactions"
+  },
+  "comments": {
+    "label": "Comments",
+    "placeholder": "Write a comment…",
+    "post": "Post",
+    "empty": "No comments yet",
+    "delete": "Delete"
+  },
   "update": {
     "available": "New version available",
     "update": "Update"

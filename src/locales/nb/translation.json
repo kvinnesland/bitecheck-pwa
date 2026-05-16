@@ -276,6 +276,16 @@
     "followers": "Følgere",
     "only_me": "Bare meg"
   },
+  "reactions": {
+    "label": "Reaksjoner"
+  },
+  "comments": {
+    "label": "Kommentarer",
+    "placeholder": "Skriv en kommentar…",
+    "post": "Send",
+    "empty": "Ingen kommentarer ennå",
+    "delete": "Slett"
+  },
   "update": {
     "available": "Ny versjon tilgjengelig",
     "update": "Oppdater"
