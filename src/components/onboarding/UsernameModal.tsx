@@ -30,8 +30,12 @@ export function UsernameModal({ user }: Props) {
     setCheckState('checking');
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      const taken = await isUsernameTaken(value);
-      setCheckState(taken ? 'taken' : 'available');
+      try {
+        const taken = await isUsernameTaken(value);
+        setCheckState(taken ? 'taken' : 'available');
+      } catch {
+        setCheckState('idle');
+      }
     }, 500);
 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
