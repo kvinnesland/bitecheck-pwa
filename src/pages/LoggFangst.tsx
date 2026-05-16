@@ -27,7 +27,7 @@ type LocationPref = 'exact' | 'approximate' | 'hidden';
 const LOCATION_ZOOM: Record<LocationPref, number> = {
   exact: 12,
   approximate: 9,
-  hidden: 0,
+  hidden: 5,
 };
 
 interface Props { user: User; }
@@ -250,17 +250,9 @@ export function LoggFangst({ user }: Props) {
 
       {/* Map snippet */}
       <div className="relative h-44 shrink-0 bg-surface border-b border-divider overflow-hidden">
-        {locationPref === 'hidden' ? (
-          <div className="flex flex-col items-center justify-center h-full gap-1.5 text-text-muted">
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            <span className="text-xs">{t('log.locationHidden')}</span>
-          </div>
-        ) : position ? (
+        {position ? (
           <Suspense fallback={<div className="w-full h-full bg-surface animate-pulse" />}>
-            <TripMapSnippet position={position} zoom={zoom} />
+            <TripMapSnippet position={position} zoom={zoom} showMarker={locationPref === 'exact'} />
           </Suspense>
         ) : (
           <div className="flex items-center justify-center h-full gap-2 text-text-muted text-sm">
@@ -284,7 +276,7 @@ export function LoggFangst({ user }: Props) {
               )}
               onClick={() => setLocationPref(pref)}
             >
-              {t(`log.location${pref.charAt(0).toUpperCase()}${pref.slice(1)}`)}
+              {t(`log.location${pref === 'hidden' ? 'Region' : pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
             </button>
           ))}
         </div>

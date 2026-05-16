@@ -137,7 +137,7 @@
     "mapLoading": "Getting position…",
     "locationExact": "Exact",
     "locationApproximate": "Approx.",
-    "locationHidden": "Hidden"
+    "locationRegion": "Region"
   },
   "gps": {
     "acquiring": "Getting position…",

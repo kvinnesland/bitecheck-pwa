@@ -8,9 +8,10 @@ const BASE_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 interface Props {
   position: GeoPosition;
   zoom: number;
+  showMarker: boolean;
 }
 
-export default function TripMapSnippet({ position, zoom }: Props) {
+export default function TripMapSnippet({ position, zoom, showMarker }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
@@ -28,9 +29,11 @@ export default function TripMapSnippet({ position, zoom }: Props) {
       attributionControl: false,
     });
 
-    markerRef.current = new maplibregl.Marker({ color: '#4f7ef2' })
-      .setLngLat([position.lng, position.lat])
-      .addTo(map);
+    if (showMarker) {
+      markerRef.current = new maplibregl.Marker({ color: '#4f7ef2' })
+        .setLngLat([position.lng, position.lat])
+        .addTo(map);
+    }
 
     mapRef.current = map;
 
