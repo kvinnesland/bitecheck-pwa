@@ -156,7 +156,7 @@
     "mapLoading": "Getting position…",
     "locationExact": "Exact",
     "locationApproximate": "Approx.",
-    "locationRegion": "Region",
+    "locationHidden": "Hidden",
     "activeTrip": "Active trip · {{count}} catch logged",
     "activeTrip_other": "Active trip · {{count}} catches logged",
     "continueTrip": "Continue trip",

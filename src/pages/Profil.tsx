@@ -68,6 +68,10 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'own' }]);
   const [editing, setEditing] = useState(false);
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
+  const [draft, setDraft] = useState<{ displayName: string; mainLocation: string; isPrivate: boolean; locationPref: LocationPref; biome: Biome }>({
+    displayName: '', mainLocation: '', isPrivate: false, locationPref: 'approximate', biome: DEFAULT_BIOME,
+  });
+  const [saving, setSaving] = useState(false);
 
   const pushProfile = (uid: string) => setNavStack(s => [...s, { type: 'profile', uid }]);
   const pushTrip = (trip: Trip) => setNavStack(s => [...s, { type: 'trip', trip }]);
@@ -98,10 +102,6 @@ export function Profil({ user, onSettingsOpen }: Props) {
       />
     );
   }
-  const [draft, setDraft] = useState<{ displayName: string; mainLocation: string; isPrivate: boolean; locationPref: LocationPref; biome: Biome }>({
-    displayName: '', mainLocation: '', isPrivate: false, locationPref: 'approximate', biome: DEFAULT_BIOME,
-  });
-  const [saving, setSaving] = useState(false);
 
   function startEdit() {
     setDraft({

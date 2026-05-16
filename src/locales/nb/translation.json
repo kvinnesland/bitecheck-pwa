@@ -156,7 +156,7 @@
     "mapLoading": "Henter posisjon…",
     "locationExact": "Eksakt",
     "locationApproximate": "Omtrentlig",
-    "locationRegion": "Region",
+    "locationHidden": "Skjult",
     "activeTrip": "Aktiv tur · {{count}} fangst logget",
     "activeTrip_other": "Aktiv tur · {{count}} fangster logget",
     "continueTrip": "Fortsett turen",

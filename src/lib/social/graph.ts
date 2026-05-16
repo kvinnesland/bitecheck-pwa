@@ -1,5 +1,5 @@
 import {
-  doc, getDoc, writeBatch, serverTimestamp, increment,
+  doc, getDoc, writeBatch, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -20,25 +20,19 @@ export async function followUser(
     status,
     createdAt: serverTimestamp(),
   });
-  if (!targetIsPrivate) {
-    batch.update(doc(db, 'users', targetUid), { followersCount: increment(1) });
-    batch.update(doc(db, 'users', myUid), { followingCount: increment(1) });
-  }
+  // followersCount / followingCount are maintained by Cloud Functions
   await batch.commit();
 }
 
 export async function unfollowUser(myUid: string, targetUid: string): Promise<void> {
   const followerRef = doc(db, 'users', targetUid, 'followers', myUid);
   const snap = await getDoc(followerRef);
-  const wasActive = snap.exists() && snap.data()?.status === 'active';
+  if (!snap.exists()) return;
 
   const batch = writeBatch(db);
   batch.delete(followerRef);
   batch.delete(doc(db, 'users', myUid, 'following', targetUid));
-  if (wasActive) {
-    batch.update(doc(db, 'users', targetUid), { followersCount: increment(-1) });
-    batch.update(doc(db, 'users', myUid), { followingCount: increment(-1) });
-  }
+  // followersCount / followingCount are maintained by Cloud Functions
   await batch.commit();
 }
 
@@ -49,8 +43,7 @@ export async function acceptFollowRequest(
   const batch = writeBatch(db);
   batch.update(doc(db, 'users', myUid, 'followers', followerUid), { status: 'active' });
   batch.update(doc(db, 'users', followerUid, 'following', myUid), { status: 'active' });
-  batch.update(doc(db, 'users', myUid), { followersCount: increment(1) });
-  batch.update(doc(db, 'users', followerUid), { followingCount: increment(1) });
+  // followersCount / followingCount are maintained by Cloud Functions
   await batch.commit();
 }
 

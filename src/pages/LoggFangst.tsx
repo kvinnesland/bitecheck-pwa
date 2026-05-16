@@ -513,7 +513,7 @@ export function LoggFangst({ user }: Props) {
               )}
               onClick={() => setLocationPref(pref)}
             >
-              {t(`log.location${pref === 'hidden' ? 'Region' : pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
+              {t(`log.location${pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
             </button>
           ))}
         </div>

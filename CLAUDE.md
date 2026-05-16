@@ -109,8 +109,12 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 
 ## Åpne issues / TODO
 
+### Gjort (sosiale vertikaler)
+- **~~Vertical 1 — Identity~~** — UsernameModal, users/usernames-samlinger, profilside med redigering, privacy-innstillinger.
+- **~~Vertical 2 — Social Graph~~** — Follow/unfollow, follow-request-flyt (pending → accept/deny), FollowListSheet, UserSearchSheet. Merk: followersCount/followingCount oppdateres IKKE client-side — dette håndteres av Cloud Functions som legges til i V5/V6.
+
 ### Utsatt (bevisst)
-- **Firestore privacy-regler** — design besluttet (se §4.7 SOCIAL_PRD.md). Implementeres som del av Vertical 1/3 når trip-datamodellen bygges.
+- **Firestore privacy-regler** — design besluttet (se §4.7 SOCIAL_PRD.md). Implementeres som del av Vertical 3 når trip-datamodellen bygges.
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Ideer ikke startet
