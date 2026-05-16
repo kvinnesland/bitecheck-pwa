@@ -104,6 +104,7 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
         currentUser={user}
         onBack={pop}
         onTripClick={trip => push({ type: 'trip', trip })}
+        onUserClick={uid => push({ type: 'profile', uid })}
       />
     );
   }

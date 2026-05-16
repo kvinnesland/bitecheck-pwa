@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import type { User } from 'firebase/auth';
@@ -9,6 +9,8 @@ import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { getBiome } from '../lib/biomes';
 import { TripCard } from '../components/social/TripCard';
+import { FollowButton } from '../components/social/FollowButton';
+import { FollowListSheet } from '../components/social/FollowListSheet';
 import { cn } from '@/lib/utils';
 import type { CatchRecord, Trip } from '../types';
 
@@ -17,6 +19,7 @@ interface Props {
   currentUser: User;
   onBack: () => void;
   onTripClick: (trip: Trip) => void;
+  onUserClick?: (uid: string) => void;
 }
 
 
@@ -67,10 +70,11 @@ function StatItem({ value, label, compact }: { value: string; label: string; com
   );
 }
 
-export function UserProfile({ targetUid, currentUser, onBack, onTripClick }: Props) {
+export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUserClick }: Props) {
   const { t, i18n } = useTranslation();
   const { prefs } = useUnits();
   const isOwn = targetUid === currentUser.uid;
+  const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
 
   const { profile } = useUserProfile(targetUid);
   // useUserCatches reads from local IndexedDB — returns real data for own profile,
@@ -174,16 +178,27 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick }: Pro
       {/* Profile body */}
       <div className="px-5 pb-10 space-y-4" style={{ paddingTop: 40 }}>
 
-        {/* Name + username (no edit button) */}
-        <div>
-          <h1 className="text-[1.35rem] font-bold text-text leading-tight tracking-tight">
-            {displayName || t('profile.title')}
-          </h1>
-          {profile?.username && (
-            <p className="text-sm text-text-muted mt-0.5">@{profile.username}</p>
-          )}
-          {profile?.mainLocation && (
-            <p className="text-sm text-text-muted mt-0.5">{profile.mainLocation}</p>
+        {/* Name + username + follow button */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[1.35rem] font-bold text-text leading-tight tracking-tight">
+              {displayName || t('profile.title')}
+            </h1>
+            {profile?.username && (
+              <p className="text-sm text-text-muted mt-0.5">@{profile.username}</p>
+            )}
+            {profile?.mainLocation && (
+              <p className="text-sm text-text-muted mt-0.5">{profile.mainLocation}</p>
+            )}
+          </div>
+          {!isOwn && (
+            <div className="mt-1 shrink-0">
+              <FollowButton
+                myUid={currentUser.uid}
+                targetUid={targetUid}
+                targetIsPrivate={profile?.isPrivate ?? false}
+              />
+            </div>
           )}
         </div>
 
@@ -192,6 +207,26 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick }: Pro
           <StatItem value={String(catchCount)} label={t('profile.catches')} />
           <div className="w-px self-stretch bg-divider" />
           <StatItem value={String(speciesCount)} label={t('profile.species')} />
+          <div className="w-px self-stretch bg-divider" />
+          <button
+            className="flex flex-col gap-0.5 text-left"
+            onClick={() => setFollowSheet('followers')}
+          >
+            <span className="text-2xl font-bold text-text leading-none">
+              {profile?.followersCount ?? 0}
+            </span>
+            <span className="text-xs text-text-muted">{t('follow.followers')}</span>
+          </button>
+          <div className="w-px self-stretch bg-divider" />
+          <button
+            className="flex flex-col gap-0.5 text-left"
+            onClick={() => setFollowSheet('following')}
+          >
+            <span className="text-2xl font-bold text-text leading-none">
+              {profile?.followingCount ?? 0}
+            </span>
+            <span className="text-xs text-text-muted">{t('follow.following')}</span>
+          </button>
           {bestDisplay && (
             <>
               <div className="w-px self-stretch bg-divider" />
@@ -293,6 +328,17 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick }: Pro
           )}
         </div>
       </div>
+
+      {followSheet && (
+        <FollowListSheet
+          uid={targetUid}
+          type={followSheet}
+          isOwn={isOwn}
+          myUid={currentUser.uid}
+          onClose={() => setFollowSheet(null)}
+          onUserClick={(uid) => onUserClick?.(uid)}
+        />
+      )}
     </div>
   );
 }

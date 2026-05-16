@@ -212,6 +212,16 @@
     "saltwater": "Saltwater",
     "freshwater": "Freshwater"
   },
+  "follow": {
+    "follow": "Follow",
+    "following": "Following",
+    "requested": "Requested",
+    "followers": "Followers",
+    "noFollowers": "No followers yet",
+    "noFollowing": "Not following anyone yet",
+    "accept": "Accept",
+    "deny": "Deny"
+  },
   "profile": {
     "title": "Profile",
     "catches": "Catches",

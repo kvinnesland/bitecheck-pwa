@@ -212,6 +212,16 @@
     "saltwater": "Saltvann",
     "freshwater": "Ferskvann"
   },
+  "follow": {
+    "follow": "Følg",
+    "following": "Følger",
+    "requested": "Forespurt",
+    "followers": "Følgere",
+    "noFollowers": "Ingen følgere ennå",
+    "noFollowing": "Følger ingen ennå",
+    "accept": "Godta",
+    "deny": "Avslå"
+  },
   "profile": {
     "title": "Profil",
     "catches": "Fangster",

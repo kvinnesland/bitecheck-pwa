@@ -8,8 +8,13 @@ import { updateUserProfile } from '../lib/userProfile';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
+import { FollowListSheet } from '../components/social/FollowListSheet';
+import { UserProfile } from './UserProfile';
+import { TripDetail } from './TripDetail';
 import { cn } from '@/lib/utils';
-import type { CatchRecord, LocationPref, Biome } from '../types';
+import type { CatchRecord, LocationPref, Biome, Trip } from '../types';
+
+type NavEntry = { type: 'own' } | { type: 'profile'; uid: string } | { type: 'trip'; trip: Trip };
 
 interface Props {
   user: User;
@@ -60,7 +65,39 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const { profile } = useUserProfile(user.uid);
   const stats = useMemo(() => computeStats(catches), [catches]);
 
+  const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'own' }]);
   const [editing, setEditing] = useState(false);
+  const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
+
+  const pushProfile = (uid: string) => setNavStack(s => [...s, { type: 'profile', uid }]);
+  const pushTrip = (trip: Trip) => setNavStack(s => [...s, { type: 'trip', trip }]);
+  const pop = () => setNavStack(s => s.length > 1 ? s.slice(0, -1) : s);
+  const currentView = navStack[navStack.length - 1];
+
+  if (currentView.type === 'profile') {
+    return (
+      <UserProfile
+        targetUid={currentView.uid}
+        currentUser={user}
+        onBack={pop}
+        onTripClick={pushTrip}
+        onUserClick={pushProfile}
+      />
+    );
+  }
+
+  if (currentView.type === 'trip') {
+    return (
+      <TripDetail
+        trip={currentView.trip}
+        isOwn={currentView.trip.uid === user.uid}
+        displayName={user.displayName ?? ''}
+        photoUrl={user.photoURL}
+        onBack={pop}
+        onAddCatch={pop}
+      />
+    );
+  }
   const [draft, setDraft] = useState<{ displayName: string; mainLocation: string; isPrivate: boolean; locationPref: LocationPref; biome: Biome }>({
     displayName: '', mainLocation: '', isPrivate: false, locationPref: 'approximate', biome: DEFAULT_BIOME,
   });
@@ -311,6 +348,26 @@ export function Profil({ user, onSettingsOpen }: Props) {
           <StatItem value={String(stats.total)} label={t('profile.catches')} />
           <div className="w-px self-stretch bg-divider" />
           <StatItem value={String(stats.species)} label={t('profile.species')} />
+          <div className="w-px self-stretch bg-divider" />
+          <button
+            className="flex flex-col gap-0.5 text-left"
+            onClick={() => setFollowSheet('followers')}
+          >
+            <span className="text-2xl font-bold text-text leading-none">
+              {profile?.followersCount ?? 0}
+            </span>
+            <span className="text-xs text-text-muted">{t('follow.followers')}</span>
+          </button>
+          <div className="w-px self-stretch bg-divider" />
+          <button
+            className="flex flex-col gap-0.5 text-left"
+            onClick={() => setFollowSheet('following')}
+          >
+            <span className="text-2xl font-bold text-text leading-none">
+              {profile?.followingCount ?? 0}
+            </span>
+            <span className="text-xs text-text-muted">{t('follow.following')}</span>
+          </button>
           {bestDisplay && (
             <>
               <div className="w-px self-stretch bg-divider" />
@@ -378,6 +435,17 @@ export function Profil({ user, onSettingsOpen }: Props) {
           </>
         )}
       </div>
+
+      {followSheet && (
+        <FollowListSheet
+          uid={user.uid}
+          type={followSheet}
+          isOwn
+          myUid={user.uid}
+          onClose={() => setFollowSheet(null)}
+          onUserClick={(uid) => { setFollowSheet(null); pushProfile(uid); }}
+        />
+      )}
     </div>
   );
 }
