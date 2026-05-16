@@ -2,8 +2,15 @@ import {
   doc, getDoc, writeBatch, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { writeNotification } from './notifications';
 
 export type FollowStatus = 'none' | 'pending' | 'active';
+
+async function getMyProfile(myUid: string): Promise<{ username: string; photoURL: string | null }> {
+  const snap = await getDoc(doc(db, 'users', myUid));
+  const d = snap.data();
+  return { username: d?.username ?? '', photoURL: d?.photoURL ?? null };
+}
 
 export async function followUser(
   myUid: string,
@@ -22,6 +29,17 @@ export async function followUser(
   });
   // followersCount / followingCount are maintained by Cloud Functions
   await batch.commit();
+
+  const { username, photoURL } = await getMyProfile(myUid);
+  writeNotification(targetUid, {
+    type: targetIsPrivate ? 'follow_request' : 'follow',
+    fromUid: myUid,
+    fromUsername: username,
+    fromPhotoURL: photoURL,
+    tripId: null,
+    emoji: null,
+    commentSnippet: null,
+  }).catch(() => {});
 }
 
 export async function unfollowUser(myUid: string, targetUid: string): Promise<void> {
@@ -45,6 +63,17 @@ export async function acceptFollowRequest(
   batch.update(doc(db, 'users', followerUid, 'following', myUid), { status: 'active' });
   // followersCount / followingCount are maintained by Cloud Functions
   await batch.commit();
+
+  const { username, photoURL } = await getMyProfile(myUid);
+  writeNotification(followerUid, {
+    type: 'follow_accepted',
+    fromUid: myUid,
+    fromUsername: username,
+    fromPhotoURL: photoURL,
+    tripId: null,
+    emoji: null,
+    commentSnippet: null,
+  }).catch(() => {});
 }
 
 export async function denyFollowRequest(
