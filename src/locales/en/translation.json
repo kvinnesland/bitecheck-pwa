@@ -137,7 +137,12 @@
     "mapLoading": "Getting position…",
     "locationExact": "Exact",
     "locationApproximate": "Approx.",
-    "locationRegion": "Region"
+    "locationRegion": "Region",
+    "activeTrip": "Active trip · {{count}} catch logged",
+    "activeTrip_other": "Active trip · {{count}} catches logged",
+    "continueTrip": "Continue trip",
+    "endTrip": "End trip",
+    "tripSummary": "{{catches}} catch · {{species}} species"
   },
   "gps": {
     "acquiring": "Getting position…",

@@ -21,5 +21,16 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }
+
+    match /trips/{tripId} {
+      allow read: if request.auth != null && (
+        resource.data.uid == request.auth.uid ||
+        resource.data.visibility == 'everyone'
+      );
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
   }
 }

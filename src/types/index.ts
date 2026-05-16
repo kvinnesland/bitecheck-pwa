@@ -2,6 +2,26 @@ export type SyncStatus = 'pending' | 'synced' | 'failed';
 
 export type LocationPref = 'exact' | 'approximate' | 'hidden';
 
+export type TripVisibility = 'everyone' | 'followers' | 'only_me';
+export type WaterType = 'salt' | 'fresh';
+
+export interface Trip {
+  tripId: string;
+  uid: string;
+  status: 'open' | 'closed';
+  visibility: TripVisibility;
+  title: string | null;
+  note: string | null;
+  startedAt: string;       // ISO string
+  closedAt: string | null;
+  location: CatchLocation | null;
+  locationShare: LocationPref;
+  approximateLocationName: string | null;
+  catchCount: number;
+  species: string[];
+  waterType: WaterType;
+}
+
 export interface UserProfile {
   uid: string;
   username: string;
@@ -63,6 +83,10 @@ export interface CatchRecord {
   location: CatchLocation;
   species: CatchSpecies;
   environment: CatchEnvironment;
+  // V3 trip fields — optional for backward compat with pre-V3 records
+  tripId?: string;
+  locationShare?: LocationPref;
+  approximateLocationName?: string | null;
 }
 
 export interface PublicCatchRecord {

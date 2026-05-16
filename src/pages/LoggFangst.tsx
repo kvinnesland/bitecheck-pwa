@@ -4,12 +4,14 @@ import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useReverseGeocode } from '../hooks/useReverseGeocode';
 import { createCatch } from '../lib/catches';
+import { startTrip, addCatchToTrip, closeTrip, fetchOpenTrip } from '../lib/trips';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { useUnits } from '../contexts/UnitsContext';
 import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } from '../lib/units';
 import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import { cn } from '@/lib/utils';
+import type { Trip } from '../types';
 
 const TripMapSnippet = React.lazy(() => import('../components/TripMapSnippet'));
 
@@ -23,6 +25,7 @@ const ALL_SPECIES = [...SALT_SPECIES, ...FRESH_SPECIES];
 type Step = 'trip' | 'details' | 'success';
 type WaterType = 'salt' | 'fresh';
 type LocationPref = 'exact' | 'approximate' | 'hidden';
+type TripState = 'loading' | Trip | null;
 
 const LOCATION_ZOOM: Record<LocationPref, number> = {
   exact: 12,
@@ -39,6 +42,7 @@ export function LoggFangst({ user }: Props) {
   const weightRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>('trip');
+  const [activeTrip, setActiveTrip] = useState<TripState>('loading');
 
   const [locationPref, setLocationPref] = useState<LocationPref>(
     () => (localStorage.getItem('bc_location_pref') as LocationPref) ?? 'approximate',
@@ -68,6 +72,10 @@ export function LoggFangst({ user }: Props) {
   useEffect(() => { localStorage.setItem('bc_water_type', waterType); }, [waterType]);
 
   useEffect(() => {
+    fetchOpenTrip(user.uid).then(setActiveTrip).catch(() => setActiveTrip(null));
+  }, [user.uid]);
+
+  useEffect(() => {
     const pending = consumePendingSpecies();
     if (pending) {
       setSpecies(pending);
@@ -95,12 +103,51 @@ export function LoggFangst({ user }: Props) {
     if (!species) return;
     setSaving(true);
     try {
+      let tripId: string;
+      const existingTrip = activeTrip !== 'loading' ? activeTrip : null;
+
+      if (existingTrip) {
+        tripId = existingTrip.tripId;
+        addCatchToTrip(tripId, species);
+      } else {
+        tripId = startTrip({
+          uid: user.uid,
+          title: tripTitle || null,
+          note: notes || null,
+          location: position,
+          locationShare: locationPref,
+          approximateLocationName: placeName,
+          firstSpecies: species,
+          waterType,
+          visibility: 'everyone',
+        });
+        setActiveTrip({
+          tripId,
+          uid: user.uid,
+          status: 'open',
+          visibility: 'everyone',
+          title: tripTitle || null,
+          note: notes || null,
+          startedAt: new Date().toISOString(),
+          closedAt: null,
+          location: position,
+          locationShare: locationPref,
+          approximateLocationName: placeName,
+          catchCount: 1,
+          species: [species],
+          waterType,
+        });
+      }
+
       await createCatch({
         userId: user.uid,
         species,
         weight_kg: weight ? parseWeightToKg(weight, prefs.weight) : null,
         length_cm: length ? parseLengthToCm(length, prefs.length) : null,
         location: position,
+        tripId,
+        locationShare: locationPref,
+        approximateLocationName: placeName,
       });
       setStep('success');
     } finally {
@@ -108,18 +155,38 @@ export function LoggFangst({ user }: Props) {
     }
   }
 
-  function reset() {
+  async function handleEndTrip() {
+    const trip = activeTrip !== 'loading' ? activeTrip : null;
+    if (trip) {
+      await closeTrip(trip.tripId).catch(() => {});
+    }
+    setActiveTrip(null);
     setStep('trip');
     setSpecies('');
     setWeight('');
     setLength('');
     setQuery('');
+    setTripTitle('');
+    setNotes('');
     setTitleEdited(false);
   }
+
+  function handleContinueTrip() {
+    setStep('trip');
+    setSpecies('');
+    setWeight('');
+    setLength('');
+    setQuery('');
+  }
+
 
   // ─── Success ─────────────────────────────────────────────────────────────────
 
   if (step === 'success') {
+    const trip = activeTrip !== 'loading' ? activeTrip : null;
+    const tripSpeciesCount = trip ? trip.species.length : 0;
+    const tripCatchCount = trip ? trip.catchCount : 1;
+
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 py-8 gap-2.5 text-center">
         <div className="w-16 h-16 bg-success/10 border-2 border-success rounded-full flex items-center justify-center mb-2">
@@ -135,15 +202,35 @@ export function LoggFangst({ user }: Props) {
             {weight} {weightUnitLabel(prefs.weight)}{length ? ` · ${length} ${lengthUnitLabel(prefs.length)}` : ''}
           </p>
         )}
-        <p className="text-xs text-text-muted mb-4">
+        <p className="text-xs text-text-muted">
           {geoStatus === 'ok' ? t('log.gpsRecorded') : t('log.noGps')}
         </p>
-        <button
-          onClick={reset}
-          className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-accent/80"
-        >
-          {t('log.logNew')}
-        </button>
+
+        {/* Trip summary pill */}
+        {trip && (
+          <div className="flex items-center gap-2 bg-surface border border-divider rounded-full px-3 py-1.5 text-xs text-text-muted mt-1">
+            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>{t('log.tripSummary', { catches: tripCatchCount, species: tripSpeciesCount })}</span>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 w-full mt-4">
+          <button
+            onClick={handleContinueTrip}
+            className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-accent/80"
+          >
+            {t('log.continueTrip')}
+          </button>
+          <button
+            onClick={handleEndTrip}
+            className="bg-surface border border-divider text-text text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-surface/80"
+          >
+            {t('log.endTrip')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -243,6 +330,17 @@ export function LoggFangst({ user }: Props) {
 
   // ─── Trip (step 1) ────────────────────────────────────────────────────────────
 
+  // When an existing open trip loads, pre-fill title/notes from it (once).
+  const tripLoaded = activeTrip !== 'loading';
+  useEffect(() => {
+    if (typeof activeTrip === 'object' && activeTrip !== null && !titleEdited) {
+      if (activeTrip.title) { setTripTitle(activeTrip.title); setTitleEdited(true); }
+      if (activeTrip.note) setNotes(activeTrip.note);
+      if (activeTrip.waterType) setWaterType(activeTrip.waterType);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripLoaded]);
+
   const zoom = LOCATION_ZOOM[locationPref];
 
   return (
@@ -281,6 +379,18 @@ export function LoggFangst({ user }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Active trip indicator */}
+      {typeof activeTrip === 'object' && activeTrip !== null && (
+        <div className="px-4 pt-3 shrink-0">
+          <div className="flex items-center gap-1.5 text-[0.72rem] text-accent font-semibold">
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="5" />
+            </svg>
+            {t('log.activeTrip', { count: activeTrip.catchCount })}
+          </div>
+        </div>
+      )}
 
       {/* Trip context fields */}
       <div className="px-4 pt-4 pb-2 flex flex-col gap-3 shrink-0">

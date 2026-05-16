@@ -137,7 +137,12 @@
     "mapLoading": "Henter posisjon…",
     "locationExact": "Eksakt",
     "locationApproximate": "Omtrentlig",
-    "locationRegion": "Region"
+    "locationRegion": "Region",
+    "activeTrip": "Aktiv tur · {{count}} fangst logget",
+    "activeTrip_other": "Aktiv tur · {{count}} fangster logget",
+    "continueTrip": "Fortsett turen",
+    "endTrip": "Avslutt turen",
+    "tripSummary": "{{catches}} fangst · {{species}} arter"
   },
   "gps": {
     "acquiring": "Henter posisjon…",
