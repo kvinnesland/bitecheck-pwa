@@ -130,7 +130,14 @@
     "saved": "Catch saved!",
     "gpsRecorded": "GPS recorded",
     "noGps": "No GPS position",
-    "logSpecies": "Log catch of {{name}}"
+    "logSpecies": "Log catch of {{name}}",
+    "tripNear": "Trip near {{place}}",
+    "tripTitlePlaceholder": "Untitled trip",
+    "tripNotesPlaceholder": "How did it go? Any tips?",
+    "mapLoading": "Getting position…",
+    "locationExact": "Exact",
+    "locationApproximate": "Approx.",
+    "locationHidden": "Hidden"
   },
   "gps": {
     "acquiring": "Getting position…",

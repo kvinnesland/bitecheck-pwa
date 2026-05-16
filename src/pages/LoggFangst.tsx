@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useReverseGeocode } from '../hooks/useReverseGeocode';
 import { createCatch } from '../lib/catches';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { useUnits } from '../contexts/UnitsContext';
@@ -10,35 +11,61 @@ import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import { cn } from '@/lib/utils';
 
-const SPECIES_GROUPS = [
-  {
-    labelKey: 'predictions.saltwater',
-    names: ['Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme',
-            'Uer', 'Steinbit', 'Makrell', 'Rødspette', 'Lomre',
-            'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye'],
-  },
-  {
-    labelKey: 'predictions.freshwater',
-    names: ['Ørret', 'Røye', 'Abbor', 'Gjedde', 'Harr'],
-  },
-];
-const ALL_SPECIES = SPECIES_GROUPS.flatMap((g) => g.names);
+const TripMapSnippet = React.lazy(() => import('../components/TripMapSnippet'));
 
-type Step = 'species' | 'details' | 'success';
+const SALT_SPECIES = [
+  'Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme', 'Uer', 'Steinbit',
+  'Makrell', 'Rødspette', 'Lomre', 'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye',
+];
+const FRESH_SPECIES = ['Ørret', 'Røye', 'Abbor', 'Gjedde', 'Harr'];
+const ALL_SPECIES = [...SALT_SPECIES, ...FRESH_SPECIES];
+
+type Step = 'trip' | 'details' | 'success';
+type WaterType = 'salt' | 'fresh';
+type LocationPref = 'exact' | 'approximate' | 'hidden';
+
+const LOCATION_ZOOM: Record<LocationPref, number> = {
+  exact: 14,
+  approximate: 10,
+  hidden: 0,
+};
 
 interface Props { user: User; }
 
 export function LoggFangst({ user }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { prefs } = useUnits();
-  const [step, setStep] = useState<Step>('species');
+  const { status: geoStatus, position } = useGeolocation();
+  const weightRef = useRef<HTMLInputElement>(null);
+
+  const [step, setStep] = useState<Step>('trip');
+
+  const [locationPref, setLocationPref] = useState<LocationPref>(
+    () => (localStorage.getItem('bc_location_pref') as LocationPref) ?? 'approximate',
+  );
+  const [waterType, setWaterType] = useState<WaterType>(
+    () => (localStorage.getItem('bc_water_type') as WaterType) ?? 'salt',
+  );
+  const [tripTitle, setTripTitle] = useState('');
+  const [titleEdited, setTitleEdited] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [query, setQuery] = useState('');
+
   const [species, setSpecies] = useState('');
   const [weight, setWeight] = useState('');
   const [length, setLength] = useState('');
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState('');
-  const { status: geoStatus, position } = useGeolocation();
-  const weightRef = useRef<HTMLInputElement>(null);
+
+  const placeName = useReverseGeocode(position, locationPref, i18n.language);
+
+  useEffect(() => {
+    if (placeName && !titleEdited) {
+      setTripTitle(t('log.tripNear', { place: placeName }));
+    }
+  }, [placeName, titleEdited, t]);
+
+  useEffect(() => { localStorage.setItem('bc_location_pref', locationPref); }, [locationPref]);
+  useEffect(() => { localStorage.setItem('bc_water_type', waterType); }, [waterType]);
 
   useEffect(() => {
     const pending = consumePendingSpecies();
@@ -51,12 +78,12 @@ export function LoggFangst({ user }: Props) {
 
   const searchQuery = query.trim().toLowerCase();
   const isSearching = searchQuery.length > 0;
-  const filtered = isSearching
+  const displayedSpecies = isSearching
     ? ALL_SPECIES.filter((s) =>
         s.toLowerCase().includes(searchQuery) ||
         t(`speciesNames.${s}`, { defaultValue: s }).toLowerCase().includes(searchQuery),
       )
-    : null;
+    : (waterType === 'salt' ? SALT_SPECIES : FRESH_SPECIES);
 
   function selectSpecies(name: string) {
     setSpecies(name);
@@ -82,12 +109,15 @@ export function LoggFangst({ user }: Props) {
   }
 
   function reset() {
-    setStep('species');
+    setStep('trip');
     setSpecies('');
     setWeight('');
     setLength('');
     setQuery('');
+    setTitleEdited(false);
   }
+
+  // ─── Success ─────────────────────────────────────────────────────────────────
 
   if (step === 'success') {
     return (
@@ -118,10 +148,12 @@ export function LoggFangst({ user }: Props) {
     );
   }
 
+  // ─── Details ─────────────────────────────────────────────────────────────────
+
   if (step === 'details') {
     const gpsColors: Record<string, string> = {
-      ok:         'text-success border-success',
-      acquiring:  'text-warning border-warning',
+      ok:        'text-success border-success',
+      acquiring: 'text-warning border-warning',
     };
     const gpsRowCls = cn(
       'flex items-center gap-2 text-[0.8rem] px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-surface border shrink-0',
@@ -132,7 +164,7 @@ export function LoggFangst({ user }: Props) {
       <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
         <button
           className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 shrink-0 hover:text-text transition-colors duration-150"
-          onClick={() => setStep('species')}
+          onClick={() => setStep('trip')}
         >
           <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -147,7 +179,7 @@ export function LoggFangst({ user }: Props) {
               action={
                 <button
                   className="bg-transparent text-accent text-[0.8rem] p-0"
-                  onClick={() => setStep('species')}
+                  onClick={() => setStep('trip')}
                 >
                   {t('log.change')}
                 </button>
@@ -209,67 +241,135 @@ export function LoggFangst({ user }: Props) {
     );
   }
 
-  return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
-      <h2 className="text-[1.25rem] font-bold tracking-tight shrink-0">{t('log.whichSpecies')}</h2>
+  // ─── Trip (step 1) ────────────────────────────────────────────────────────────
 
-      <div className="relative shrink-0">
-        <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          className="w-full bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] py-2.5 pl-[38px] pr-3 outline-none transition-colors duration-150 focus:border-accent placeholder:text-text-muted"
-          type="text"
-          placeholder={t('log.searchPlaceholder')}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          autoFocus
-        />
+  const zoom = LOCATION_ZOOM[locationPref];
+
+  return (
+    <div className="flex flex-col h-full overflow-y-auto">
+
+      {/* Map snippet */}
+      <div className="relative h-44 shrink-0 bg-surface border-b border-divider overflow-hidden">
+        {locationPref === 'hidden' ? (
+          <div className="flex flex-col items-center justify-center h-full gap-1.5 text-text-muted">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span className="text-xs">{t('log.locationHidden')}</span>
+          </div>
+        ) : position ? (
+          <Suspense fallback={<div className="w-full h-full bg-surface animate-pulse" />}>
+            <TripMapSnippet position={position} zoom={zoom} />
+          </Suspense>
+        ) : (
+          <div className="flex items-center justify-center h-full gap-2 text-text-muted text-sm">
+            <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            </svg>
+            {t('log.mapLoading')}
+          </div>
+        )}
+
+        {/* Privacy pills */}
+        <div className="absolute bottom-2 left-2 flex gap-1">
+          {(['exact', 'approximate', 'hidden'] as const).map((pref) => (
+            <button
+              key={pref}
+              className={cn(
+                'text-[0.65rem] font-semibold px-2 py-0.5 rounded-full transition-colors duration-150 backdrop-blur-sm',
+                locationPref === pref
+                  ? 'bg-accent text-white'
+                  : 'bg-black/40 text-white hover:bg-black/60',
+              )}
+              onClick={() => setLocationPref(pref)}
+            >
+              {t(`log.location${pref.charAt(0).toUpperCase()}${pref.slice(1)}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 flex-1">
-        {isSearching ? (
-          <>
-            {(filtered ?? []).map((name) => (
-              <button
-                key={name}
-                className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.85rem] font-semibold pt-2.5 pb-3 px-2 text-center flex flex-col items-center gap-1.5 transition-[border-color,background,transform] duration-150 leading-tight hover:border-accent hover:bg-bg active:scale-[0.96]"
-                onClick={() => selectSpecies(name)}
-              >
-                <FishSvg name={name} className="w-full h-14 text-text-muted" />
-                <span>{t(`speciesNames.${name}`, { defaultValue: name })}</span>
-              </button>
-            ))}
-            {(filtered ?? []).length === 0 && (
-              <button
-                className="col-span-2 bg-surface border border-dashed border-accent rounded-[var(--radius-md)] text-accent text-[0.85rem] font-semibold pt-2.5 pb-3 px-2 text-center flex flex-col items-center gap-1.5 transition-colors duration-150 leading-tight"
-                onClick={() => selectSpecies(query.trim())}
-              >
-                {t('log.addCustom', { name: query.trim() })}
-              </button>
-            )}
-          </>
-        ) : (
-          SPECIES_GROUPS.map((group) => (
-            <React.Fragment key={group.labelKey}>
-              <span className="col-span-2 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-text-muted pt-1 pb-0.5 mt-1">
-                {t(group.labelKey)}
+      {/* Trip context fields */}
+      <div className="px-4 pt-4 pb-2 flex flex-col gap-3 shrink-0">
+        <input
+          className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[1rem] font-semibold px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted placeholder:font-normal"
+          type="text"
+          placeholder={t('log.tripTitlePlaceholder')}
+          value={tripTitle}
+          onChange={(e) => {
+            setTripTitle(e.target.value);
+            setTitleEdited(true);
+          }}
+        />
+
+        <textarea
+          className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.9rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none"
+          placeholder={t('log.tripNotesPlaceholder')}
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+
+        {/* Water type toggle */}
+        <div className="flex gap-1 bg-surface border border-divider rounded-[var(--radius-md)] p-1">
+          {(['salt', 'fresh'] as const).map((wt) => (
+            <button
+              key={wt}
+              className={cn(
+                'flex-1 py-2 text-sm font-semibold rounded-[calc(var(--radius-md)-4px)] transition-colors duration-150',
+                waterType === wt ? 'bg-accent text-white' : 'text-text-muted hover:text-text',
+              )}
+              onClick={() => setWaterType(wt)}
+            >
+              {t(wt === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            className="w-full bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] py-2.5 pl-[38px] pr-3 outline-none transition-colors duration-150 focus:border-accent placeholder:text-text-muted"
+            type="text"
+            placeholder={t('log.searchPlaceholder')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Species list */}
+      <div className="px-4 pb-6 flex flex-col">
+        {displayedSpecies.length > 0 ? (
+          displayedSpecies.map((name) => (
+            <button
+              key={name}
+              className="flex items-center gap-3 w-full py-3 px-1 text-left border-b border-divider last:border-0 transition-colors duration-150 hover:bg-surface active:bg-surface/60"
+              onClick={() => selectSpecies(name)}
+            >
+              <FishSvg name={name} className="w-10 h-7 shrink-0 text-text-muted" />
+              <span className="text-[0.95rem] font-medium text-text flex-1">
+                {t(`speciesNames.${name}`, { defaultValue: name })}
               </span>
-              {group.names.map((name) => (
-                <button
-                  key={name}
-                  className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.85rem] font-semibold pt-2.5 pb-3 px-2 text-center flex flex-col items-center gap-1.5 transition-[border-color,background,transform] duration-150 leading-tight hover:border-accent hover:bg-bg active:scale-[0.96]"
-                  onClick={() => selectSpecies(name)}
-                >
-                  <FishSvg name={name} className="w-full h-14 text-text-muted" />
-                  <span>{t(`speciesNames.${name}`, { defaultValue: name })}</span>
-                </button>
-              ))}
-            </React.Fragment>
+              <svg className="w-4 h-4 text-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           ))
+        ) : (
+          <button
+            className="flex items-center gap-3 w-full py-3 px-3 text-accent font-semibold text-[0.95rem] border border-dashed border-accent rounded-[var(--radius-md)]"
+            onClick={() => selectSpecies(query.trim())}
+          >
+            {t('log.addCustom', { name: query.trim() })}
+          </button>
         )}
       </div>
     </div>

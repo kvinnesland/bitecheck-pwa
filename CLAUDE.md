@@ -27,7 +27,7 @@ Ingen CI/CD — alt deployes manuelt. Firebase-prosjekt: `fishing-projects`. URL
 
 **Firebase Storage er ikke satt opp** — prosjektet er på Spark-plan og regionen støtter ikke gratis buckets. Fotofunksjonen ble fjernet fullstendig. Ikke prøv å legge den tilbake uten å oppgradere til Blaze-plan.
 
-**Firestore privacy-regler er bevisst svake** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Dette er en kjent issue som er utsatt fordi det krever en større design-beslutning om privat vs. offentlig data.
+**Firestore privacy-regler er bevisst svake** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Design-beslutning tatt: synlighet styres på trip-nivå (`visibility: 'everyone' | 'followers' | 'only_me'`), ikke per fangst. Posisjonspresisjon (`locationShare`) styres per fangst med profilnivå-default. Se SOCIAL_PRD.md §4.7 og §7. Reglene implementeres som del av Vertical 1/3.
 
 **Torsk og Steinbit har to varianter** — `method: 'land' | 'båt'` i `SPECIES_DEFS`. Tanken er at SST påvirker kystfiske fra land men ikke dypvannsfiske fra båt. Land-varianter bruker `water_temp` i scoringsformelen; båt-varianter bruker månefase/tidevann. **Ingen andre arter splittes** — de øvrige er enten primært én metode, eller overflatepelagiske der dybdeforskjell ikke gir ulikt scoring-signal.
 
@@ -110,7 +110,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 ## Åpne issues / TODO
 
 ### Utsatt (bevisst)
-- **Firestore privacy-regler** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Krever design-beslutning: hva skal være privat vs. offentlig? Relevant når brukerbase vokser.
+- **Firestore privacy-regler** — design besluttet (se §4.7 SOCIAL_PRD.md). Implementeres som del av Vertical 1/3 når trip-datamodellen bygges.
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Ideer ikke startet

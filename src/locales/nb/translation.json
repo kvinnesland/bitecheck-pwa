@@ -130,7 +130,14 @@
     "saved": "Fangst lagret!",
     "gpsRecorded": "GPS registrert",
     "noGps": "Ingen GPS-posisjon",
-    "logSpecies": "Logg fangst av {{name}}"
+    "logSpecies": "Logg fangst av {{name}}",
+    "tripNear": "Tur nær {{place}}",
+    "tripTitlePlaceholder": "Navnløs tur",
+    "tripNotesPlaceholder": "Hvordan gikk det? Tips?",
+    "mapLoading": "Henter posisjon…",
+    "locationExact": "Eksakt",
+    "locationApproximate": "Omtrentlig",
+    "locationHidden": "Skjult"
   },
   "gps": {
     "acquiring": "Henter posisjon…",

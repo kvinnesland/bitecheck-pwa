@@ -17,8 +17,8 @@ BiteCheck becomes the Strava of fishing. Every fishing trip is a social moment �
 
 | Concept | Description |
 |---|---|
-| **Trip** | The primary social unit. One fishing outing = one feed post. Contains 0–N catches. Publishes immediately on first catch or explicit start. Auto-closes after 8h of inactivity. |
-| **Catch** | A logged fish. Always belongs to a trip. Not a standalone feed item. |
+| **Trip** | The primary social unit. One fishing outing = one feed post. Contains 0–N catches. Publishes immediately on first catch or explicit start. Auto-closes after 8h of inactivity. Visibility is set per trip: Everyone / Followers / Only me. |
+| **Catch** | A logged fish. Always belongs to a trip. Not a standalone feed item. Visibility is inherited from the trip. Location precision is set per catch (exact / approximate / hidden), defaulting to the user's profile preference. |
 | **Feed** | Mixed stream of trips from followed users + discover content. |
 | **Social Graph** | One-way follow relationships. Private accounts require approval. |
 | **Reaction** | One of 👍 ✋ 😁 😭 😯 per trip per user. |
@@ -42,8 +42,8 @@ BiteCheck becomes the Strava of fishing. Every fishing trip is a social moment �
   photoURL: string | null,
   mainLocation: string,       // free text e.g. "Tromsø"
   memberSince: Timestamp,
-  isPrivate: boolean,         // account-level privacy
-  locationPref: 'exact' | 'approximate' | 'hidden',  // account-level default
+  isPrivate: boolean,         // account-level privacy — acts as ceiling: private account makes all trips followers-only regardless of trip visibility setting
+  locationPref: 'exact' | 'approximate' | 'hidden',  // default for new catches; user can override per catch
   followersCount: number,     // denormalized
   followingCount: number,     // denormalized
   catchCount: number,         // denormalized
@@ -80,6 +80,7 @@ The primary social entity. One trip = one feed post.
   tripId: string,
   uid: string,                          // owner
   status: 'open' | 'closed',           // open = still accepting catches; closed = final
+  visibility: 'everyone' | 'followers' | 'only_me',  // who can see this trip. 'everyone' on a private account behaves like 'followers'.
   isMultiDay: boolean,                  // user-set flag; no UI difference except surfaced on trip card
   startedAt: Timestamp,
   closedAt: Timestamp | null,           // null while open; set on explicit user action only
@@ -108,9 +109,8 @@ Existing fields kept. New fields:
 {
   // ... existing fields ...
   tripId: string,                       // always set — every catch belongs to a trip
-  locationShare: 'exact' | 'approximate' | 'hidden',
+  locationShare: 'exact' | 'approximate' | 'hidden',  // defaults to user's locationPref; overridable per catch
   approximateLocationName: string | null,
-  isPublic: boolean,                    // visibility toggle, default true
   photoRefs: string[],                  // ordered list of Firebase Storage paths, max 10
                                         // empty until Firebase Blaze is enabled
 }
@@ -311,12 +311,22 @@ The algorithm lives in one isolated module (`src/lib/social/feedRanking.ts`) so 
 - Author can delete any comment on their catch.
 - No threading. No quoting.
 
-### 4.7 Catch Visibility & Location Privacy
+### 4.7 Trip Visibility & Catch Location Privacy
 
-#### Per-catch toggles (shown in catch log form + edit view)
-1. **Visibility toggle:** "Vis i feed" (on by default). Off = `isPublic: false`, invisible to all.
-2. **Location toggle:** overrides account default. Options: Exact / Vis omtrentlig sted / Skjul sted.
-3. **Approximate location name:** auto-filled from Nominatim reverse geocode of coordinates. User can edit to any free text (e.g. "Et sted i Nordland 😄").
+#### Trip visibility (set when starting or editing a trip)
+Three options matching Strava's model:
+- **Everyone** — visible to any authenticated user (subject to account-level ceiling: private accounts treat this as Followers).
+- **Followers** — visible only to approved followers.
+- **Only me** — private; never appears in any feed.
+
+Default: Everyone (for public accounts) / Followers (for private accounts).
+
+#### Per-catch location (shown in catch log form + edit view)
+1. **Location precision:** overrides account default. Options: Exact / Approximate / Hidden.
+2. **Approximate location name:** auto-filled from Nominatim reverse geocode of coordinates. User can edit to any free text (e.g. "Somewhere in Nordland 😄").
+
+#### Account-level ceiling
+`isPrivate: true` on the user profile forces all trips to be follower-gated, regardless of the trip's own `visibility` field. The trip's setting is preserved so it takes effect if the account is ever made public.
 
 ### 4.8 Discovery & Search
 
@@ -538,63 +548,142 @@ src/
 
 ## 7. Firestore Security Rules (additions)
 
+A `tripIsVisible()` helper centralises the visibility check so it isn't duplicated across trips, catches, reactions, and comments.
+
 ```
-// Users can read any public profile; only owner can write
-match /users/{uid} {
-  allow read: if request.auth != null;
-  allow write: if request.auth.uid == uid;
-}
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-// Usernames index: anyone can read; only enforced by transaction
-match /usernames/{username} {
-  allow read: if request.auth != null;
-  allow write: if request.auth != null; // transactions handle uniqueness
-}
+    // Central visibility check. Reads up to 3 documents (trip + user + follower).
+    // Returns true for: owner, 'everyone' on a public account, or active follower on 'followers'/'everyone'.
+    function tripIsVisible(tripId) {
+      let trip = get(/databases/$(database)/documents/trips/$(tripId)).data;
+      let ownerIsPrivate = get(/databases/$(database)/documents/users/$(trip.uid)).data.isPrivate;
+      let followerDoc = /databases/$(database)/documents/users/$(trip.uid)/followers/$(request.auth.uid);
+      let isActiveFollower = exists(followerDoc)
+        && get(followerDoc).data.status == 'active';
+      return trip.uid == request.auth.uid
+        || (trip.visibility == 'everyone' && !ownerIsPrivate)
+        || ((trip.visibility == 'everyone' || trip.visibility == 'followers') && isActiveFollower);
+    }
 
-// Followers: target can read; follower can write own entry
-match /users/{uid}/followers/{followerId} {
-  allow read: if request.auth.uid == uid || request.auth.uid == followerId;
-  allow write: if request.auth.uid == followerId;
-  allow delete: if request.auth.uid == followerId || request.auth.uid == uid; // deny = delete
-}
+    // Users: any authenticated user can read profiles; only owner can write.
+    // NOTE: count fields (followersCount, followingCount, etc.) must only be written
+    // by Cloud Functions via admin SDK — the client should never touch them directly.
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == uid;
+    }
 
-// Catches: visible if public AND (exact: anyone / approximate: anyone / hidden: anyone — location filtered client-side)
-// Private catches: only owner
-match /catches/{catchId} {
-  allow read: if request.auth != null &&
-    (resource.data.isPublic == true || resource.data.user_id == request.auth.uid);
-  allow write: if request.auth.uid == resource.data.user_id;
-}
+    // Usernames index: caller can only claim/release their own UID.
+    // No updates — usernames are immutable once claimed (must release + re-claim to change).
+    match /usernames/{username} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
 
-// Reactions: any authenticated user can react to a public catch
-match /catches/{catchId}/reactions/{userId} {
-  allow read: if request.auth != null;
-  allow write, delete: if request.auth.uid == userId;
-}
+    // Followers: who follows {uid}.
+    // On public accounts the follower may create an 'active' document directly.
+    // On private accounts only 'pending' is allowed on create; only the target can accept.
+    match /users/{uid}/followers/{followerId} {
+      allow read: if request.auth.uid == uid || request.auth.uid == followerId;
+      allow create: if request.auth.uid == followerId && (
+        request.resource.data.status == 'pending' ||
+        (request.resource.data.status == 'active'
+          && !get(/databases/$(database)/documents/users/$(uid)).data.isPrivate)
+      );
+      allow update: if request.auth.uid == uid
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'active';
+      allow delete: if request.auth.uid == followerId || request.auth.uid == uid;
+    }
 
-// Comments: any authenticated user can comment; owner or commenter can delete
-match /catches/{catchId}/comments/{commentId} {
-  allow read: if request.auth != null;
-  allow create: if request.auth != null;
-  allow delete: if request.auth.uid == resource.data.userId
-    || request.auth.uid == get(/databases/$(database)/documents/catches/$(catchId)).data.user_id;
-}
+    // Following: who {uid} follows. Mirror of followers, written by the follower.
+    // Validates that the doc body's followingId matches the path key.
+    match /users/{uid}/following/{followingId} {
+      allow read: if request.auth.uid == uid;
+      allow create: if request.auth.uid == uid
+        && request.resource.data.followingId == followingId;
+      allow delete: if request.auth.uid == uid || request.auth.uid == followingId;
+    }
 
-// Notifications: only owner can read/write
-match /notifications/{uid}/items/{notificationId} {
-  allow read, write: if request.auth.uid == uid;
-}
+    // Trips: primary social unit. Visibility enforced via tripIsVisible().
+    // Prevent ownership transfer on update by asserting uid is immutable.
+    match /trips/{tripId} {
+      allow read: if request.auth != null && tripIsVisible(tripId);
+      allow create: if request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth.uid == resource.data.uid
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth.uid == resource.data.uid;
+    }
 
-// Feed: only owner can read; Cloud Functions write (admin SDK bypasses rules)
-match /feed/{uid}/items/{catchId} {
-  allow read: if request.auth.uid == uid;
-}
+    // Catches: visibility inherited from parent trip.
+    // locationShare is enforced at write time: store location: null when 'hidden',
+    // store only approximateLocationName (not GeoPoint) when 'approximate'.
+    // tripId must reference a trip owned by the same user to prevent cross-trip injection.
+    match /catches/{catchId} {
+      allow read: if request.auth != null && (
+        resource.data.user_id == request.auth.uid ||
+        tripIsVisible(resource.data.tripId)
+      );
+      allow create: if request.auth.uid == request.resource.data.user_id
+        && get(/databases/$(database)/documents/trips/$(request.resource.data.tripId)).data.uid == request.auth.uid;
+      allow update, delete: if request.auth.uid == resource.data.user_id;
+    }
 
-// Personal records: anyone authenticated can read; Cloud Functions write
-match /personalRecords/{uid} {
-  allow read: if request.auth != null;
+    // Reactions: gated on parent catch visibility. Doc ID = userId enforces one reaction per user.
+    match /catches/{catchId}/reactions/{userId} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/catches/$(catchId)).data.user_id == request.auth.uid ||
+        tripIsVisible(get(/databases/$(database)/documents/catches/$(catchId)).data.tripId)
+      );
+      allow write, delete: if request.auth.uid == userId;
+    }
+
+    // Comments: gated on parent catch visibility.
+    // Create validates userId ownership and enforces 500-char limit.
+    match /catches/{catchId}/comments/{commentId} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/catches/$(catchId)).data.user_id == request.auth.uid ||
+        tripIsVisible(get(/databases/$(database)/documents/catches/$(catchId)).data.tripId)
+      );
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.text.size() <= 500;
+      allow delete: if request.auth.uid == resource.data.userId
+        || request.auth.uid == get(/databases/$(database)/documents/catches/$(catchId)).data.user_id;
+    }
+
+    // Notifications: owner can read and delete their own. Cloud Functions create via admin SDK.
+    match /notifications/{uid}/items/{notificationId} {
+      allow read, delete: if request.auth.uid == uid;
+    }
+
+    // Feed: only owner can read; Cloud Functions write via admin SDK.
+    match /feed/{uid}/items/{tripId} {
+      allow read: if request.auth.uid == uid;
+    }
+
+    // Personal records: no PII, readable by all authenticated users.
+    // Written exclusively by Cloud Functions via admin SDK.
+    match /personalRecords/{uid} {
+      allow read: if request.auth != null;
+    }
+  }
 }
 ```
+
+### Notes
+
+**Location privacy — defense in depth:** Rules enforce *who* can read a document, but not *which fields* are safe. When a user sets `locationShare: 'hidden'`, the app must write `location: null` to Firestore (not just suppress display). For `'approximate'`, store only `approximateLocationName`, not the GeoPoint. This ensures exact coordinates are never in the database for those catches.
+
+**Denormalized counts:** `followersCount`, `followingCount`, `catchCount`, `speciesCount` on user documents and `reactionCounts`, `commentCount` on trips are writable by the document owner (rules can't easily restrict individual fields without field-level diffs). These must only be written by Cloud Functions via admin SDK — the client UI must never touch count fields directly.
+
+**Demo data:** The current `firestore.rules` allows any authenticated user to write catches with a `user_id` matching `demo-.*`. This must be replaced before launch — either restrict to a specific allowlist of known demo UIDs, or seed demo data exclusively via admin SDK and remove the exception from client rules entirely.
 
 ---
 
