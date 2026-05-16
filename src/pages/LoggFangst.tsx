@@ -22,7 +22,7 @@ const SALT_SPECIES = [
 const FRESH_SPECIES = ['Ørret', 'Røye', 'Abbor', 'Gjedde', 'Harr'];
 const ALL_SPECIES = [...SALT_SPECIES, ...FRESH_SPECIES];
 
-type Step = 'trip' | 'details' | 'success';
+type Step = 'trip' | 'details' | 'moment' | 'success';
 type WaterType = 'salt' | 'fresh';
 type LocationPref = 'exact' | 'approximate' | 'hidden';
 type TripState = 'loading' | Trip | null;
@@ -58,6 +58,7 @@ export function LoggFangst({ user }: Props) {
   const [species, setSpecies] = useState('');
   const [weight, setWeight] = useState('');
   const [length, setLength] = useState('');
+  const [caption, setCaption] = useState('');
   const [saving, setSaving] = useState(false);
 
   const placeName = useReverseGeocode(position, locationPref, i18n.language);
@@ -159,7 +160,9 @@ export function LoggFangst({ user }: Props) {
         tripId,
         locationShare: locationPref,
         approximateLocationName: placeName,
+        caption: caption || undefined,
       });
+      setCaption('');
       setStep('success');
     } finally {
       setSaving(false);
@@ -179,7 +182,67 @@ export function LoggFangst({ user }: Props) {
     setQuery('');
     setTripTitle('');
     setNotes('');
+    setCaption('');
     setTitleEdited(false);
+  }
+
+  async function handleSaveMoment() {
+    if (!caption.trim()) return;
+    setSaving(true);
+    try {
+      let tripId: string;
+      const existingTrip = activeTrip !== 'loading' ? activeTrip : null;
+
+      if (existingTrip) {
+        tripId = existingTrip.tripId;
+        addCatchToTrip(tripId, '');
+      } else {
+        tripId = startTrip({
+          uid: user.uid,
+          title: tripTitle || null,
+          note: notes || null,
+          location: position,
+          locationShare: locationPref,
+          approximateLocationName: placeName,
+          firstSpecies: '',
+          waterType,
+          visibility: 'everyone',
+        });
+        setActiveTrip({
+          tripId,
+          uid: user.uid,
+          status: 'open',
+          visibility: 'everyone',
+          title: tripTitle || null,
+          note: notes || null,
+          startedAt: new Date().toISOString(),
+          closedAt: null,
+          location: position,
+          locationShare: locationPref,
+          approximateLocationName: placeName,
+          catchCount: 1,
+          species: [],
+          waterType,
+        });
+      }
+
+      await createCatch({
+        userId: user.uid,
+        species: '',
+        weight_kg: null,
+        length_cm: null,
+        location: position,
+        tripId,
+        locationShare: locationPref,
+        approximateLocationName: placeName,
+        caption: caption.trim(),
+        isMoment: true,
+      });
+      setCaption('');
+      setStep('success');
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleContinueTrip() {
@@ -188,6 +251,7 @@ export function LoggFangst({ user }: Props) {
     setWeight('');
     setLength('');
     setQuery('');
+    setCaption('');
   }
 
 
@@ -321,6 +385,19 @@ export function LoggFangst({ user }: Props) {
               </label>
             </div>
 
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
+                {t('log.caption')} <span className="font-normal normal-case tracking-normal text-text-muted">({t('log.optional')})</span>
+              </span>
+              <textarea
+                className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.9rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none"
+                placeholder={t('log.captionPlaceholder')}
+                rows={2}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+              />
+            </label>
+
             <div className={gpsRowCls}>
               <GpsIcon status={geoStatus} />
               <GpsLabel status={geoStatus} accuracy={position?.accuracy_m} />
@@ -332,6 +409,48 @@ export function LoggFangst({ user }: Props) {
               disabled={saving}
             >
               {saving ? t('log.saving') : t('log.save')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Moment ───────────────────────────────────────────────────────────────────
+
+  if (step === 'moment') {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto px-4 py-5 pb-6 gap-4">
+        <button
+          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 shrink-0 hover:text-text transition-colors duration-150"
+          onClick={() => setStep('trip')}
+        >
+          <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          {t('log.back')}
+        </button>
+
+        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden flex flex-col flex-1">
+          <div className="px-5 py-4 border-b border-divider">
+            <p className="text-base font-semibold text-text">{t('log.logMoment')}</p>
+            <p className="text-xs text-text-muted mt-0.5">{t('log.momentHint')}</p>
+          </div>
+          <div className="px-5 py-5 flex flex-col gap-4 flex-1">
+            <textarea
+              className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none flex-1"
+              placeholder={t('log.momentPlaceholder')}
+              rows={5}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              autoFocus
+            />
+            <button
+              className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-[background,opacity] duration-150 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent/80"
+              onClick={handleSaveMoment}
+              disabled={saving || !caption.trim()}
+            >
+              {saving ? t('log.saving') : t('log.saveMoment')}
             </button>
           </div>
         </div>
@@ -448,7 +567,7 @@ export function LoggFangst({ user }: Props) {
       </div>
 
       {/* Species list */}
-      <div className="px-4 pb-6 flex flex-col">
+      <div className="px-4 pb-2 flex flex-col">
         {displayedSpecies.length > 0 ? (
           displayedSpecies.map((name) => (
             <button
@@ -473,6 +592,20 @@ export function LoggFangst({ user }: Props) {
             {t('log.addCustom', { name: query.trim() })}
           </button>
         )}
+      </div>
+
+      {/* Log a moment */}
+      <div className="px-4 pb-6">
+        <button
+          className="w-full flex items-center justify-center gap-2 text-text-muted text-sm py-3 border border-dashed border-divider rounded-[var(--radius-md)] hover:text-text hover:border-text-muted transition-colors duration-150"
+          onClick={() => setStep('moment')}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          {t('log.logMoment')}
+        </button>
       </div>
     </div>
   );

@@ -13,8 +13,16 @@
     "afternoon": "Good afternoon",
     "evening": "Good evening",
     "angler": "Angler",
+    "you": "You",
+    "live": "Live",
     "recentUpdates": "Recent updates",
-    "empty": "No catches yet — be the first to log one!",
+    "empty": "No trips yet — head out and log your first catch!",
+    "catchCount": "{{count}} catch",
+    "catchCount_other": "{{count}} catches",
+    "catches": "Catches",
+    "noCatches": "No catches logged yet",
+    "loading": "Loading…",
+    "addCatch": "Log a catch or moment",
     "weather": {
       "clear": "Clear sky",
       "cloudy": "Partly cloudy",
@@ -142,7 +150,14 @@
     "activeTrip_other": "Active trip · {{count}} catches logged",
     "continueTrip": "Continue trip",
     "endTrip": "End trip",
-    "tripSummary": "{{catches}} catch · {{species}} species"
+    "tripSummary": "{{catches}} catch · {{species}} species",
+    "caption": "Caption",
+    "optional": "optional",
+    "captionPlaceholder": "What happened here?",
+    "logMoment": "Log a moment",
+    "momentHint": "A photo note — no catch required",
+    "momentPlaceholder": "What do you want to remember?",
+    "saveMoment": "Save moment"
   },
   "gps": {
     "acquiring": "Getting position…",

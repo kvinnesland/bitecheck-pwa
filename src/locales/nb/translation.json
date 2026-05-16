@@ -13,8 +13,16 @@
     "afternoon": "God ettermiddag",
     "evening": "God kveld",
     "angler": "Fisker",
+    "you": "Deg",
+    "live": "Pågår",
     "recentUpdates": "Siste oppdateringer",
-    "empty": "Ingen fangster ennå — bli den første til å logge!",
+    "empty": "Ingen turer ennå — dra ut og logg din første fangst!",
+    "catchCount": "{{count}} fangst",
+    "catchCount_other": "{{count}} fangster",
+    "catches": "Fangster",
+    "noCatches": "Ingen fangster logget ennå",
+    "loading": "Laster…",
+    "addCatch": "Logg en fangst eller et øyeblikk",
     "weather": {
       "clear": "Klart",
       "cloudy": "Delvis skyet",
@@ -142,7 +150,14 @@
     "activeTrip_other": "Aktiv tur · {{count}} fangster logget",
     "continueTrip": "Fortsett turen",
     "endTrip": "Avslutt turen",
-    "tripSummary": "{{catches}} fangst · {{species}} arter"
+    "tripSummary": "{{catches}} fangst · {{species}} arter",
+    "caption": "Bildetekst",
+    "optional": "valgfritt",
+    "captionPlaceholder": "Hva skjedde her?",
+    "logMoment": "Logg et øyeblikk",
+    "momentHint": "Et notat — ingen fangst nødvendig",
+    "momentPlaceholder": "Hva vil du huske?",
+    "saveMoment": "Lagre øyeblikk"
   },
   "gps": {
     "acquiring": "Henter posisjon…",

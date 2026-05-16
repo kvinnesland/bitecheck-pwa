@@ -87,6 +87,8 @@ export interface CatchRecord {
   tripId?: string;
   locationShare?: LocationPref;
   approximateLocationName?: string | null;
+  caption?: string;
+  isMoment?: boolean;
 }
 
 export interface PublicCatchRecord {
