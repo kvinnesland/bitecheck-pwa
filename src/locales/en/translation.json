@@ -28,6 +28,7 @@
     "live": "Live",
     "recentUpdates": "Recent updates",
     "empty": "No trips yet — head out and log your first catch!",
+    "loadMore": "Load more",
     "catchCount": "{{count}} catch",
     "catchCount_other": "{{count}} catches",
     "catches": "Catches",

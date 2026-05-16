@@ -67,7 +67,15 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
   const lat = position ? Math.round(position.lat * 100) / 100 : null;
   const lng = position ? Math.round(position.lng * 100) / 100 : null;
   const weather = useFeedWeather(lat, lng);
-  const { trips, loading } = useFeedTrips(user.uid);
+  const { trips, loading, hasMore, loadMore } = useFeedTrips(user.uid);
+
+  function markSeen(tripId: string) {
+    const key = `bc_seen_trips_${user.uid}`;
+    const existing: string[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+    if (!existing.includes(tripId)) {
+      localStorage.setItem(key, JSON.stringify([...existing, tripId].slice(-500)));
+    }
+  }
 
   const hour = new Date().getHours();
   const greetingKey = hour < 12 ? 'feed.morning' : hour < 18 ? 'feed.afternoon' : 'feed.evening';
@@ -183,18 +191,28 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
             <p className="text-sm text-text-muted">{t('feed.empty')}</p>
           </div>
         ) : (
-          trips.map(trip => (
-            <TripCard
-              key={trip.tripId}
-              trip={trip}
-              displayName={trip.uid === user.uid ? displayName : t('feed.angler')}
-              photoUrl={trip.uid === user.uid ? user.photoURL : null}
-              isOwn={trip.uid === user.uid}
-              locale={i18n.language}
-              onClick={() => push({ type: 'trip', trip })}
-              onAvatarClick={() => push({ type: 'profile', uid: trip.uid })}
-            />
-          ))
+          <>
+            {trips.map(trip => (
+              <TripCard
+                key={trip.tripId}
+                trip={trip}
+                displayName={trip.uid === user.uid ? displayName : trip.authorDisplayName}
+                photoUrl={trip.uid === user.uid ? user.photoURL : trip.authorPhotoURL}
+                isOwn={trip.uid === user.uid}
+                locale={i18n.language}
+                onClick={() => { markSeen(trip.tripId); push({ type: 'trip', trip }); }}
+                onAvatarClick={() => push({ type: 'profile', uid: trip.uid })}
+              />
+            ))}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                className="w-full py-3 text-sm text-accent font-semibold border border-accent/30 rounded-[var(--radius-md)] hover:bg-accent/5 transition-colors duration-150"
+              >
+                {t('feed.loadMore')}
+              </button>
+            )}
+          </>
         )}
       </div>
 

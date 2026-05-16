@@ -143,11 +143,21 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
         )}
 
         {/* Footer */}
-        <p className="text-[0.75rem] text-text-muted pt-0.5">
-          {t('feed.catchCount', { count: trip.catchCount })}
-          {' · '}
-          {t(trip.waterType === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
-        </p>
+        <div className="flex items-center gap-2 flex-wrap pt-0.5">
+          <span className="text-[0.75rem] text-text-muted">
+            {t('feed.catchCount', { count: trip.catchCount })}
+            {' · '}
+            {t(trip.waterType === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
+          </span>
+          {Object.values(trip.reactionCounts ?? {}).reduce((a, b) => a + b, 0) > 0 && (
+            <span className="text-[0.75rem] text-text-muted">
+              👍 {Object.values(trip.reactionCounts!).reduce((a, b) => a + b, 0)}
+            </span>
+          )}
+          {(trip.commentCount ?? 0) > 0 && (
+            <span className="text-[0.75rem] text-text-muted">💬 {trip.commentCount}</span>
+          )}
+        </div>
       </div>
     </div>
   );

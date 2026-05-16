@@ -28,6 +28,7 @@
     "live": "Pågår",
     "recentUpdates": "Siste oppdateringer",
     "empty": "Ingen turer ennå — dra ut og logg din første fangst!",
+    "loadMore": "Last inn mer",
     "catchCount": "{{count}} fangst",
     "catchCount_other": "{{count}} fangster",
     "catches": "Fangster",
