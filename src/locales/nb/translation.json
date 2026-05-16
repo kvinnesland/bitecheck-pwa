@@ -212,6 +212,12 @@
     "saltwater": "Saltvann",
     "freshwater": "Ferskvann"
   },
+  "search": {
+    "title": "Søk",
+    "placeholder": "Søk etter brukernavn…",
+    "hint": "Skriv et brukernavn for å finne fiskere",
+    "noResults": "Ingen brukere funnet for «{{term}}»"
+  },
   "follow": {
     "follow": "Følg",
     "following": "Følger",

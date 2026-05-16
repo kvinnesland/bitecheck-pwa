@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Settings,
+  Settings, Search,
   Sun, Cloud, CloudSun, CloudRain, CloudSnow, CloudLightning, Wind,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
@@ -11,6 +11,7 @@ import { useFeedWeather } from '../hooks/useFeedWeather';
 import { useFeedTrips } from '../hooks/useFeedTrips';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { TripCard } from '../components/social/TripCard';
+import { UserSearchSheet } from '../components/social/UserSearchSheet';
 import { TripDetail } from './TripDetail';
 import { UserProfile } from './UserProfile';
 import { useUnits } from '../contexts/UnitsContext';
@@ -57,6 +58,7 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
   const { position } = useGeolocation();
   const { profile } = useUserProfile(user.uid);
   const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'feed' }]);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const push = (entry: NavEntry) => setNavStack(s => [...s, entry]);
   const pop = () => setNavStack(s => s.length > 1 ? s.slice(0, -1) : s);
@@ -123,17 +125,30 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
             <p className="text-sm text-text-muted">{t(greetingKey)},</p>
             <h1 className="text-[1.3rem] font-bold text-text leading-tight tracking-tight">{firstName}</h1>
           </div>
-          <button
-            onClick={onSettingsOpen}
-            aria-label={t('settings.title')}
-            className={cn(
-              'mt-1 w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
-              'text-text-muted border border-divider',
-              'transition-colors duration-150 hover:text-text hover:border-accent',
-            )}
-          >
-            <Settings size={18} strokeWidth={1.75} />
-          </button>
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label={t('search.title')}
+              className={cn(
+                'w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
+                'text-text-muted border border-divider',
+                'transition-colors duration-150 hover:text-text hover:border-accent',
+              )}
+            >
+              <Search size={18} strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={onSettingsOpen}
+              aria-label={t('settings.title')}
+              className={cn(
+                'w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
+                'text-text-muted border border-divider',
+                'transition-colors duration-150 hover:text-text hover:border-accent',
+              )}
+            >
+              <Settings size={18} strokeWidth={1.75} />
+            </button>
+          </div>
         </div>
 
         {/* Weather strip */}
@@ -179,6 +194,13 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
           ))
         )}
       </div>
+
+      {searchOpen && (
+        <UserSearchSheet
+          onClose={() => setSearchOpen(false)}
+          onUserClick={uid => { setSearchOpen(false); push({ type: 'profile', uid }); }}
+        />
+      )}
     </div>
   );
 }

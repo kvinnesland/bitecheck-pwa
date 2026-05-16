@@ -212,6 +212,12 @@
     "saltwater": "Saltwater",
     "freshwater": "Freshwater"
   },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search by username…",
+    "hint": "Type a username to find anglers",
+    "noResults": "No users found for \"{{term}}\""
+  },
   "follow": {
     "follow": "Follow",
     "following": "Following",
