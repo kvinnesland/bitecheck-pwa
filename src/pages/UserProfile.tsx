@@ -5,6 +5,7 @@ import type { User } from 'firebase/auth';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { useUserPublicTrips } from '../hooks/useUserPublicTrips';
+import { useFollowCounts } from '../hooks/social/useFollowCounts';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { getBiome } from '../lib/biomes';
@@ -81,6 +82,7 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUse
   // empty array for other users (they have no local catches on this device)
   const catches = useUserCatches(targetUid);
   const { trips, loading: tripsLoading } = useUserPublicTrips(targetUid, isOwn);
+  const { followersCount, followingCount } = useFollowCounts(targetUid);
 
   const stats = useMemo(() => computeStats(catches), [catches]);
 
@@ -213,7 +215,7 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUse
             onClick={() => setFollowSheet('followers')}
           >
             <span className="text-2xl font-bold text-text leading-none">
-              {profile?.followersCount ?? 0}
+              {followersCount}
             </span>
             <span className="text-xs text-text-muted">{t('follow.followers')}</span>
           </button>
@@ -223,7 +225,7 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUse
             onClick={() => setFollowSheet('following')}
           >
             <span className="text-2xl font-bold text-text leading-none">
-              {profile?.followingCount ?? 0}
+              {followingCount}
             </span>
             <span className="text-xs text-text-muted">{t('follow.following')}</span>
           </button>
