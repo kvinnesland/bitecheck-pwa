@@ -15,6 +15,7 @@
     "log": "Logg",
     "map": "Kart",
     "score": "Score",
+    "notifications": "Varsler",
     "history": "Historikk",
     "profile": "Profil",
     "ariaLabel": "Hovednavigasjon"
@@ -276,6 +277,22 @@
     "everyone": "Alle",
     "followers": "Følgere",
     "only_me": "Bare meg"
+  },
+  "notifs": {
+    "title": "Varsler",
+    "empty": "Ingen varsler ennå",
+    "markAllRead": "Merk alle lest",
+    "justNow": "akkurat nå",
+    "follow": "{{user}} følger deg nå",
+    "follow_request": "{{user}} vil følge deg",
+    "follow_accepted": "{{user}} godkjente følgeforespørselen din",
+    "reaction": "{{user}} reagerte {{emoji}} på turen din",
+    "comment": "{{user}} kommenterte på turen din",
+    "comment_snippet": "{{user}}: {{snippet}}",
+    "mention": "{{user}} nevnte deg i en kommentar",
+    "pushTitle": "Push-varsler",
+    "pushDesc": "Få beskjed når noen følger deg eller reagerer på turene dine.",
+    "pushEnable": "Aktiver"
   },
   "reactions": {
     "label": "Reaksjoner"

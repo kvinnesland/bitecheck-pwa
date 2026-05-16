@@ -15,6 +15,7 @@
     "log": "Log",
     "map": "Map",
     "score": "Score",
+    "notifications": "Alerts",
     "history": "History",
     "profile": "Profile",
     "ariaLabel": "Main navigation"
@@ -276,6 +277,22 @@
     "everyone": "Everyone",
     "followers": "Followers",
     "only_me": "Only me"
+  },
+  "notifs": {
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "markAllRead": "Mark all read",
+    "justNow": "just now",
+    "follow": "{{user}} started following you",
+    "follow_request": "{{user}} wants to follow you",
+    "follow_accepted": "{{user}} accepted your follow request",
+    "reaction": "{{user}} reacted {{emoji}} to your trip",
+    "comment": "{{user}} commented on your trip",
+    "comment_snippet": "{{user}}: {{snippet}}",
+    "mention": "{{user}} mentioned you in a comment",
+    "pushTitle": "Push notifications",
+    "pushDesc": "Get notified when someone follows or reacts to your trips.",
+    "pushEnable": "Enable"
   },
   "reactions": {
     "label": "Reactions"

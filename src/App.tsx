@@ -15,6 +15,7 @@ const LoggFangst = lazy(() => import('./pages/LoggFangst').then((m) => ({ defaul
 const Kart       = lazy(() => import('./pages/Kart').then((m) => ({ default: m.Kart })));
 const BiteScore  = lazy(() => import('./pages/BiteScore').then((m) => ({ default: m.BiteScore })));
 const Profil     = lazy(() => import('./pages/Profil').then((m) => ({ default: m.Profil })));
+const Varsler    = lazy(() => import('./pages/Varsler').then((m) => ({ default: m.Varsler })));
 
 export default function App() {
   const { user, loading, error, signInWithGoogle, signOutUser } = useAuth();
@@ -58,11 +59,12 @@ function AuthenticatedApp({ user, onSignOut }: { user: User; onSignOut: () => vo
       <AppShell user={user} onSignOut={onSignOut}>
         {(view: AppView, navigate: (v: AppView) => void, openSettings: () => void) => (
           <Suspense fallback={<PageSpinner />}>
-            {view === 'feed'   && <Feed user={user} onSettingsOpen={openSettings} onNavigate={navigate} />}
-            {view === 'logg'   && <LoggFangst user={user} />}
-            {view === 'kart'   && <Kart user={user} />}
-            {view === 'score'  && <BiteScore user={user} navigate={navigate} />}
-            {view === 'profil' && <Profil user={user} onSettingsOpen={openSettings} />}
+            {view === 'feed'    && <Feed user={user} onSettingsOpen={openSettings} onNavigate={navigate} />}
+            {view === 'logg'    && <LoggFangst user={user} />}
+            {view === 'kart'    && <Kart user={user} />}
+            {view === 'score'   && <BiteScore user={user} navigate={navigate} />}
+            {view === 'varsler' && <Varsler uid={user.uid} onNavigate={navigate} />}
+            {view === 'profil'  && <Profil user={user} onSettingsOpen={openSettings} />}
           </Suspense>
         )}
       </AppShell>
