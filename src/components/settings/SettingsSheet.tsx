@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useUnits } from '../../contexts/UnitsContext';
@@ -115,16 +115,59 @@ function DemoSection() {
   );
 }
 
+const DISMISS_THRESHOLD = 80;
+
 export function SettingsSheet({ user, onClose, onSignOut }: Props) {
   const { t, i18n } = useTranslation();
   const activeLang = i18n.language.startsWith('nb') ? 'nb' : 'en';
   const { prefs, update } = useUnits();
   const { isDark, toggle: toggleTheme } = useTheme();
 
+  const [visible, setVisible] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startY = useRef(0);
+  const dragging = useRef(false);
+
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)); }, []);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    startY.current = e.touches[0].clientY;
+    dragging.current = true;
+    setIsDragging(true);
+  }
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!dragging.current) return;
+    const delta = e.touches[0].clientY - startY.current;
+    if (delta > 0) setDragY(delta);
+  }
+  function handleTouchEnd() {
+    dragging.current = false;
+    setIsDragging(false);
+    if (dragY > DISMISS_THRESHOLD) {
+      setDragY(window.innerHeight);
+      setTimeout(onClose, 220);
+    } else {
+      setDragY(0);
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 z-[1200] flex items-end" onClick={onClose}>
-      <div className="bg-surface rounded-t-2xl w-full pb-10 flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="w-9 h-1 bg-divider rounded-full mx-auto mt-3 mb-2 shrink-0" />
+      <div
+        className="bg-surface rounded-t-2xl w-full max-h-[88dvh] overflow-y-auto flex flex-col will-change-transform"
+        style={{
+          transform: visible ? `translateY(${dragY}px)` : 'translateY(100%)',
+          transition: isDragging ? 'none' : 'transform 0.25s ease',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="w-9 h-1 bg-divider rounded-full mx-auto mt-3 mb-2 shrink-0 cursor-grab touch-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        />
         <h2 className="text-[1.05rem] font-bold px-5 pb-3.5 pt-2 text-text border-b border-divider">
           {t('settings.title')}
         </h2>
@@ -216,7 +259,7 @@ export function SettingsSheet({ user, onClose, onSignOut }: Props) {
           </span>
         </div>
 
-        <div className="px-5 pt-4">
+        <div className="px-5 pt-4 pb-10">
           <button
             onClick={onSignOut}
             className="w-full py-3 bg-transparent text-error text-[0.95rem] font-medium rounded-[var(--radius-md)] border border-error transition-colors duration-150 hover:bg-error/10"

@@ -405,7 +405,7 @@ export function LoggFangst({ user }: Props) {
           {t('log.back')}
         </button>
 
-        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden flex flex-col flex-1">
+        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden">
           <div className="px-5 py-4 border-b border-divider">
             <SpeciesCardHeader
               name={species}
@@ -420,7 +420,7 @@ export function LoggFangst({ user }: Props) {
             />
           </div>
 
-          <div className="px-5 py-5 flex flex-col gap-4 flex-1">
+          <div className="px-5 py-5 flex flex-col gap-4">
             <div className="flex flex-col gap-3 shrink-0">
               <label className="flex flex-col gap-1.5">
                 <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
@@ -492,7 +492,7 @@ export function LoggFangst({ user }: Props) {
             </div>
 
             <button
-              className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-[background,opacity] duration-150 shrink-0 mt-auto disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent/80"
+              className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-[background,opacity] duration-150 disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent/80"
               onClick={handleSave}
               disabled={saving}
             >
@@ -519,12 +519,12 @@ export function LoggFangst({ user }: Props) {
           {t('log.back')}
         </button>
 
-        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden flex flex-col flex-1">
+        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden">
           <div className="px-5 py-4 border-b border-divider">
             <p className="text-base font-semibold text-text">{t('log.logMoment')}</p>
             <p className="text-xs text-text-muted mt-0.5">{t('log.momentHint')}</p>
           </div>
-          <div className="px-5 py-5 flex flex-col gap-4 flex-1">
+          <div className="px-5 py-5 flex flex-col gap-4">
             <textarea
               className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none flex-1"
               placeholder={t('log.momentPlaceholder')}
