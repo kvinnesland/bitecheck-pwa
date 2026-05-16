@@ -112,9 +112,10 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 ### Gjort (sosiale vertikaler)
 - **~~Vertical 1 — Identity~~** — UsernameModal, users/usernames-samlinger, profilside med redigering, privacy-innstillinger.
 - **~~Vertical 2 — Social Graph~~** — Follow/unfollow, follow-request-flyt (pending → accept/deny), FollowListSheet, UserSearchSheet. Merk: followersCount/followingCount oppdateres IKKE client-side — dette håndteres av Cloud Functions som legges til i V5/V6.
+- **~~Vertical 3 — Trip & Catch Layer~~** — Visibility-toggle (everyone/followers/only_me), isMultiDay-toggle, photoRefs-felt på CatchRecord, photo-placeholder-knapp med "krever Blaze"-melding, stale-state-fix for catchCount/species på activeTrip, fetchOpenTrip bruker nå Firestore-query i stedet for JS-filtrering.
 
 ### Utsatt (bevisst)
-- **Firestore privacy-regler** — design besluttet (se §4.7 SOCIAL_PRD.md). Implementeres som del av Vertical 3 når trip-datamodellen bygges.
+- **Firestore privacy-regler (tripIsVisible-funksjon)** — data-modellen er klar (visibility-felt på Trip), men server-side enforcement utsettes til V5/feeds.
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Ideer ikke startet

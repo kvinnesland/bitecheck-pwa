@@ -168,7 +168,10 @@
     "logMoment": "Logg et øyeblikk",
     "momentHint": "Et notat — ingen fangst nødvendig",
     "momentPlaceholder": "Hva vil du huske?",
-    "saveMoment": "Lagre øyeblikk"
+    "saveMoment": "Lagre øyeblikk",
+    "multiDay": "Flerdag-tur",
+    "addPhoto": "Legg til bilde",
+    "photoBlaze": "Bildeopplasting krever Firebase Blaze-plan"
   },
   "gps": {
     "acquiring": "Henter posisjon…",
@@ -266,6 +269,12 @@
     "confirm": "Bekreft",
     "claiming": "Lagrer…",
     "error": "Noe gikk galt — prøv igjen"
+  },
+  "visibility": {
+    "label": "Synlighet",
+    "everyone": "Alle",
+    "followers": "Følgere",
+    "only_me": "Bare meg"
   },
   "update": {
     "available": "Ny versjon tilgjengelig",

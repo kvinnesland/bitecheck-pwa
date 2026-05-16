@@ -19,6 +19,7 @@ export interface Trip {
   uid: string;
   status: 'open' | 'closed';
   visibility: TripVisibility;
+  isMultiDay?: boolean;
   title: string | null;
   note: string | null;
   startedAt: string;       // ISO string
@@ -98,6 +99,7 @@ export interface CatchRecord {
   tripId?: string;
   locationShare?: LocationPref;
   approximateLocationName?: string | null;
+  photoRefs?: string[];
   caption?: string;
   isMoment?: boolean;
 }

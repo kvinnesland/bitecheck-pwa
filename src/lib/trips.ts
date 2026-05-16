@@ -1,7 +1,7 @@
 import {
   doc, setDoc, updateDoc, getDocs,
   collection, query, where,
-  increment, arrayUnion, serverTimestamp, Timestamp,
+  increment, arrayUnion, serverTimestamp, Timestamp, orderBy, limit,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Trip, LocationPref, TripVisibility, WaterType, CatchLocation, Biome } from '../types';
@@ -16,6 +16,7 @@ export function startTrip(params: {
   firstSpecies: string;
   waterType: WaterType;
   visibility: TripVisibility;
+  isMultiDay?: boolean;
   biome?: Biome;
 }): string {
   const tripId = crypto.randomUUID();
@@ -24,6 +25,7 @@ export function startTrip(params: {
     uid: params.uid,
     status: 'open',
     visibility: params.visibility,
+    isMultiDay: params.isMultiDay ?? false,
     title: params.title,
     note: params.note,
     startedAt: serverTimestamp(),
@@ -32,11 +34,19 @@ export function startTrip(params: {
     locationShare: params.locationShare,
     approximateLocationName: params.approximateLocationName,
     catchCount: 1,
-    species: [params.firstSpecies],
+    species: params.firstSpecies ? [params.firstSpecies] : [],
     waterType: params.waterType,
     ...(params.biome && { biome: params.biome }),
   }).catch(() => {});
   return tripId;
+}
+
+export async function setTripMultiDay(tripId: string, isMultiDay: boolean): Promise<void> {
+  await updateDoc(doc(db, 'trips', tripId), { isMultiDay });
+}
+
+export async function setTripVisibility(tripId: string, visibility: TripVisibility): Promise<void> {
+  await updateDoc(doc(db, 'trips', tripId), { visibility });
 }
 
 export function addCatchToTrip(tripId: string, species: string): void {
@@ -55,24 +65,23 @@ export async function closeTrip(tripId: string): Promise<void> {
 
 export async function fetchOpenTrip(uid: string): Promise<Trip | null> {
   const snap = await getDocs(
-    query(collection(db, 'trips'), where('uid', '==', uid)),
+    query(
+      collection(db, 'trips'),
+      where('uid', '==', uid),
+      where('status', '==', 'open'),
+      orderBy('startedAt', 'desc'),
+      limit(1),
+    ),
   );
-  const open = snap.docs
-    .map(d => d.data())
-    .filter(d => d.status === 'open')
-    .sort((a, b) => {
-      const aMs = (a.startedAt as Timestamp)?.toMillis?.() ?? 0;
-      const bMs = (b.startedAt as Timestamp)?.toMillis?.() ?? 0;
-      return bMs - aMs;
-    });
 
-  if (open.length === 0) return null;
-  const d = open[0];
+  if (snap.empty) return null;
+  const d = snap.docs[0].data();
   return {
     tripId: d.tripId as string,
     uid: d.uid as string,
     status: 'open',
     visibility: d.visibility as TripVisibility,
+    isMultiDay: (d.isMultiDay as boolean) ?? false,
     title: (d.title as string | null) ?? null,
     note: (d.note as string | null) ?? null,
     startedAt: (d.startedAt as Timestamp)?.toDate?.()?.toISOString() ?? new Date().toISOString(),

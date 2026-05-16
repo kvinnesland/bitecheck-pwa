@@ -55,6 +55,7 @@ export async function createCatch(params: {
       tide_phase: null,
       moon_phase: moonIllum.phase,
     },
+    photoRefs: [],
     ...(params.tripId && { tripId: params.tripId }),
     ...(params.locationShare && { locationShare: params.locationShare }),
     ...(params.approximateLocationName !== undefined && { approximateLocationName: params.approximateLocationName }),

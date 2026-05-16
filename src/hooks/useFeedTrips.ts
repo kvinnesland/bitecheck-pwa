@@ -9,6 +9,7 @@ export function tripFromDoc(d: Record<string, unknown>): Trip {
     uid: d.uid as string,
     status: d.status as 'open' | 'closed',
     visibility: (d.visibility as TripVisibility) ?? 'everyone',
+    isMultiDay: (d.isMultiDay as boolean) ?? false,
     title: (d.title as string | null) ?? null,
     note: (d.note as string | null) ?? null,
     startedAt: (d.startedAt as Timestamp)?.toDate?.()?.toISOString() ?? new Date().toISOString(),

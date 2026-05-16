@@ -5,7 +5,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useReverseGeocode } from '../hooks/useReverseGeocode';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { createCatch } from '../lib/catches';
-import { startTrip, addCatchToTrip, closeTrip, fetchOpenTrip } from '../lib/trips';
+import { startTrip, addCatchToTrip, closeTrip, fetchOpenTrip, setTripMultiDay } from '../lib/trips';
 import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { useUnits } from '../contexts/UnitsContext';
@@ -13,7 +13,7 @@ import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } fr
 import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
 import { cn } from '@/lib/utils';
-import type { Trip, Biome } from '../types';
+import type { Trip, Biome, TripVisibility } from '../types';
 
 const TripMapSnippet = React.lazy(() => import('../components/TripMapSnippet'));
 
@@ -65,6 +65,9 @@ export function LoggFangst({ user }: Props) {
   const [length, setLength] = useState('');
   const [caption, setCaption] = useState('');
   const [saving, setSaving] = useState(false);
+  const [visibility, setVisibility] = useState<TripVisibility>('everyone');
+  const [isMultiDay, setIsMultiDay] = useState(false);
+  const [showPhotoMessage, setShowPhotoMessage] = useState(false);
 
   const placeName = useReverseGeocode(position, locationPref, i18n.language);
 
@@ -98,6 +101,8 @@ export function LoggFangst({ user }: Props) {
       if (activeTrip.note) setNotes(activeTrip.note);
       if (activeTrip.waterType) setWaterType(activeTrip.waterType);
       if (activeTrip.biome) { setBiome(activeTrip.biome); setBiomeEdited(true); }
+      if (activeTrip.visibility) setVisibility(activeTrip.visibility);
+      if (activeTrip.isMultiDay) setIsMultiDay(activeTrip.isMultiDay);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripLoaded]);
@@ -135,6 +140,15 @@ export function LoggFangst({ user }: Props) {
       if (existingTrip) {
         tripId = existingTrip.tripId;
         addCatchToTrip(tripId, species);
+        setActiveTrip(prev =>
+          typeof prev === 'object' && prev !== null
+            ? {
+                ...prev,
+                catchCount: prev.catchCount + 1,
+                species: prev.species.includes(species) ? prev.species : [...prev.species, species],
+              }
+            : prev,
+        );
       } else {
         tripId = startTrip({
           uid: user.uid,
@@ -145,14 +159,16 @@ export function LoggFangst({ user }: Props) {
           approximateLocationName: placeName,
           firstSpecies: species,
           waterType,
-          visibility: 'everyone',
+          visibility,
+          isMultiDay,
           biome,
         });
         setActiveTrip({
           tripId,
           uid: user.uid,
           status: 'open',
-          visibility: 'everyone',
+          visibility,
+          isMultiDay,
           title: tripTitle || null,
           note: notes || null,
           startedAt: new Date().toISOString(),
@@ -202,6 +218,9 @@ export function LoggFangst({ user }: Props) {
     setTitleEdited(false);
     setBiomeEdited(false);
     setBiome(profile?.biome ?? DEFAULT_BIOME);
+    setVisibility('everyone');
+    setIsMultiDay(false);
+    setShowPhotoMessage(false);
   }
 
   async function handleSaveMoment() {
@@ -214,6 +233,11 @@ export function LoggFangst({ user }: Props) {
       if (existingTrip) {
         tripId = existingTrip.tripId;
         addCatchToTrip(tripId, '');
+        setActiveTrip(prev =>
+          typeof prev === 'object' && prev !== null
+            ? { ...prev, catchCount: prev.catchCount + 1 }
+            : prev,
+        );
       } else {
         tripId = startTrip({
           uid: user.uid,
@@ -224,14 +248,16 @@ export function LoggFangst({ user }: Props) {
           approximateLocationName: placeName,
           firstSpecies: '',
           waterType,
-          visibility: 'everyone',
+          visibility,
+          isMultiDay,
           biome,
         });
         setActiveTrip({
           tripId,
           uid: user.uid,
           status: 'open',
-          visibility: 'everyone',
+          visibility,
+          isMultiDay,
           title: tripTitle || null,
           note: notes || null,
           startedAt: new Date().toISOString(),
@@ -312,7 +338,32 @@ export function LoggFangst({ user }: Props) {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 w-full mt-4">
+        {/* Multi-day toggle */}
+        {trip && (
+          <div className="flex items-center justify-between w-full bg-surface border border-divider rounded-[var(--radius-md)] px-4 py-3">
+            <span className="text-sm text-text">{t('log.multiDay')}</span>
+            <button
+              role="switch"
+              aria-checked={isMultiDay}
+              onClick={async () => {
+                const next = !isMultiDay;
+                setIsMultiDay(next);
+                await setTripMultiDay(trip.tripId, next).catch(() => {});
+              }}
+              className={cn(
+                'relative w-11 h-6 rounded-full transition-colors duration-200',
+                isMultiDay ? 'bg-accent' : 'bg-divider',
+              )}
+            >
+              <span className={cn(
+                'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200',
+                isMultiDay ? 'translate-x-5' : 'translate-x-0',
+              )} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 w-full">
           <button
             onClick={handleContinueTrip}
             className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-accent/80"
@@ -417,6 +468,23 @@ export function LoggFangst({ user }: Props) {
                 onChange={(e) => setCaption(e.target.value)}
               />
             </label>
+
+            {/* Photo button — visible but gated on Firebase Blaze */}
+            <div className="flex flex-col gap-1">
+              <button
+                className="flex items-center gap-2 text-sm text-text-muted border border-dashed border-divider rounded-[var(--radius-md)] px-4 py-2.5 transition-colors hover:border-text-muted"
+                onClick={() => setShowPhotoMessage(v => !v)}
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                {t('log.addPhoto')}
+              </button>
+              {showPhotoMessage && (
+                <p className="text-xs text-text-muted px-1">{t('log.photoBlaze')}</p>
+              )}
+            </div>
 
             <div className={gpsRowCls}>
               <GpsIcon status={geoStatus} />
@@ -567,6 +635,24 @@ export function LoggFangst({ user }: Props) {
             </button>
           ))}
         </div>
+
+        {/* Visibility — only shown when no active trip (can't change mid-trip) */}
+        {!(typeof activeTrip === 'object' && activeTrip !== null) && (
+          <div className="flex gap-1 bg-surface border border-divider rounded-[var(--radius-md)] p-1">
+            {(['everyone', 'followers', 'only_me'] as TripVisibility[]).map(v => (
+              <button
+                key={v}
+                className={cn(
+                  'flex-1 py-1.5 text-xs font-semibold rounded-[calc(var(--radius-md)-4px)] transition-colors duration-150',
+                  visibility === v ? 'bg-accent text-white' : 'text-text-muted hover:text-text',
+                )}
+                onClick={() => setVisibility(v)}
+              >
+                {t(`visibility.${v}`)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Biome picker */}
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">

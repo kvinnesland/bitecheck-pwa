@@ -168,7 +168,10 @@
     "logMoment": "Log a moment",
     "momentHint": "A photo note — no catch required",
     "momentPlaceholder": "What do you want to remember?",
-    "saveMoment": "Save moment"
+    "saveMoment": "Save moment",
+    "multiDay": "Multi-day trip",
+    "addPhoto": "Add photo",
+    "photoBlaze": "Photo uploads require Firebase Blaze upgrade"
   },
   "gps": {
     "acquiring": "Getting position…",
@@ -266,6 +269,12 @@
     "confirm": "Confirm",
     "claiming": "Claiming…",
     "error": "Something went wrong — please try again"
+  },
+  "visibility": {
+    "label": "Visibility",
+    "everyone": "Everyone",
+    "followers": "Followers",
+    "only_me": "Only me"
   },
   "update": {
     "available": "New version available",
