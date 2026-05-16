@@ -48,9 +48,12 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
   const isLive = trip.status === 'open';
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full bg-surface rounded-[var(--radius-md)] border border-divider overflow-hidden text-left transition-colors duration-150 active:bg-surface/70"
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+      className="w-full bg-surface rounded-[var(--radius-md)] border border-divider overflow-hidden text-left transition-colors duration-150 active:bg-surface/70 cursor-pointer"
     >
       {/* Header row */}
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
@@ -121,6 +124,6 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
           {t(trip.waterType === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
         </p>
       </div>
-    </button>
+    </div>
   );
 }
