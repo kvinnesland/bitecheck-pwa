@@ -21,7 +21,10 @@ service cloud.firestore {
         allow read: if request.auth != null
           && (request.auth.uid == userId || request.auth.uid == followerId);
         allow create: if request.auth != null && request.auth.uid == followerId
-          && request.resource.data.status in ['pending', 'active'];
+          && request.resource.data.status in ['pending', 'active']
+          && (request.resource.data.status == 'active'
+              ? !get(/databases/$(database)/documents/users/$(userId)).data.isPrivate
+              : true);
         allow update: if request.auth != null && request.auth.uid == userId
           && request.resource.data.status == 'active'
           && resource.data.status == 'pending';
@@ -34,7 +37,7 @@ service cloud.firestore {
           && (request.auth.uid == userId || request.auth.uid == followingId);
         allow create: if request.auth != null && request.auth.uid == userId
           && request.resource.data.status in ['pending', 'active'];
-        allow update: if request.auth != null && request.auth.uid == followingId
+        allow update: if request.auth != null && request.auth.uid == userId
           && request.resource.data.status == 'active'
           && resource.data.status == 'pending';
         allow delete: if request.auth != null
