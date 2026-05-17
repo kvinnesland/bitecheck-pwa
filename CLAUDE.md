@@ -127,6 +127,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Profilside stats-rad overflower** — rad med Catches/Species/Followers/Following er for bred, siste element kuttes av. Bruk flex-wrap eller reduser font-størrelse/padding så alle tallene får plass på én linje.
 - **Profilside topp-arter viser duplikater** — Ørret dukker opp to ganger i Top Species-lista (to separate rader).
 - **Profilside mangler tilbake-navigasjon** — ingen back-knapp. Løsning: enten gjør profil til et pull-down-kort (bottom sheet) eller legg til en tydelig tilbake-knapp øverst.
+- **Varsler: ingen måte å slette leste varsler** — varsler blir liggende for alltid etter at de er lest. Legg til slette-funksjon (sveip for å slette enkeltvarsel, eller "Slett alle leste"-knapp).
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
