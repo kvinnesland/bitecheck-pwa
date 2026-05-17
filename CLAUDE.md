@@ -124,6 +124,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 ### Bugs og designendringer
 - **Overskriftsfont** — bytt til en mer klassisk font (serif eller slab-serif). Nåværende font er for moderne/teknisk for en fiske-app.
 - **Kort ser komprimerte ut** — øk padding/spacing i kortkomponenter. Elementer sitter for tett.
+- **Profilside stats-rad overflower** — rad med Catches/Species/Followers/Following er for bred, siste element kuttes av. Bruk flex-wrap eller reduser font-størrelse/padding så alle tallene får plass på én linje.
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
