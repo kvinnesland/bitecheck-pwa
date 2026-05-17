@@ -129,6 +129,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Profilside mangler tilbake-navigasjon** — ingen back-knapp. Løsning: enten gjør profil til et pull-down-kort (bottom sheet) eller legg til en tydelig tilbake-knapp øverst.
 - **Varsler: ingen måte å slette leste varsler** — varsler blir liggende for alltid etter at de er lest. Legg til slette-funksjon (sveip for å slette enkeltvarsel, eller "Slett alle leste"-knapp).
 - **Varsler skal ikke være egen bunnfane** — fjern Alerts-fanen fra BottomNav. Erstatt med bjelle-ikon i topp-headeren med rød badge for uleste. Tapp åpner varselside.
+- **Topp-header skal reflektere biome** — headeren bør visuelt speile brukerens valgte biome (salt/ferskvann), f.eks. via fargetema eller bakgrunn.
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
