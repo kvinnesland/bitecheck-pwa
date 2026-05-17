@@ -1,5 +1,73 @@
 export type SyncStatus = 'pending' | 'synced' | 'failed';
 
+export type LocationPref = 'exact' | 'approximate' | 'hidden';
+
+export type Biome =
+  | 'arctic_salt'
+  | 'arctic_fresh'
+  | 'ice'
+  | 'tropical_fresh'
+  | 'tropical_salt'
+  | 'temperate_fresh'
+  | 'temperate_salt';
+
+export type TripVisibility = 'everyone' | 'followers' | 'only_me';
+export type WaterType = 'salt' | 'fresh';
+
+export interface Trip {
+  tripId: string;
+  uid: string;
+  status: 'open' | 'closed';
+  visibility: TripVisibility;
+  isMultiDay?: boolean;
+  title: string | null;
+  note: string | null;
+  startedAt: string;       // ISO string
+  closedAt: string | null;
+  location: CatchLocation | null;
+  locationShare: LocationPref;
+  approximateLocationName: string | null;
+  catchCount: number;
+  species: string[];
+  waterType: WaterType;
+  biome?: Biome;
+  reactionCounts?: Record<string, number>;
+  commentCount?: number;
+}
+
+export interface TripReaction {
+  userId: string;
+  emoji: string;
+  createdAt: string;
+}
+
+export interface TripComment {
+  commentId: string;
+  userId: string;
+  username: string;
+  photoURL: string | null;
+  text: string;
+  mentions: string[];
+  createdAt: string;
+  editedAt: string | null;
+}
+
+export interface UserProfile {
+  uid: string;
+  username: string;
+  displayName: string;
+  photoURL: string | null;
+  mainLocation: string;
+  memberSince: string;       // ISO string, converted from Firestore Timestamp on read
+  isPrivate: boolean;
+  locationPref: LocationPref;
+  biome?: Biome;
+  followersCount: number;
+  followingCount: number;
+  catchCount: number;
+  speciesCount: number;
+}
+
 export type CurrentStrength = 'stille' | 'moderat' | 'sterk' | 'sterkest';
 
 export type PressureTrend =
@@ -46,6 +114,13 @@ export interface CatchRecord {
   location: CatchLocation;
   species: CatchSpecies;
   environment: CatchEnvironment;
+  // V3 trip fields — optional for backward compat with pre-V3 records
+  tripId?: string;
+  locationShare?: LocationPref;
+  approximateLocationName?: string | null;
+  photoRefs?: string[];
+  caption?: string;
+  isMoment?: boolean;
 }
 
 export interface PublicCatchRecord {
@@ -56,9 +131,3 @@ export interface PublicCatchRecord {
   species: Pick<CatchSpecies, 'name'>;
 }
 
-export interface UserProfile {
-  uid: string;
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-}

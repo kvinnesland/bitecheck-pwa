@@ -1,35 +1,89 @@
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — single source of truth
+   To replace the entire design system: edit only this block.
+   Font choice:   --font-display / --font-sans
+   Colors:        --color-* values below
+   Radius:        --radius-*
+   Shadows:       --shadow-*
+───────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Fonts ── */
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-sans:    'Inter Variable', system-ui, sans-serif;
+
+  /* ── Light mode palette ── */
+  --color-bg:           #F7F5F1;
+  --color-surface:      #FCFBF8;
+  --color-elevated:     #FFFFFF;
+  --color-text:         #1F2326;
+  --color-text-muted:   #747A7F;
+  --color-accent:       #234E5F;
+  --color-accent-mist:  #7E9FA5;
+  --color-copper:       #B58A63;
+  --color-success:      #5F7A69;
+  --color-divider:      #E7E4DF;
+  --color-error:        #C0392B;
+  --color-warning:      #D4862A;
+
+  /* ── Radius ── */
+  --radius-sm:   8px;
+  --radius-md:   16px;
+  --radius-lg:   24px;
+  --radius-full: 9999px;
+
+  /* ── Shadows (soft, luxury) ── */
+  --shadow-sm:   0 2px  8px  rgba(20, 30, 40, 0.06);
+  --shadow-md:   0 6px  20px rgba(20, 30, 40, 0.08);
+  --shadow-lg:   0 12px 40px rgba(20, 30, 40, 0.10);
 }
 
-:root {
-  --color-primary: #0066CC;
-  --color-primary-dark: #004999;
-  --color-bg: #001529;
-  --color-bg-card: #0a2540;
-  --color-surface: #0d3060;
-  --color-text: #e8f4fd;
-  --color-text-muted: #8ab4d4;
-  --color-border: #1a4a7a;
-  --color-marker-own: #0066CC;
-  --color-marker-others: #888888;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+/* ── Dark mode overrides ── */
+.dark {
+  --color-bg:          #101517;
+  --color-surface:     #182024;
+  --color-elevated:    #1E282D;
+  --color-text:        #F3F1EC;
+  --color-text-muted:  #B2B7BA;
+  --color-accent:      #6E9AA6;
+  --color-accent-mist: #4A7A87;
+  --color-copper:      #C29A75;
+  --color-success:     #6E9A78;
+  --color-divider:     #283138;
+  --color-error:       #E05C4B;
+  --color-warning:     #E09A45;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SHARED ANIMATIONS
+───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes slideModal {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BASE STYLES
+   Note: the *, margin/padding reset is intentionally omitted here.
+   Tailwind v4 emits it inside @layer base. Repeating it outside any layer
+   would make it unlayered (highest cascade precedence), silently zeroing out
+   every padding/margin utility class in the whole app.
+───────────────────────────────────────────────────────────────────────────── */
 
 html, body, #root {
   height: 100%;
   width: 100%;
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -45,27 +99,23 @@ a {
   text-decoration: none;
 }
 
-/* ── MapLibre popup dark theme ── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAP OVERRIDES (MapLibre dark theme — kept separate from design tokens
+   so map styles don't break when tokens change)
+───────────────────────────────────────────────────────────────────────────── */
+
 .maplibregl-popup-content {
-  background: var(--color-bg-card) !important;
-  border: 1px solid var(--color-border);
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-sm) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: var(--shadow-md) !important;
   padding: 10px 12px !important;
 }
 
-.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-  border-top-color: var(--color-bg-card) !important;
-}
-.maplibregl-popup-anchor-top .maplibregl-popup-tip {
-  border-bottom-color: var(--color-bg-card) !important;
-}
-.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: var(--color-bg-card) !important;
-}
-.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: var(--color-bg-card) !important;
-}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color:    var(--color-surface) !important; }
+.maplibregl-popup-anchor-top    .maplibregl-popup-tip { border-bottom-color: var(--color-surface) !important; }
+.maplibregl-popup-anchor-left   .maplibregl-popup-tip { border-right-color:  var(--color-surface) !important; }
+.maplibregl-popup-anchor-right  .maplibregl-popup-tip { border-left-color:   var(--color-surface) !important; }
 
 .bc-popup {
   display: flex;
@@ -76,28 +126,24 @@ a {
   line-height: 1.4;
 }
 
-.bc-popup strong {
-  font-size: 0.9rem;
-  font-weight: 700;
-}
+.bc-popup strong { font-size: 0.9rem; font-weight: 700; }
+.bc-popup time   { color: var(--color-text-muted); font-size: 0.72rem; }
 
-.bc-popup time {
-  color: var(--color-text-muted);
-  font-size: 0.72rem;
-}
-
-/* MapLibre zoom/navigation controls dark theme */
 .maplibregl-ctrl-group {
-  background: var(--color-bg-card) !important;
-  border: 1px solid var(--color-border) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-divider) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
-.maplibregl-ctrl-group button {
-  background: transparent !important;
-  border-color: var(--color-border) !important;
+.maplibregl-ctrl-group button { background: transparent !important; border-color: var(--color-divider) !important; }
+.maplibregl-ctrl-icon         { filter: invert(0.3); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAP MARKER COLORS (not design tokens — app logic constants)
+───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --color-marker-own:    #234E5F;
+  --color-marker-others: #7E9FA5;
 }
 
-.maplibregl-ctrl-icon {
-  filter: invert(1) brightness(0.7);
-}

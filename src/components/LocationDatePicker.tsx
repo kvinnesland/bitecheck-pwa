@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MapPin, Clock, Search, ChevronDown, Crosshair } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import styles from './LocationDatePicker.module.css';
+import { cn } from '@/lib/utils';
 
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
@@ -32,17 +34,17 @@ function toDatetimeLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatDatetime(d: Date): string {
+function formatDatetime(d: Date, locale: string, todayLabel: string): string {
   const now = new Date();
   const isToday =
     d.getDate() === now.getDate() &&
     d.getMonth() === now.getMonth() &&
     d.getFullYear() === now.getFullYear();
 
-  const timeStr = d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
-  if (isToday) return `I dag · ${timeStr}`;
+  const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return `${todayLabel} · ${timeStr}`;
 
-  return d.toLocaleDateString('nb-NO', {
+  return d.toLocaleDateString(locale, {
     weekday: 'short', day: 'numeric', month: 'short',
   }) + ' · ' + timeStr;
 }
@@ -51,6 +53,10 @@ export function LocationDatePicker({
   location, datetime, gpsLat, gpsLng, weatherLoading,
   onLocationChange, onDatetimeChange,
 }: Props) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language.startsWith('nb') ? 'nb-NO' : 'en-US';
+  const todayLabel = i18n.language.startsWith('nb') ? 'I dag' : 'Today';
+
   const [locOpen, setLocOpen]   = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
   const [query, setQuery]       = useState('');
@@ -62,7 +68,6 @@ export function LocationDatePicker({
   const markerRef       = useRef<maplibregl.Marker | null>(null);
   const debounceRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Init / resize mini-map when panel opens ────────────────────────────────
   useEffect(() => {
     if (!locOpen || !mapContainerRef.current) return;
 
@@ -79,7 +84,7 @@ export function LocationDatePicker({
       });
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
 
-      const marker = new maplibregl.Marker({ color: 'var(--color-primary)' })
+      const marker = new maplibregl.Marker({ color: 'var(--color-accent)' })
         .setLngLat([centerLng, centerLat])
         .addTo(map);
       markerRef.current = marker;
@@ -102,14 +107,12 @@ export function LocationDatePicker({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locOpen]);
 
-  // ── Update marker when location changes externally ─────────────────────────
   useEffect(() => {
     if (!markerRef.current) return;
     const target = location ?? { lat: gpsLat, lng: gpsLng };
     markerRef.current.setLngLat([target.lng, target.lat]);
   }, [location, gpsLat, gpsLng]);
 
-  // ── Nominatim geocoding search ─────────────────────────────────────────────
   const search = useCallback((q: string) => {
     if (q.length < 2) { setGeoResults([]); return; }
     setSearching(true);
@@ -147,79 +150,103 @@ export function LocationDatePicker({
     mapRef.current?.flyTo({ center: [gpsLng, gpsLat], zoom: 10, duration: 500 });
   }
 
-  const displayName = location?.name ?? 'Min posisjon (GPS)';
+  const displayName = location?.name ?? t('location.myPosition');
   const isCustomLocation = location !== null;
 
+  const rowCls = 'flex items-center gap-2.5 px-4 py-[11px] cursor-pointer transition-colors duration-[120ms] border-b border-divider active:bg-surface';
+
   return (
-    <div className={styles.wrap}>
+    <div className="border-b border-divider shrink-0">
       {/* ── Location row ── */}
-      <div className={styles.row} onClick={() => { setLocOpen((o) => !o); setTimeOpen(false); }}>
-        <PinIcon className={styles.rowIcon} />
-        <span className={`${styles.rowText} ${!isCustomLocation ? styles.rowMuted : ''}`}>
+      <div className={rowCls} onClick={() => { setLocOpen((o) => !o); setTimeOpen(false); }}>
+        <MapPin size={16} strokeWidth={2} className="text-accent shrink-0" />
+        <span className={cn('flex-1 text-sm font-medium text-ellipsis overflow-hidden whitespace-nowrap', !isCustomLocation && 'text-text-muted')}>
           {displayName}
         </span>
-        {weatherLoading && <span className={styles.autoTag}>henter…</span>}
-        <ChevronIcon className={`${styles.rowChevron} ${locOpen ? styles.rowChevronOpen : ''}`} />
+        {weatherLoading && (
+          <span className="inline-flex items-center text-[0.6rem] font-bold uppercase tracking-[0.06em] text-accent border border-accent rounded-[3px] px-[5px] py-[1px] ml-1.5 opacity-80 shrink-0">
+            {t('conditions.fetching')}
+          </span>
+        )}
+        <ChevronDown size={14} strokeWidth={2} className={cn('text-text-muted shrink-0 transition-transform duration-200', locOpen && 'rotate-180')} />
       </div>
 
-      <div className={`${styles.panel} ${locOpen ? styles.panelOpen : ''}`}>
-        <div className={styles.searchWrap}>
-          <SearchIcon className={styles.searchIcon} />
+      <div className={cn(
+        'overflow-hidden bg-surface border-b border-divider transition-[max-height] duration-[250ms] ease-in-out',
+        locOpen ? 'max-h-[400px]' : 'max-h-0',
+      )}>
+        <div className="relative px-3 pt-2.5 pb-1.5">
+          <Search size={14} strokeWidth={2} className="absolute left-[22px] top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
           <input
-            className={styles.searchInput}
-            placeholder="Søk på sted…"
+            className="w-full bg-bg border border-divider rounded-[var(--radius-sm)] text-text text-sm pl-8 pr-2.5 py-2 outline-none transition-colors duration-150 focus:border-accent placeholder:text-text-muted"
+            placeholder={t('location.searchPlaceholder')}
             value={query}
             onChange={handleQueryChange}
           />
         </div>
 
-        {searching && <div style={{ padding: '4px 12px', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Søker…</div>}
+        {searching && (
+          <div className="px-3 py-1 text-xs text-text-muted">{t('location.searching')}</div>
+        )}
 
         {geoResults.length > 0 && (
-          <div className={styles.results}>
+          <div className="mx-3 mb-1.5 bg-bg border border-divider rounded-[var(--radius-sm)] overflow-hidden">
             {geoResults.map((r, i) => (
-              <button key={i} className={styles.resultItem} onClick={() => selectResult(r)}>
+              <button
+                key={i}
+                onClick={() => selectResult(r)}
+                className="block w-full text-left px-3 py-[9px] text-[0.82rem] text-text border-b border-divider last:border-b-0 transition-colors duration-100 hover:bg-surface"
+              >
                 {r.display_name.split(',').slice(0, 3).join(', ')}
               </button>
             ))}
           </div>
         )}
 
-        <div className={styles.mapWrap} ref={mapContainerRef} />
+        <div className="h-[180px] mx-3 mb-1.5 rounded-[var(--radius-sm)] overflow-hidden border border-divider" ref={mapContainerRef} />
 
         {isCustomLocation && (
-          <button className={styles.resetBtn} onClick={resetLocation}>
-            <CrosshairIcon className={styles.resetIcon} />
-            Bruk min GPS-posisjon
+          <button
+            onClick={resetLocation}
+            className="flex items-center gap-1.5 px-3 py-2 pb-2.5 text-text-muted text-[0.78rem] font-medium hover:text-accent transition-colors duration-150"
+          >
+            <Crosshair size={12} strokeWidth={2} />
+            {t('location.useGps')}
           </button>
         )}
       </div>
 
       {/* ── Datetime row ── */}
-      <div className={styles.row} onClick={() => { setTimeOpen((o) => !o); setLocOpen(false); }}>
-        <ClockIcon className={styles.rowIcon} />
-        <span className={styles.rowText}>{formatDatetime(datetime)}</span>
-        <ChevronIcon className={`${styles.rowChevron} ${timeOpen ? styles.rowChevronOpen : ''}`} />
+      <div className={rowCls} onClick={() => { setTimeOpen((o) => !o); setLocOpen(false); }}>
+        <Clock size={16} strokeWidth={2} className="text-accent shrink-0" />
+        <span className="flex-1 text-sm font-medium text-ellipsis overflow-hidden whitespace-nowrap">
+          {formatDatetime(datetime, dateLocale, todayLabel)}
+        </span>
+        <ChevronDown size={14} strokeWidth={2} className={cn('text-text-muted shrink-0 transition-transform duration-200', timeOpen && 'rotate-180')} />
       </div>
 
-      <div className={`${styles.panel} ${timeOpen ? styles.panelOpen : ''}`}>
-        <div className={styles.datetimeWrap}>
+      <div className={cn(
+        'overflow-hidden bg-surface transition-[max-height] duration-[250ms] ease-in-out',
+        timeOpen ? 'max-h-[400px]' : 'max-h-0',
+      )}>
+        <div className="px-3 pt-2.5 pb-3 flex flex-col gap-2">
           <input
-            className={styles.datetimeInput}
+            className="w-full bg-bg border border-divider rounded-[var(--radius-sm)] text-text text-sm px-2.5 py-2 outline-none transition-colors duration-150 focus:border-accent color-scheme-dark"
             type="datetime-local"
             value={toDatetimeLocal(datetime)}
             max={toDatetimeLocal(new Date(Date.now() + 15 * 86_400_000))}
+            style={{ colorScheme: 'dark' }}
             onChange={(e) => {
               const d = new Date(e.target.value);
               if (!isNaN(d.getTime())) onDatetimeChange(d);
             }}
           />
           <button
-            className={styles.nowBtn}
             onClick={() => onDatetimeChange(new Date())}
+            className="flex items-center gap-1.5 text-text-muted text-[0.78rem] font-medium hover:text-accent transition-colors duration-150"
           >
-            <CrosshairIcon className={styles.resetIcon} />
-            Bruk nåværende tidspunkt
+            <Crosshair size={12} strokeWidth={2} />
+            {t('location.useCurrentTime')}
           </button>
         </div>
       </div>
@@ -227,7 +254,6 @@ export function LocationDatePicker({
   );
 }
 
-// ── Inline reverse-geocode ────────────────────────────────────────────────────
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
     const r = await fetch(
@@ -239,49 +265,4 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
   } catch {
     return `${lat.toFixed(3)}, ${lng.toFixed(3)}`;
   }
-}
-
-// ── Icons (same stroke style as rest of app) ──────────────────────────────────
-function PinIcon({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7z" />
-      <circle cx="12" cy="9" r="2.5" />
-    </svg>
-  );
-}
-
-function ClockIcon({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function SearchIcon({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function ChevronIcon({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function CrosshairIcon({ className }: { className: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-    </svg>
-  );
 }

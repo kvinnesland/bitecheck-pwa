@@ -3,7 +3,6 @@ import { computeAllScores, type EnvInputs } from '../lib/biteScore';
 import type { PressureTrend, CurrentStrength } from '../types';
 import type { HourlyTideEntry } from '../hooks/useTide';
 import type { HourlyWeatherEntry } from '../hooks/useWeather';
-import styles from './DailyScoreChart.module.css';
 
 interface Props {
   datetime:      Date;
@@ -34,7 +33,6 @@ function yAt(score: number) {
 function buildPath(scores: number[]): { line: string; area: string } {
   const pts = scores.map((s, h) => [xAt(h), yAt(s)] as [number, number]);
 
-  // Monotone smooth path via cardinal spline
   let line = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) {
     const p0 = pts[Math.max(0, i - 2)];
@@ -96,10 +94,12 @@ export function DailyScoreChart({
   const peakHour  = scores.indexOf(peakScore);
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.header}>
-        <span className={styles.title}>{isToday(datetime) ? 'Score i dag' : datetime.toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-        <span className={styles.peak}>
+    <div className="px-4 pt-3 pb-2 border-b border-divider shrink-0 bg-surface">
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-text-muted">
+          {isToday(datetime) ? 'Score i dag' : datetime.toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' })}
+        </span>
+        <span className="text-[0.72rem] font-semibold text-accent">
           Topp {pad(peakHour)}:00 · {Math.round(peakScore * 100)}%
         </span>
       </div>
@@ -107,32 +107,27 @@ export function DailyScoreChart({
       <svg
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
-        className={styles.svg}
+        className="block w-full h-16 overflow-visible"
       >
         <defs>
           <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="var(--color-primary)" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.02" />
+            <stop offset="0%"   stopColor="var(--color-accent)" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
-        {/* Area fill */}
         <path d={area} fill="url(#chart-fill)" />
+        <path d={line} fill="none" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" />
 
-        {/* Score line */}
-        <path d={line} fill="none" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
-
-        {/* Peak hour marker */}
         <line
           x1={xAt(peakHour)} y1="0"
           x2={xAt(peakHour)} y2={H}
-          stroke="var(--color-primary)"
+          stroke="var(--color-accent)"
           strokeWidth="1"
           strokeDasharray="3 3"
           opacity="0.5"
         />
 
-        {/* Selected time cursor — only meaningful when viewing today */}
         {isToday(datetime) && <>
           <line
             x1={cursorX} y1="0"
@@ -149,12 +144,11 @@ export function DailyScoreChart({
         </>}
       </svg>
 
-      {/* X-axis labels */}
-      <div className={styles.xAxis}>
+      <div className="relative h-4 mt-0.5">
         {HOUR_LABELS.map((h) => (
           <span
             key={h}
-            className={styles.xLabel}
+            className="absolute -translate-x-1/2 text-[0.62rem] text-text-muted tabular-nums"
             style={{ left: `${(h / 23) * 100}%` }}
           >
             {pad(h)}

@@ -1,11 +1,14 @@
 import maplibregl, { type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type User } from 'firebase/auth';
 import { useUserCatches } from '../hooks/useUserCatches';
 import { usePublicCatches } from '../hooks/usePublicCatches';
 import { useGeolocation } from '../hooks/useGeolocation';
-import styles from './Kart.module.css';
+import { useUnits } from '../contexts/UnitsContext';
+import { formatWeight, formatLength, type UnitPrefs } from '../lib/units';
+import { cn } from '@/lib/utils';
 
 const BASE_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
@@ -38,6 +41,11 @@ const GYTE_WMS =
 interface Props { user: User; }
 
 export function Kart({ user }: Props) {
+  const { t } = useTranslation();
+  const { prefs } = useUnits();
+  const prefsRef = useRef<UnitPrefs>(prefs);
+  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -53,7 +61,6 @@ export function Kart({ user }: Props) {
   const publicCatches = usePublicCatches(user.uid);
   const { position } = useGeolocation();
 
-  // ── Init map ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -69,115 +76,33 @@ export function Kart({ user }: Props) {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', () => {
-      // Depth contour overlay
-      map.addSource('depth', {
-        type: 'raster',
-        tiles: [DEPTH_WMS],
-        tileSize: 256,
-        attribution: '© Geonorge',
-      });
-      map.addLayer({
-        id: 'depth',
-        type: 'raster',
-        source: 'depth',
-        layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.7 },
-      });
+      map.addSource('depth', { type: 'raster', tiles: [DEPTH_WMS], tileSize: 256, attribution: '© Geonorge' });
+      map.addLayer({ id: 'depth', type: 'raster', source: 'depth', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.7 } });
 
-      // Sediment overlay
-      map.addSource('sediment', {
-        type: 'raster',
-        tiles: [SEDIMENT_WMS],
-        tileSize: 256,
-        attribution: '© NGU',
-      });
-      map.addLayer({
-        id: 'sediment',
-        type: 'raster',
-        source: 'sediment',
-        layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.65 },
-      });
+      map.addSource('sediment', { type: 'raster', tiles: [SEDIMENT_WMS], tileSize: 256, attribution: '© NGU' });
+      map.addLayer({ id: 'sediment', type: 'raster', source: 'sediment', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.65 } });
 
-      // OpenSeaMap — nautical marks
-      map.addSource('seamark', {
-        type: 'raster',
-        tiles: [SEAMARK_TILES],
-        tileSize: 256,
-        attribution: '© OpenSeaMap',
-      });
-      map.addLayer({
-        id: 'seamark',
-        type: 'raster',
-        source: 'seamark',
-        layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.9 },
-      });
+      map.addSource('seamark', { type: 'raster', tiles: [SEAMARK_TILES], tileSize: 256, attribution: '© OpenSeaMap' });
+      map.addLayer({ id: 'seamark', type: 'raster', source: 'seamark', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.9 } });
 
-      // Verneområder (Miljødirektoratet)
-      map.addSource('vern', {
-        type: 'raster',
-        tiles: [VERN_WMS],
-        tileSize: 256,
-        attribution: '© Miljødirektoratet',
-      });
-      map.addLayer({
-        id: 'vern',
-        type: 'raster',
-        source: 'vern',
-        layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.6 },
-      });
+      map.addSource('vern', { type: 'raster', tiles: [VERN_WMS], tileSize: 256, attribution: '© Miljødirektoratet' });
+      map.addLayer({ id: 'vern', type: 'raster', source: 'vern', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.6 } });
 
-      // Gyteområder (Fiskeridirektoratet)
-      map.addSource('gyte', {
-        type: 'raster',
-        tiles: [GYTE_WMS],
-        tileSize: 256,
-        attribution: '© Fiskeridirektoratet',
-      });
-      map.addLayer({
-        id: 'gyte',
-        type: 'raster',
-        source: 'gyte',
-        layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.65 },
-      });
+      map.addSource('gyte', { type: 'raster', tiles: [GYTE_WMS], tileSize: 256, attribution: '© Fiskeridirektoratet' });
+      map.addLayer({ id: 'gyte', type: 'raster', source: 'gyte', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.65 } });
 
-      // Catches GeoJSON source
-      map.addSource('catches', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      });
+      map.addSource('catches', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
-      // Public (gray) — rendered below own
       map.addLayer({
-        id: 'catches-public',
-        type: 'circle',
-        source: 'catches',
+        id: 'catches-public', type: 'circle', source: 'catches',
         filter: ['==', ['get', 'isOwn'], 'false'],
-        paint: {
-          'circle-radius': 7,
-          'circle-color': '#888888',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff',
-          'circle-opacity': 0.75,
-        },
+        paint: { 'circle-radius': 7, 'circle-color': '#888888', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff', 'circle-opacity': 0.75 },
       });
 
-      // Own (blue) — rendered on top
       map.addLayer({
-        id: 'catches-own',
-        type: 'circle',
-        source: 'catches',
+        id: 'catches-own', type: 'circle', source: 'catches',
         filter: ['==', ['get', 'isOwn'], 'true'],
-        paint: {
-          'circle-radius': 9,
-          'circle-color': '#0066CC',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff',
-          'circle-opacity': 0.9,
-        },
+        paint: { 'circle-radius': 9, 'circle-color': '#0066CC', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff', 'circle-opacity': 0.9 },
       });
 
       (['catches-own', 'catches-public'] as const).forEach((layerId) => {
@@ -187,13 +112,11 @@ export function Kart({ user }: Props) {
           const geom = e.features[0].geometry as GeoJSON.Point;
           const coords = geom.coordinates.slice() as [number, number];
 
-          const time = new Date(props.created_at as string).toLocaleString('no-NO', {
-            dateStyle: 'short',
-            timeStyle: 'short',
-          });
+          const time = new Date(props.created_at as string).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' });
 
-          const weight = props.weight_kg ? `${props.weight_kg} kg` : '';
-          const len = props.length_cm ? `${props.length_cm} cm` : '';
+          const unitPrefs = prefsRef.current;
+          const weight = props.weight_kg ? formatWeight(props.weight_kg as number, unitPrefs.weight) : '';
+          const len = props.length_cm ? formatLength(props.length_cm as number, unitPrefs.length) : '';
           const measurements = [weight, len].filter(Boolean).join(' · ');
 
           const html = `
@@ -225,7 +148,6 @@ export function Kart({ user }: Props) {
     };
   }, []);
 
-  // ── Update catches on map ────────────────────────────────────────────────
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
     const source = mapRef.current.getSource('catches') as GeoJSONSource | undefined;
@@ -242,14 +164,7 @@ export function Kart({ user }: Props) {
 
     const own = ownCatches
       .filter((c) => c.location.accuracy_m !== -1)
-      .map((c) =>
-        toFeature(c, {
-          isOwn: 'true',
-          weight_kg: c.species.weight_kg,
-          length_cm: c.species.length_cm,
-          bite_score: c.environment.bite_score,
-        }),
-      );
+      .map((c) => toFeature(c, { isOwn: 'true', weight_kg: c.species.weight_kg, length_cm: c.species.length_cm, bite_score: c.environment.bite_score }));
 
     const pub = publicCatches
       .filter((c) => c.location.accuracy_m !== -1)
@@ -258,138 +173,88 @@ export function Kart({ user }: Props) {
     source.setData({ type: 'FeatureCollection', features: [...pub, ...own] });
   }, [mapReady, ownCatches, publicCatches]);
 
-  // ── Layer visibility toggles — called directly from button handlers ───────
-  function toggleDepth() {
-    const next = !depthOn;
-    setDepthOn(next);
+  function toggleLayer(id: string, isOn: boolean, setFn: (v: boolean) => void) {
+    const next = !isOn;
+    setFn(next);
     const map = mapRef.current;
-    if (map?.getLayer('depth')) {
-      map.setLayoutProperty('depth', 'visibility', next ? 'visible' : 'none');
-    }
+    if (map?.getLayer(id)) map.setLayoutProperty(id, 'visibility', next ? 'visible' : 'none');
   }
 
-  function toggleSediment() {
-    const next = !sedimentOn;
-    setSedimentOn(next);
-    const map = mapRef.current;
-    if (map?.getLayer('sediment')) {
-      map.setLayoutProperty('sediment', 'visibility', next ? 'visible' : 'none');
-    }
-  }
-
-  function toggleSeaMarks() {
-    const next = !seaMarksOn;
-    setSeaMarksOn(next);
-    mapRef.current?.getLayer('seamark') &&
-      mapRef.current.setLayoutProperty('seamark', 'visibility', next ? 'visible' : 'none');
-  }
-
-  function toggleVern() {
-    const next = !vernOn;
-    setVernOn(next);
-    mapRef.current?.getLayer('vern') &&
-      mapRef.current.setLayoutProperty('vern', 'visibility', next ? 'visible' : 'none');
-  }
-
-  function toggleGyte() {
-    const next = !gyteOn;
-    setGyteOn(next);
-    mapRef.current?.getLayer('gyte') &&
-      mapRef.current.setLayoutProperty('gyte', 'visibility', next ? 'visible' : 'none');
-  }
-
-  // ── Locate me ────────────────────────────────────────────────────────────
   function locateMe() {
     if (position && mapRef.current) {
       mapRef.current.flyTo({ center: [position.lng, position.lat], zoom: 12, duration: 800 });
     }
   }
 
-  return (
-    <div className={styles.container}>
-      <div ref={containerRef} className={styles.map} />
+  const layerBtnCls = 'flex items-center gap-1.5 bg-surface border border-divider rounded-[var(--radius-sm)] text-text-muted text-[0.75rem] font-semibold tracking-[0.04em] uppercase px-2.5 py-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-colors duration-150 hover:text-text hover:border-accent';
+  const layerActiveCls = 'text-accent border-accent bg-accent/10';
+  const floatCls = 'bg-surface border border-divider rounded-[var(--radius-sm)] shadow-[0_2px_8px_rgba(0,0,0,0.4)]';
 
-      <div className={styles.layerControls}>
-        <button
-          className={`${styles.layerBtn} ${depthOn ? styles.layerActive : ''}`}
-          onClick={toggleDepth}
-          title="Dybdekonturer (Geonorge)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      <div ref={containerRef} className="w-full h-full" />
+
+      <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+        <button className={cn(layerBtnCls, depthOn && layerActiveCls)} onClick={() => toggleLayer('depth', depthOn, setDepthOn)} title={t('map.depthTitle')}>
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 17c3-4 5-4 9 0s6 4 9 0" />
             <path d="M3 12c3-4 5-4 9 0s6 4 9 0" />
             <path d="M3 7c3-4 5-4 9 0s6 4 9 0" />
           </svg>
-          Dybde
+          {t('map.depthLabel')}
         </button>
-        <button
-          className={`${styles.layerBtn} ${sedimentOn ? styles.layerActive : ''}`}
-          onClick={toggleSediment}
-          title="Bunnsedimenter (NGU)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <button className={cn(layerBtnCls, sedimentOn && layerActiveCls)} onClick={() => toggleLayer('sediment', sedimentOn, setSedimentOn)} title={t('map.bottomTitle')}>
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="14" width="18" height="7" rx="1" />
             <path d="M3 14c2-3 4-5 9-5s7 2 9 5" />
           </svg>
-          Bunn
+          {t('map.bottomLabel')}
         </button>
-        <button
-          className={`${styles.layerBtn} ${seaMarksOn ? styles.layerActive : ''}`}
-          onClick={toggleSeaMarks}
-          title="Sjømerker (OpenSeaMap)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <button className={cn(layerBtnCls, seaMarksOn && layerActiveCls)} onClick={() => toggleLayer('seamark', seaMarksOn, setSeaMarksOn)} title={t('map.seamarksTitle')}>
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2v14M5 20h14M8 14l4-4 4 4" />
             <circle cx="12" cy="20" r="2" />
           </svg>
-          Sjømerker
+          {t('map.seamarksLabel')}
         </button>
-        <button
-          className={`${styles.layerBtn} ${vernOn ? styles.layerActive : ''}`}
-          onClick={toggleVern}
-          title="Verneområder (Miljødirektoratet)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <button className={cn(layerBtnCls, vernOn && layerActiveCls)} onClick={() => toggleLayer('vern', vernOn, setVernOn)} title={t('map.protectedTitle')}>
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3L4 7v6c0 5 4 8.5 8 10 4-1.5 8-5 8-10V7l-8-4z" />
           </svg>
-          Vern
+          {t('map.protectedLabel')}
         </button>
-        <button
-          className={`${styles.layerBtn} ${gyteOn ? styles.layerActive : ''}`}
-          onClick={toggleGyte}
-          title="Gyteområder (Fiskeridirektoratet)"
-        >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <button className={cn(layerBtnCls, gyteOn && layerActiveCls)} onClick={() => toggleLayer('gyte', gyteOn, setGyteOn)} title={t('map.spawningTitle')}>
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 12c2-5 6-7 10-7s8 2 10 7c-2 5-6 7-10 7S4 17 2 12z" />
             <circle cx="16" cy="10" r="1.5" fill="currentColor" stroke="none" />
             <path d="M20 8c1-2 2.5-3 3.5-3" />
           </svg>
-          Gyting
+          {t('map.spawningLabel')}
         </button>
       </div>
 
       {sedimentOn && zoom < SEDIMENT_MIN_ZOOM && (
-        <div className={styles.zoomHint}>
-          Zoom inn for å se bunndata
+        <div className={cn('absolute top-3 left-1/2 -translate-x-1/2 z-10 px-2.5 py-[5px] text-[0.7rem] text-text-muted pointer-events-none whitespace-nowrap', floatCls)}>
+          {t('map.zoomForBottom')}
         </div>
       )}
 
       <button
-        className={`${styles.locateBtn} ${position ? '' : styles.locateDisabled}`}
+        className={cn('absolute bottom-[100px] right-3 w-10 h-10 z-10 flex items-center justify-center text-accent transition-colors duration-150 hover:bg-surface/80', floatCls, !position && 'text-text-muted opacity-60 cursor-not-allowed')}
         onClick={locateMe}
-        aria-label="Gå til min posisjon"
+        aria-label={t('map.goToPosition')}
       >
-        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
         </svg>
       </button>
 
-      <div className={styles.legend}>
-        <span className={styles.legendOwn} />
-        <span>Mine</span>
-        <span className={styles.legendPublic} />
-        <span>Andre</span>
+      <div className={cn('absolute bottom-10 left-3 z-10 flex items-center gap-1.5 px-2.5 py-[5px] text-[0.7rem] text-text-muted', floatCls)}>
+        <span className="w-2.5 h-2.5 rounded-full border-2 border-white shrink-0 bg-[#0066CC]" />
+        <span>{t('map.mine')}</span>
+        <span className="w-2.5 h-2.5 rounded-full border-2 border-white shrink-0 bg-[#888888]" />
+        <span>{t('map.others')}</span>
       </div>
     </div>
   );

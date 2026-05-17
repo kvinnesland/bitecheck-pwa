@@ -1,13 +1,15 @@
 # BiteCheck Social — Product Requirements Document
 
-> Scope: Social feed, following graph, reactions, comments, profiles, notifications, discovery.
-> Challenges, leaderboards, verified badges, photos, and Contact Picker API are explicitly out of scope (see Todo).
+> Scope: Social feed, following graph, reactions, comments, profiles, notifications, discovery, photos (requires Firebase Blaze upgrade).
+> Challenges, leaderboards, verified badges, and Contact Picker API are explicitly out of scope for v1 (see Todo).
+>
+> **Core social unit: the fishing trip, not the individual catch.** A trip is published immediately when the first catch is logged and updates live as more catches are added. Trips are closed explicitly by the user, not by a time heuristic.
 
 ---
 
 ## 1. Vision
 
-BiteCheck becomes the Strava of fishing. Every logged catch is a potential social moment. Users follow friends and notable anglers, react to catches, leave comments, and discover new fishing spots and people through an engagement-ranked feed.
+BiteCheck becomes the Strava of fishing. Every fishing trip is a social moment — whether you land ten mackerel or nothing at all. Users follow friends and notable anglers, react to trips, leave comments, and discover new fishing spots and people through an engagement-ranked feed.
 
 ---
 
@@ -15,13 +17,15 @@ BiteCheck becomes the Strava of fishing. Every logged catch is a potential socia
 
 | Concept | Description |
 |---|---|
-| **Catch** | A logged fishing event. Already exists. Extended with social fields. |
-| **Feed** | Mixed stream of catches from followed users + discover content. |
+| **Trip** | The primary social unit. One fishing outing = one feed post. Contains 0–N catches. Publishes immediately on first catch or explicit start. Auto-closes after 8h of inactivity. Visibility is set per trip: Everyone / Followers / Only me. |
+| **Catch** | A logged fish. Always belongs to a trip. Not a standalone feed item. Visibility is inherited from the trip. Location precision is set per catch (exact / approximate / hidden), defaulting to the user's profile preference. |
+| **Feed** | Mixed stream of trips from followed users + discover content. |
 | **Social Graph** | One-way follow relationships. Private accounts require approval. |
-| **Reaction** | One of 👍 ✋ 😁 😭 😯 per catch per user. |
-| **Comment** | Flat text comment on a catch. Supports @mentions. |
+| **Reaction** | One of 👍 ✋ 😁 😭 😯 per trip per user. |
+| **Comment** | Flat text comment on a trip. Supports @mentions. |
+| **Companion** | A person tagged as present on the trip. BiteCheck users link to their profile and get a notification; non-users are stored as a display name only. |
 | **Notification** | In-app + push event triggered by social actions. |
-| **Profile** | Public page per user with stats, PRs, recent catches. |
+| **Profile** | Public page per user with stats, PRs, recent trips. |
 | **Username** | Unique handle chosen on first login. Used for search and @mentions. |
 
 ---
@@ -38,8 +42,8 @@ BiteCheck becomes the Strava of fishing. Every logged catch is a potential socia
   photoURL: string | null,
   mainLocation: string,       // free text e.g. "Tromsø"
   memberSince: Timestamp,
-  isPrivate: boolean,         // account-level privacy
-  locationPref: 'exact' | 'approximate' | 'hidden',  // account-level default
+  isPrivate: boolean,         // account-level privacy — acts as ceiling: private account makes all trips followers-only regardless of trip visibility setting
+  locationPref: 'exact' | 'approximate' | 'hidden',  // default for new catches; user can override per catch
   followersCount: number,     // denormalized
   followingCount: number,     // denormalized
   catchCount: number,         // denormalized
@@ -67,22 +71,60 @@ BiteCheck becomes the Strava of fishing. Every logged catch is a potential socia
 }
 ```
 
-### 3.4 `catches/{catchId}` (extended)
+### 3.4 `trips/{tripId}`
 
-Existing fields kept. New social fields added:
+The primary social entity. One trip = one feed post.
+
+```
+{
+  tripId: string,
+  uid: string,                          // owner
+  status: 'open' | 'closed',           // open = still accepting catches; closed = final
+  visibility: 'everyone' | 'followers' | 'only_me',  // who can see this trip. 'everyone' on a private account behaves like 'followers'.
+  isMultiDay: boolean,                  // user-set flag; no UI difference except surfaced on trip card
+  startedAt: Timestamp,
+  closedAt: Timestamp | null,           // null while open; set on explicit user action only
+  location: GeoPoint | null,            // location of first catch, or user's location at start
+  locationShare: 'exact' | 'approximate' | 'hidden',
+  approximateLocationName: string | null,
+  catchCount: number,                   // denormalized
+  species: string[],                    // denormalized list of distinct species caught
+  companions: [                         // people on the trip
+    { uid: string | null, displayName: string, username: string | null }
+  ],
+  note: string | null,                  // free text trip note
+  weatherSnapshot: object | null,       // conditions at trip start (from useWeather)
+  reactionCounts: { [emoji: string]: number },
+  commentCount: number,
+}
+```
+
+> **Close rule:** Trips are closed explicitly by the user only — no auto-close. When logging a catch, the confirmation screen offers two actions: **Continue trip** (trip stays open) or **End trip** (sets `status: 'closed'`, `closedAt: now`). Dismissing without choosing leaves the trip open. The `isMultiDay` flag has no effect on close logic — it is purely informational, surfaced on the trip card so followers know the trip spans multiple days.
+
+### 3.5 `catches/{catchId}` (extended)
+
+Existing fields kept. New fields:
 
 ```
 {
   // ... existing fields ...
-  isPublic: boolean,                    // false = hidden from everyone
-  locationShare: 'exact' | 'approximate' | 'hidden',  // overrides account default
-  approximateLocationName: string | null,   // e.g. "Mjøsa", user-editable
-  reactionCounts: { [emoji: string]: number },  // denormalized
-  commentCount: number,                 // denormalized
+  tripId: string,                       // always set — every catch belongs to a trip
+  locationShare: 'exact' | 'approximate' | 'hidden',  // defaults to user's locationPref; overridable per catch
+  approximateLocationName: string | null,
+  photoRefs: string[],                  // ordered list of Firebase Storage paths, max 10
+                                        // empty until Firebase Blaze is enabled
 }
 ```
 
-### 3.5 `catches/{catchId}/reactions/{userId}`
+> **Photos:** Each catch supports 0–10 photos stored in Firebase Storage at `catches/{catchId}/{filename}`. Photos can be added at log time (camera capture) or after the fact (camera roll). Requires Firebase Blaze plan — `photoRefs` is written as `[]` until Storage is enabled. The UI shows a photo add button that is visible but shows an "upgrade required" message until Blaze is active. This ensures the data model is in place before Storage is enabled.
+>
+> **Photo caching strategy (implement at upload time):**
+> 1. **CDN cache header** — set `Cache-Control: public, max-age=31536000` on every upload. Firebase Storage serves via Google's CDN; this header makes the CDN cache the image for a year so repeat requests are served from edge at zero egress cost.
+> 2. **Browser cache** — automatic once the CDN header is set. Same photo opened twice costs nothing after the first load.
+> 3. **Service worker cache** — add a Workbox `CacheFirst` runtime strategy on `firebasestorage.googleapis.com` in `vite.config.ts`. Photos then work offline and survive app restarts without re-downloading.
+> 4. **Compress on upload** — resize to max 1080px on the long edge, JPEG at 80% quality before uploading. Reduces a typical phone photo from 3–5 MB to 200–400 KB, cutting egress cost by ~10×.
+
+### 3.6 `trips/{tripId}/reactions/{userId}`
 
 ```
 {
@@ -92,7 +134,7 @@ Existing fields kept. New social fields added:
 }
 ```
 
-### 3.6 `catches/{catchId}/comments/{commentId}`
+### 3.7 `trips/{tripId}/comments/{commentId}`
 
 ```
 {
@@ -107,15 +149,15 @@ Existing fields kept. New social fields added:
 }
 ```
 
-### 3.7 `notifications/{uid}/items/{notificationId}`
+### 3.8 `notifications/{uid}/items/{notificationId}`
 
 ```
 {
-  type: 'follow' | 'follow_request' | 'follow_accepted' | 'reaction' | 'comment' | 'mention',
+  type: 'follow' | 'follow_request' | 'follow_accepted' | 'reaction' | 'comment' | 'mention' | 'companion_tag',
   fromUid: string,
   fromUsername: string,       // denormalized
   fromPhotoURL: string | null,
-  catchId: string | null,     // null for follow notifications
+  tripId: string | null,      // null for follow notifications
   emoji: string | null,       // for reaction notifications
   commentSnippet: string | null,
   read: boolean,
@@ -123,23 +165,25 @@ Existing fields kept. New social fields added:
 }
 ```
 
-### 3.8 `feed/{uid}/items/{catchId}`
+### 3.9 `feed/{uid}/items/{tripId}`
 
-Fan-out-on-write feed. Written to by Cloud Functions when a catch is created/updated.
+Fan-out-on-write feed. Written to by Cloud Functions when a trip is created/updated.
 
 ```
 {
-  catchId: string,
+  tripId: string,
   authorUid: string,
   authorUsername: string,
-  species: string,
-  createdAt: Timestamp,
+  species: string[],          // distinct species on the trip
+  catchCount: number,
+  status: 'open' | 'closed',
+  startedAt: Timestamp,
   engagementScore: number,    // updated on reactions/comments
   seenBy: string[],           // array of uids who have seen this item (capped)
 }
 ```
 
-> **Note:** Fan-out on write is the right pattern at this scale. When a user posts, a Cloud Function writes to each follower's feed collection. For large follower counts (future "celeb" accounts) this may need a hybrid approach — defer to Todo.
+> **Note:** Fan-out on write is the right pattern at this scale. When a trip is first published (first catch logged), a Cloud Function writes to each follower's feed. Subsequent catch additions update the existing feed item in place — followers see the live update without a new post appearing. For large follower counts (future "celeb" accounts) this may need a hybrid approach — defer to Todo.
 
 ### 3.9 `usernames/{username}` (lookup index)
 
@@ -267,12 +311,22 @@ The algorithm lives in one isolated module (`src/lib/social/feedRanking.ts`) so 
 - Author can delete any comment on their catch.
 - No threading. No quoting.
 
-### 4.7 Catch Visibility & Location Privacy
+### 4.7 Trip Visibility & Catch Location Privacy
 
-#### Per-catch toggles (shown in catch log form + edit view)
-1. **Visibility toggle:** "Vis i feed" (on by default). Off = `isPublic: false`, invisible to all.
-2. **Location toggle:** overrides account default. Options: Exact / Vis omtrentlig sted / Skjul sted.
-3. **Approximate location name:** auto-filled from Nominatim reverse geocode of coordinates. User can edit to any free text (e.g. "Et sted i Nordland 😄").
+#### Trip visibility (set when starting or editing a trip)
+Three options matching Strava's model:
+- **Everyone** — visible to any authenticated user (subject to account-level ceiling: private accounts treat this as Followers).
+- **Followers** — visible only to approved followers.
+- **Only me** — private; never appears in any feed.
+
+Default: Everyone (for public accounts) / Followers (for private accounts).
+
+#### Per-catch location (shown in catch log form + edit view)
+1. **Location precision:** overrides account default. Options: Exact / Approximate / Hidden.
+2. **Approximate location name:** auto-filled from Nominatim reverse geocode of coordinates. User can edit to any free text (e.g. "Somewhere in Nordland 😄").
+
+#### Account-level ceiling
+`isPrivate: true` on the user profile forces all trips to be follower-gated, regardless of the trip's own `visibility` field. The trip's setting is preserved so it takes effect if the account is ever made public.
 
 ### 4.8 Discovery & Search
 
@@ -348,16 +402,19 @@ Each vertical is independently deployable and testable. Suggested order:
 
 ---
 
-### Vertical 3 — Social Catch Layer
-**Goal:** Catches have social fields. Feed cards display correctly.
+### Vertical 3 — Trip & Catch Layer
+**Goal:** Catches belong to trips. Social fields on catch. Feed cards display correctly.
 
-- Extend catch log form with visibility toggle + location privacy toggle + approximate location name.
-- `isPublic`, `locationShare`, `approximateLocationName` written on new catches.
-- Catch card component (condensed view).
-- Catch detail view (full conditions + map).
+- Trip creation on first catch log. Trip confirmation screen: **Continue trip** / **End trip** / **Multi-day trip** toggle.
+- "Add to existing trip?" prompt when an open trip exists and user logs a new catch.
+- Extend catch log form: visibility toggle, location privacy toggle, approximate location name, photo add button (shows "requires Blaze" if Storage not enabled).
+- `tripId`, `isPublic`, `locationShare`, `approximateLocationName`, `photoRefs` written on new catches.
+- Photo upload flow: camera capture + camera roll picker. Photos stored in Firebase Storage (requires Blaze). UI in place regardless.
+- Trip card component (condensed feed view showing trip status, catch count, species list).
+- Catch detail view (photo carousel at top, full conditions + map below).
 - No feed yet — just the components, testable via a static list.
 
-**Testable:** Log catch with "Skjul sted" → card shows no map → log catch with "Vis omtrentlig sted" → card shows Nominatim-derived name → tap card → detail view shows conditions.
+**Testable:** Log catch → prompted to continue or end trip → log second catch → offered to add to open trip → trip card shows 2 catches → add photo → photo appears in carousel → tap card → detail view shows conditions and photos.
 
 ---
 
@@ -477,6 +534,7 @@ src/
       updatePRs.ts       — on catch write: update personalRecords
       updateCounts.ts    — on reaction/comment write: update denormalized counts
       sendInviteEmail.ts — HTTP function: send invite email
+      // NOTE: no auto-close function — trips are closed explicitly by the user only
 ```
 
 **Rules:**
@@ -490,77 +548,156 @@ src/
 
 ## 7. Firestore Security Rules (additions)
 
+A `tripIsVisible()` helper centralises the visibility check so it isn't duplicated across trips, catches, reactions, and comments.
+
 ```
-// Users can read any public profile; only owner can write
-match /users/{uid} {
-  allow read: if request.auth != null;
-  allow write: if request.auth.uid == uid;
-}
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-// Usernames index: anyone can read; only enforced by transaction
-match /usernames/{username} {
-  allow read: if request.auth != null;
-  allow write: if request.auth != null; // transactions handle uniqueness
-}
+    // Central visibility check. Reads up to 3 documents (trip + user + follower).
+    // Returns true for: owner, 'everyone' on a public account, or active follower on 'followers'/'everyone'.
+    function tripIsVisible(tripId) {
+      let trip = get(/databases/$(database)/documents/trips/$(tripId)).data;
+      let ownerIsPrivate = get(/databases/$(database)/documents/users/$(trip.uid)).data.isPrivate;
+      let followerDoc = /databases/$(database)/documents/users/$(trip.uid)/followers/$(request.auth.uid);
+      let isActiveFollower = exists(followerDoc)
+        && get(followerDoc).data.status == 'active';
+      return trip.uid == request.auth.uid
+        || (trip.visibility == 'everyone' && !ownerIsPrivate)
+        || ((trip.visibility == 'everyone' || trip.visibility == 'followers') && isActiveFollower);
+    }
 
-// Followers: target can read; follower can write own entry
-match /users/{uid}/followers/{followerId} {
-  allow read: if request.auth.uid == uid || request.auth.uid == followerId;
-  allow write: if request.auth.uid == followerId;
-  allow delete: if request.auth.uid == followerId || request.auth.uid == uid; // deny = delete
-}
+    // Users: any authenticated user can read profiles; only owner can write.
+    // NOTE: count fields (followersCount, followingCount, etc.) must only be written
+    // by Cloud Functions via admin SDK — the client should never touch them directly.
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == uid;
+    }
 
-// Catches: visible if public AND (exact: anyone / approximate: anyone / hidden: anyone — location filtered client-side)
-// Private catches: only owner
-match /catches/{catchId} {
-  allow read: if request.auth != null &&
-    (resource.data.isPublic == true || resource.data.user_id == request.auth.uid);
-  allow write: if request.auth.uid == resource.data.user_id;
-}
+    // Usernames index: caller can only claim/release their own UID.
+    // No updates — usernames are immutable once claimed (must release + re-claim to change).
+    match /usernames/{username} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
 
-// Reactions: any authenticated user can react to a public catch
-match /catches/{catchId}/reactions/{userId} {
-  allow read: if request.auth != null;
-  allow write, delete: if request.auth.uid == userId;
-}
+    // Followers: who follows {uid}.
+    // On public accounts the follower may create an 'active' document directly.
+    // On private accounts only 'pending' is allowed on create; only the target can accept.
+    match /users/{uid}/followers/{followerId} {
+      allow read: if request.auth.uid == uid || request.auth.uid == followerId;
+      allow create: if request.auth.uid == followerId && (
+        request.resource.data.status == 'pending' ||
+        (request.resource.data.status == 'active'
+          && !get(/databases/$(database)/documents/users/$(uid)).data.isPrivate)
+      );
+      allow update: if request.auth.uid == uid
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'active';
+      allow delete: if request.auth.uid == followerId || request.auth.uid == uid;
+    }
 
-// Comments: any authenticated user can comment; owner or commenter can delete
-match /catches/{catchId}/comments/{commentId} {
-  allow read: if request.auth != null;
-  allow create: if request.auth != null;
-  allow delete: if request.auth.uid == resource.data.userId
-    || request.auth.uid == get(/databases/$(database)/documents/catches/$(catchId)).data.user_id;
-}
+    // Following: who {uid} follows. Mirror of followers, written by the follower.
+    // Validates that the doc body's followingId matches the path key.
+    match /users/{uid}/following/{followingId} {
+      allow read: if request.auth.uid == uid;
+      allow create: if request.auth.uid == uid
+        && request.resource.data.followingId == followingId;
+      allow delete: if request.auth.uid == uid || request.auth.uid == followingId;
+    }
 
-// Notifications: only owner can read/write
-match /notifications/{uid}/items/{notificationId} {
-  allow read, write: if request.auth.uid == uid;
-}
+    // Trips: primary social unit. Visibility enforced via tripIsVisible().
+    // Prevent ownership transfer on update by asserting uid is immutable.
+    match /trips/{tripId} {
+      allow read: if request.auth != null && tripIsVisible(tripId);
+      allow create: if request.auth.uid == request.resource.data.uid;
+      allow update: if request.auth.uid == resource.data.uid
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth.uid == resource.data.uid;
+    }
 
-// Feed: only owner can read; Cloud Functions write (admin SDK bypasses rules)
-match /feed/{uid}/items/{catchId} {
-  allow read: if request.auth.uid == uid;
-}
+    // Catches: visibility inherited from parent trip.
+    // locationShare is enforced at write time: store location: null when 'hidden',
+    // store only approximateLocationName (not GeoPoint) when 'approximate'.
+    // tripId must reference a trip owned by the same user to prevent cross-trip injection.
+    match /catches/{catchId} {
+      allow read: if request.auth != null && (
+        resource.data.user_id == request.auth.uid ||
+        tripIsVisible(resource.data.tripId)
+      );
+      allow create: if request.auth.uid == request.resource.data.user_id
+        && get(/databases/$(database)/documents/trips/$(request.resource.data.tripId)).data.uid == request.auth.uid;
+      allow update, delete: if request.auth.uid == resource.data.user_id;
+    }
 
-// Personal records: anyone authenticated can read; Cloud Functions write
-match /personalRecords/{uid} {
-  allow read: if request.auth != null;
+    // Reactions: gated on parent catch visibility. Doc ID = userId enforces one reaction per user.
+    match /catches/{catchId}/reactions/{userId} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/catches/$(catchId)).data.user_id == request.auth.uid ||
+        tripIsVisible(get(/databases/$(database)/documents/catches/$(catchId)).data.tripId)
+      );
+      allow write, delete: if request.auth.uid == userId;
+    }
+
+    // Comments: gated on parent catch visibility.
+    // Create validates userId ownership and enforces 500-char limit.
+    match /catches/{catchId}/comments/{commentId} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/catches/$(catchId)).data.user_id == request.auth.uid ||
+        tripIsVisible(get(/databases/$(database)/documents/catches/$(catchId)).data.tripId)
+      );
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.text.size() <= 500;
+      allow delete: if request.auth.uid == resource.data.userId
+        || request.auth.uid == get(/databases/$(database)/documents/catches/$(catchId)).data.user_id;
+    }
+
+    // Notifications: owner can read and delete their own. Cloud Functions create via admin SDK.
+    match /notifications/{uid}/items/{notificationId} {
+      allow read, delete: if request.auth.uid == uid;
+    }
+
+    // Feed: only owner can read; Cloud Functions write via admin SDK.
+    match /feed/{uid}/items/{tripId} {
+      allow read: if request.auth.uid == uid;
+    }
+
+    // Personal records: no PII, readable by all authenticated users.
+    // Written exclusively by Cloud Functions via admin SDK.
+    match /personalRecords/{uid} {
+      allow read: if request.auth != null;
+    }
+  }
 }
 ```
+
+### Notes
+
+**Location privacy — defense in depth:** Rules enforce *who* can read a document, but not *which fields* are safe. When a user sets `locationShare: 'hidden'`, the app must write `location: null` to Firestore (not just suppress display). For `'approximate'`, store only `approximateLocationName`, not the GeoPoint. This ensures exact coordinates are never in the database for those catches.
+
+**Denormalized counts:** `followersCount`, `followingCount`, `catchCount`, `speciesCount` on user documents and `reactionCounts`, `commentCount` on trips are writable by the document owner (rules can't easily restrict individual fields without field-level diffs). These must only be written by Cloud Functions via admin SDK — the client UI must never touch count fields directly.
+
+**Demo data:** The current `firestore.rules` allows any authenticated user to write catches with a `user_id` matching `demo-.*`. This must be replaced before launch — either restrict to a specific allowlist of known demo UIDs, or seed demo data exclusively via admin SDK and remove the exception from client rules entirely.
 
 ---
 
 ## 8. Todo (Out of Scope Now)
 
+- **Photos (activate)** — data model and UI are in place (see §3.5). Activation requires upgrading to Firebase Blaze plan, creating a Storage bucket, and updating Firestore + Storage security rules. Once done, remove the "upgrade required" gate from the photo add button.
 - **Challenges** — community goals and competitions
 - **Leaderboards** — biggest fish / most catches by species, area, time window
 - **Verified/celeb badge** — ✓ on notable angler profiles
-- **Photos on catches** — requires Firebase Blaze plan + Storage setup
 - **Feed discover algorithm** — "people followed by your friends" graph traversal
 - **Contact Picker API** — full phone contact invite (browser support patchy)
 - **Push notifications** — bundle with solunar push work; needs service worker integration
 - **Fan-out scaling** — hybrid approach for accounts with large follower counts
-- **Reporting/moderation** — report a catch, block a user
+- **Reporting/moderation** — report a trip, block a user
 - **Code-splitting** — MapLibre + SunCalc dynamic import (already in main Todo)
 - **Map: tide forecast layer** — time-scrubber-aware, shows predicted tide level across map
 - **Map: temperature forecast layer** — time-scrubber-aware, shows SST or air temp across map
