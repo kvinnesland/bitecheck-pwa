@@ -132,7 +132,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Topp-header skal reflektere biome** — headeren bør visuelt speile brukerens valgte biome (salt/ferskvann), f.eks. via fargetema eller bakgrunn.
 - **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
 - **"No fish" skal være første valg i artslisten** — legg til "No fish (yet) — log a moment from the trip" som første element i artslisten. Fjern tilsvarende knapp/element fra bunnen der det ligger i dag.
-- **"I don't know" skal være andre valg i artslisten** — legg til "I don't know" som andre element, rett etter "No fish (yet)".
+- **"I don't know" skal være andre valg i artslisten** — legg til "I don't know what kind of fish this is" som andre element, rett etter "No fish (yet)".
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
