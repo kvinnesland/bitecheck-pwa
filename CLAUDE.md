@@ -134,6 +134,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **"No fish" skal være første valg i artslisten** — legg til "No fish (yet) — log a moment from the trip" som første element i artslisten. Fjern tilsvarende knapp/element fra bunnen der det ligger i dag.
 - **"I don't know" skal være andre valg i artslisten** — legg til "I don't know what kind of fish this is" som andre element, rett etter "No fish (yet)".
 - **"Not listed" skal være tredje valg i artslisten** — legg til "Not listed (add manually)" som tredje element, rett etter "I don't know what kind of fish this is".
+- **Søkefelt under de tre faste valgene** — søkefeltet kommer etter de tre faste elementene og filtrerer artslisten dynamisk ved skriving. Artslisten er skjult til brukeren begynner å skrive.
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
