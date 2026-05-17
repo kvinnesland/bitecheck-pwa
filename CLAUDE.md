@@ -125,7 +125,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Overskriftsfont** — bytt til en mer klassisk font (serif eller slab-serif). Nåværende font er for moderne/teknisk for en fiske-app.
 - **Kort ser komprimerte ut** — øk padding/spacing i kortkomponenter. Elementer sitter for tett.
 - **Profilside stats-rad overflower** — rad med Catches/Species/Followers/Following er for bred, siste element kuttes av. Bruk flex-wrap eller reduser font-størrelse/padding så alle tallene får plass på én linje.
-- **Profilside topp-arter viser duplikater** — Ørret dukker opp to ganger i Top Species-lista (to separate rader). Sannsynlig årsak: manglende normalisering av artsnavn ved gruppering (f.eks. "ørret" vs "Ørret", eller torsk land/båt-varianter telles separat). Normaliser til lowercase eller bruk species-ID fra SPECIES_DEFS som nøkkel ved aggregering.
+- **Profilside topp-arter viser duplikater** — Ørret dukker opp to ganger i Top Species-lista (to separate rader).
 
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
