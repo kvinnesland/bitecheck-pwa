@@ -121,6 +121,10 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Firestore privacy-regler (tripIsVisible-funksjon)** — data-modellen er klar (visibility-felt på Trip), men server-side enforcement utsettes til V5/feeds.
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
+### Bugs og designendringer
+- **Overskriftsfont** — bytt til en mer klassisk font (serif eller slab-serif). Nåværende font er for moderne/teknisk for en fiske-app.
+- **Kort ser komprimerte ut** — øk padding/spacing i kortkomponenter. Elementer sitter for tett.
+
 ### Ideer ikke startet
 - **~~Profilside~~** — gjort. Avatar + navn, totalfangst, antall arter, personlig rekord, månedlig trendkurve, topp-arter.
 - **Demo-profiler** — fiktive brukere med realistiske innlegg for å teste feed-design. Skal se ut og oppføre seg som ekte brukere (avatar, navn, innlegg, interaksjon). Trenger avklaring: Firestore write-regler, avatar-bilder (placeholder-service eller fargekodet initial), antall profiler og innlegg, Add/Remove-kontroll i Settings. Påbegynt implementasjon finnes i `src/lib/demoData.ts`, `src/lib/seedDemo.ts` og `SettingsSheet.tsx`.
