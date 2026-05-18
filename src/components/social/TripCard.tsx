@@ -57,7 +57,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       className="w-full bg-surface rounded-[var(--radius-md)] border border-divider overflow-hidden text-left transition-colors duration-150 active:bg-surface/70 cursor-pointer"
     >
       {/* Header row — biome image/gradient strip */}
-      <div className="relative flex items-center gap-2.5 px-4 pt-3.5 pb-2.5 overflow-hidden">
+      <div className="relative flex items-center gap-2.5 px-4 pt-4 pb-3 overflow-hidden">
         {/* Biome background */}
         {(() => {
           const def = getBiome(trip.biome);
@@ -108,7 +108,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       </div>
 
       {/* Body */}
-      <div className="px-4 pb-3 space-y-2">
+      <div className="px-4 pt-1 pb-4 space-y-3">
         <div className="flex items-center gap-2">
           {isLive && (
             <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-success shrink-0">
