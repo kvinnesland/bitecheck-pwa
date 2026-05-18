@@ -125,7 +125,6 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Overskriftsfont** — bytt til en mer klassisk font (serif eller slab-serif). Nåværende font er for moderne/teknisk for en fiske-app.
 - **Kort ser komprimerte ut** — øk padding/spacing i kortkomponenter. Elementer sitter for tett.
 - **Profilside topp-arter viser duplikater** — Ørret dukker opp to ganger i Top Species-lista (to separate rader).
-- **Profilside mangler tilbake-navigasjon** — ingen back-knapp. Løsning: enten gjør profil til et pull-down-kort (bottom sheet) eller legg til en tydelig tilbake-knapp øverst.
 - **Varsler skal ikke være egen bunnfane** — fjern Alerts-fanen fra BottomNav. Erstatt med bjelle-ikon i topp-headeren med rød badge for uleste. Tapp åpner varselside.
 - **Topp-header skal reflektere biome** — headeren bør visuelt speile brukerens valgte biome (salt/ferskvann), f.eks. via fargetema eller bakgrunn.
 - **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
