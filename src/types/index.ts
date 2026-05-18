@@ -33,6 +33,7 @@ export interface Trip {
   biome?: Biome;
   reactionCounts?: Record<string, number>;
   commentCount?: number;
+  photoCount?: number;
 }
 
 export interface TripReaction {
