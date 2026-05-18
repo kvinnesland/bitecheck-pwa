@@ -57,9 +57,9 @@ function AuthenticatedApp({ user, onSignOut }: { user: User; onSignOut: () => vo
   return (
     <>
       <AppShell user={user} onSignOut={onSignOut}>
-        {(view: AppView, navigate: (v: AppView) => void, openSettings: () => void) => (
+        {(view: AppView, navigate: (v: AppView) => void, openSettings: () => void, unreadCount: number) => (
           <Suspense fallback={<PageSpinner />}>
-            {view === 'feed'    && <Feed user={user} onSettingsOpen={openSettings} onNavigate={navigate} />}
+            {view === 'feed'    && <Feed user={user} onSettingsOpen={openSettings} onNavigate={navigate} unreadCount={unreadCount} />}
             {view === 'logg'    && <LoggFangst user={user} />}
             {view === 'kart'    && <Kart user={user} />}
             {view === 'score'   && <BiteScore user={user} navigate={navigate} />}

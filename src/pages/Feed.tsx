@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Settings, Search,
+  Settings, Search, Bell,
   Sun, Cloud, CloudSun, CloudRain, CloudSnow, CloudLightning, Wind,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
@@ -28,6 +28,7 @@ interface Props {
   user: User;
   onSettingsOpen: () => void;
   onNavigate: (view: AppView) => void;
+  unreadCount: number;
 }
 
 function weatherIcon(code: number | null, size = 20) {
@@ -52,7 +53,7 @@ function weatherDescKey(code: number | null): string {
   return 'feed.weather.storm';
 }
 
-export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
+export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
   const { t, i18n } = useTranslation();
   const { prefs } = useUnits();
   const { position } = useGeolocation();
@@ -147,6 +148,22 @@ export function Feed({ user, onSettingsOpen, onNavigate }: Props) {
               )}
             >
               <Search size={18} strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => onNavigate('varsler')}
+              aria-label={t('notifs.title')}
+              className={cn(
+                'relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
+                'text-text-muted border border-divider',
+                'transition-colors duration-150 hover:text-text hover:border-accent',
+              )}
+            >
+              <Bell size={18} strokeWidth={1.75} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             <button
               onClick={onSettingsOpen}
