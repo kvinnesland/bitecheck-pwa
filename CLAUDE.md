@@ -123,7 +123,6 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 
 ### Bugs og designendringer
 - **Kort ser komprimerte ut** — øk padding/spacing i kortkomponenter. Elementer sitter for tett.
-- **Profilside topp-arter viser duplikater** — Ørret dukker opp to ganger i Top Species-lista (to separate rader).
 - **Varsler skal ikke være egen bunnfane** — fjern Alerts-fanen fra BottomNav. Erstatt med bjelle-ikon i topp-headeren med rød badge for uleste. Tapp åpner varselside.
 - **Topp-header skal reflektere biome** — headeren bør visuelt speile brukerens valgte biome (salt/ferskvann), f.eks. via fargetema eller bakgrunn.
 - **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
