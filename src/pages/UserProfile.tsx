@@ -12,7 +12,6 @@ import { getBiome } from '../lib/biomes';
 import { TripCard } from '../components/social/TripCard';
 import { FollowButton } from '../components/social/FollowButton';
 import { FollowListSheet } from '../components/social/FollowListSheet';
-import { cn } from '@/lib/utils';
 import type { CatchRecord, Trip } from '../types';
 
 interface Props {
@@ -60,13 +59,11 @@ function computeStats(catches: CatchRecord[]) {
   return { total, species: speciesSet.size, bestWeight, bestLength, months, topSpecies };
 }
 
-function StatItem({ value, label, compact }: { value: string; label: string; compact?: boolean }) {
+function StatItem({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className={cn('font-bold text-text leading-none', compact ? 'text-lg' : 'text-2xl')}>
-        {value}
-      </span>
-      <span className="text-xs text-text-muted">{label}</span>
+      <span className="text-xl font-bold text-text leading-none">{value}</span>
+      <span className="text-[11px] text-text-muted">{label}</span>
     </div>
   );
 }
@@ -205,7 +202,7 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUse
         </div>
 
         {/* Stats row */}
-        <div className="flex items-start gap-5">
+        <div className="flex items-start gap-3">
           <StatItem value={String(catchCount)} label={t('profile.catches')} />
           <div className="w-px self-stretch bg-divider" />
           <StatItem value={String(speciesCount)} label={t('profile.species')} />
@@ -214,25 +211,21 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUse
             className="flex flex-col gap-0.5 text-left"
             onClick={() => setFollowSheet('followers')}
           >
-            <span className="text-2xl font-bold text-text leading-none">
-              {followersCount}
-            </span>
-            <span className="text-xs text-text-muted">{t('follow.followers')}</span>
+            <span className="text-xl font-bold text-text leading-none">{followersCount}</span>
+            <span className="text-[11px] text-text-muted">{t('follow.followers')}</span>
           </button>
           <div className="w-px self-stretch bg-divider" />
           <button
             className="flex flex-col gap-0.5 text-left"
             onClick={() => setFollowSheet('following')}
           >
-            <span className="text-2xl font-bold text-text leading-none">
-              {followingCount}
-            </span>
-            <span className="text-xs text-text-muted">{t('follow.following')}</span>
+            <span className="text-xl font-bold text-text leading-none">{followingCount}</span>
+            <span className="text-[11px] text-text-muted">{t('follow.following')}</span>
           </button>
           {bestDisplay && (
             <>
               <div className="w-px self-stretch bg-divider" />
-              <StatItem value={bestDisplay} label={t('profile.personalBest')} compact />
+              <StatItem value={bestDisplay} label={t('profile.personalBest')} />
             </>
           )}
         </div>
