@@ -11,7 +11,7 @@
 
 @theme {
   /* ── Fonts ── */
-  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-display: 'Playfair Display Variable', Georgia, serif;
   --font-sans:    'Inter Variable', system-ui, sans-serif;
 
   /* ── Light mode palette ── */
