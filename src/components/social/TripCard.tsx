@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MapPin, Images } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { getBiome } from '../../lib/biomes';
 import type { Trip } from '../../types';
 
@@ -33,12 +33,12 @@ function Avatar({ displayName, photoUrl }: { displayName: string; photoUrl: stri
         src={photoUrl}
         alt={displayName}
         referrerPolicy="no-referrer"
-        className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-white/40"
+        className="w-9 h-9 rounded-full object-cover shrink-0"
       />
     );
   }
   return (
-    <div className="w-8 h-8 rounded-full bg-accent/80 flex items-center justify-center text-white text-xs font-semibold shrink-0 ring-2 ring-white/40">
+    <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-semibold shrink-0">
       {initials}
     </div>
   );
@@ -47,8 +47,6 @@ function Avatar({ displayName, photoUrl }: { displayName: string; photoUrl: stri
 export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, onAvatarClick }: Props) {
   const { t } = useTranslation();
   const isLive = trip.status === 'open';
-  const def = getBiome(trip.biome);
-  const photoCount = trip.photoCount ?? 0;
 
   return (
     <div
@@ -58,38 +56,31 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
       className="w-full bg-surface rounded-[var(--radius-md)] border border-divider overflow-hidden text-left transition-colors duration-150 active:bg-surface/70 cursor-pointer"
     >
-      {/* Photo area */}
-      <div className="relative h-44 overflow-hidden">
-        {/* Biome image / gradient */}
-        <div className="absolute inset-0" style={{ background: def.gradient }} />
-        <img
-          src={def.image}
-          className="absolute inset-0 w-full h-full object-cover"
-          alt=""
-          onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
-        />
+      {/* Header row — biome image/gradient strip */}
+      <div className="relative flex items-center gap-2.5 px-4 pt-4 pb-3 overflow-hidden">
+        {/* Biome background */}
+        {(() => {
+          const def = getBiome(trip.biome);
+          return (
+            <>
+              <div className="absolute inset-0" style={{ background: def.gradient }} />
+              <img
+                src={def.image}
+                className="absolute inset-0 w-full h-full object-cover"
+                alt=""
+                onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+              />
+              {/* Scrim so text reads cleanly over any photo */}
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.18) 100%)' }}
+              />
+            </>
+          );
+        })()}
 
-        {/* Bottom scrim for avatar legibility */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.15) 100%)' }}
-        />
-
-        {/* Top row: multi-photo indicator + time */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-          {photoCount > 1 ? (
-            <span className="flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white text-[11px] font-semibold px-2 py-1 rounded-full">
-              <Images size={12} strokeWidth={2} />
-              {photoCount}
-            </span>
-          ) : <span />}
-          <span className="bg-black/40 backdrop-blur-sm text-white/90 text-[11px] px-2 py-1 rounded-full">
-            {timeAgo(trip.startedAt, locale)}
-          </span>
-        </div>
-
-        {/* Bottom row: avatar + name + location */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-end gap-2">
+        {/* Content sits above the background */}
+        <div className="relative flex items-center gap-2.5 w-full">
           {onAvatarClick ? (
             <button
               onClick={e => { e.stopPropagation(); onAvatarClick(); }}
@@ -102,7 +93,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
             <Avatar displayName={displayName} photoUrl={photoUrl} />
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white leading-tight drop-shadow-sm truncate">
+            <p className="text-sm font-semibold text-white leading-tight truncate drop-shadow-sm">
               {isOwn ? t('feed.you') : displayName}
             </p>
             {trip.approximateLocationName && (
@@ -112,20 +103,23 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
               </p>
             )}
           </div>
-          {isLive && (
-            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-success/80 backdrop-blur-sm px-2 py-0.5 rounded-full shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              {t('feed.live')}
-            </span>
-          )}
+          <span className="text-[11px] text-white/70 shrink-0">{timeAgo(trip.startedAt, locale)}</span>
         </div>
       </div>
 
       {/* Body */}
-      <div className="px-4 pt-3 pb-4 space-y-3">
-        <p className="text-[0.95rem] font-semibold text-text leading-snug">
-          {trip.title || t('log.tripTitlePlaceholder')}
-        </p>
+      <div className="px-4 pt-1 pb-4 space-y-3">
+        <div className="flex items-center gap-2">
+          {isLive && (
+            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-success shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+              {t('feed.live')}
+            </span>
+          )}
+          <p className="text-[0.95rem] font-semibold text-text leading-snug truncate">
+            {trip.title || t('log.tripTitlePlaceholder')}
+          </p>
+        </div>
 
         {trip.note && (
           <p className="text-[0.82rem] text-text-muted leading-snug line-clamp-2">{trip.note}</p>
@@ -133,7 +127,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
 
         {/* Species chips */}
         {trip.species.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
             {trip.species.slice(0, 5).map(s => (
               <span
                 key={s}
@@ -149,7 +143,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
         )}
 
         {/* Footer */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap pt-0.5">
           <span className="text-[0.75rem] text-text-muted">
             {t('feed.catchCount', { count: trip.catchCount })}
             {' · '}
