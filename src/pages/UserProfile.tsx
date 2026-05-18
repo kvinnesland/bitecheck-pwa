@@ -49,12 +49,16 @@ function computeStats(catches: CatchRecord[]) {
   }
 
   const speciesCounts: Record<string, number> = {};
+  const speciesDisplay: Record<string, string> = {};
   for (const c of active) {
-    speciesCounts[c.species.name] = (speciesCounts[c.species.name] ?? 0) + 1;
+    const key = c.species.name.trim().toLowerCase();
+    speciesCounts[key] = (speciesCounts[key] ?? 0) + 1;
+    speciesDisplay[key] ??= c.species.name.trim();
   }
   const topSpecies = Object.entries(speciesCounts)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 5);
+    .slice(0, 5)
+    .map(([key, count]) => [speciesDisplay[key], count] as [string, number]);
 
   return { total, species: speciesSet.size, bestWeight, bestLength, months, topSpecies };
 }
