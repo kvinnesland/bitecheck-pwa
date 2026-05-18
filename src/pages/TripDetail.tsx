@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Fish, Camera, MapPin } from 'lucide-react';
+import { ArrowLeft, Fish, Camera, MapPin, Images } from 'lucide-react';
 import { useUnits } from '../contexts/UnitsContext';
 import { formatWeight, formatLength } from '../lib/units';
 import { useTripCatches } from '../hooks/useTripCatches';
@@ -55,11 +55,37 @@ function CatchEntry({ c, weightUnit, lengthUnit }: {
     );
   }
 
+  const photoRefs = c.photoRefs ?? [];
+  const thumbUrl = photoRefs.length > 0
+    ? photoRefs[photoRefs.length - 1]
+    : `https://picsum.photos/seed/${c.catch_id.slice(0, 8)}/80/80`;
+
   return (
     <div className="flex gap-3 py-3 border-b border-divider last:border-0">
-      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-        <Fish size={18} className="text-accent" strokeWidth={1.5} />
+      {/* Photo thumbnail */}
+      <div className="relative shrink-0 mt-0.5">
+        <img
+          src={thumbUrl}
+          alt=""
+          className="w-14 h-14 rounded-[var(--radius-sm)] object-cover bg-divider"
+          onError={e => {
+            const el = e.currentTarget;
+            el.style.display = 'none';
+            (el.nextElementSibling as HTMLElement | null)?.style.setProperty('display', 'flex');
+          }}
+        />
+        {/* Fallback icon if image fails */}
+        <div className="w-14 h-14 rounded-[var(--radius-sm)] bg-accent/10 items-center justify-center shrink-0 hidden">
+          <Fish size={20} className="text-accent" strokeWidth={1.5} />
+        </div>
+        {photoRefs.length > 1 && (
+          <span className="absolute bottom-1 right-1 flex items-center gap-0.5 bg-black/50 text-white text-[10px] font-semibold px-1 py-0.5 rounded">
+            <Images size={9} strokeWidth={2} />
+            {photoRefs.length}
+          </span>
+        )}
       </div>
+
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-text leading-tight">
           {t(`speciesNames.${c.species.name}`, { defaultValue: c.species.name })}
