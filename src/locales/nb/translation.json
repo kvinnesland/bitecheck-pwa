@@ -282,6 +282,8 @@
     "title": "Varsler",
     "empty": "Ingen varsler ennå",
     "markAllRead": "Merk alle lest",
+    "deleteAllRead": "Slett alle leste",
+    "delete": "Slett varsel",
     "justNow": "akkurat nå",
     "follow": "{{user}} følger deg nå",
     "follow_request": "{{user}} vil følge deg",

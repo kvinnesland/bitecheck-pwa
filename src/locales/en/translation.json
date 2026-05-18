@@ -282,6 +282,8 @@
     "title": "Notifications",
     "empty": "No notifications yet",
     "markAllRead": "Mark all read",
+    "deleteAllRead": "Delete all read",
+    "delete": "Delete notification",
     "justNow": "just now",
     "follow": "{{user}} started following you",
     "follow_request": "{{user}} wants to follow you",

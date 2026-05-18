@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, limit, onSnapshot, updateDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, updateDoc, doc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { NotificationData } from '../lib/social/notifications';
 
@@ -15,6 +15,8 @@ export function useNotifications(uid: string): {
   loading: boolean;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  deleteAllRead: () => Promise<void>;
 } {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,5 +68,17 @@ export function useNotifications(uid: string): {
     await batch.commit();
   }
 
-  return { notifications, unreadCount, loading, markRead, markAllRead };
+  async function deleteNotification(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'notifications', uid, 'items', id));
+  }
+
+  async function deleteAllRead(): Promise<void> {
+    const read = notifications.filter(n => n.read);
+    if (read.length === 0) return;
+    const batch = writeBatch(db);
+    read.forEach(n => batch.delete(doc(db, 'notifications', uid, 'items', n.id)));
+    await batch.commit();
+  }
+
+  return { notifications, unreadCount, loading, markRead, markAllRead, deleteNotification, deleteAllRead };
 }

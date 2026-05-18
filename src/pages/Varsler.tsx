@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bell, UserPlus, UserCheck, MessageCircle, AtSign } from 'lucide-react';
+import { Bell, UserPlus, UserCheck, MessageCircle, AtSign, X } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { useNotifications, type AppNotification } from '../hooks/useNotifications';
 import { UserProfile } from './UserProfile';
@@ -57,51 +57,70 @@ function notifText(n: AppNotification, t: (k: string, opts?: Record<string, stri
 function NotifItem({
   notif,
   onTap,
+  onDelete,
 }: {
   notif: AppNotification;
   onTap: (n: AppNotification) => void;
+  onDelete: (id: string) => void;
 }) {
   const { t } = useTranslation();
   return (
-    <button
-      onClick={() => onTap(notif)}
+    <div
       className={cn(
-        'w-full flex items-start gap-3 px-4 py-3.5 border-b border-divider last:border-0 text-left transition-colors duration-150',
-        !notif.read ? 'bg-accent/5 hover:bg-accent/10' : 'bg-surface hover:bg-bg',
+        'flex items-stretch border-b border-divider last:border-0',
+        !notif.read ? 'bg-accent/5' : 'bg-surface',
       )}
     >
-      {/* Avatar / icon */}
-      <div className="relative shrink-0 mt-0.5">
-        {notif.fromPhotoURL ? (
-          <img
-            src={notif.fromPhotoURL}
-            referrerPolicy="no-referrer"
-            alt=""
-            className="w-9 h-9 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-9 h-9 rounded-full bg-divider flex items-center justify-center">
-            <span className="text-sm font-bold text-text-muted uppercase">
-              {notif.fromUsername.slice(0, 1)}
-            </span>
-          </div>
+      {/* Main tap area */}
+      <button
+        onClick={() => onTap(notif)}
+        className={cn(
+          'flex-1 flex items-start gap-3 px-4 py-3.5 text-left transition-colors duration-150 min-w-0',
+          !notif.read ? 'hover:bg-accent/10' : 'hover:bg-bg',
         )}
-        <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-surface flex items-center justify-center">
-          {notifIcon(notif.type, notif.emoji)}
-        </span>
-      </div>
+      >
+        {/* Avatar / icon */}
+        <div className="relative shrink-0 mt-0.5">
+          {notif.fromPhotoURL ? (
+            <img
+              src={notif.fromPhotoURL}
+              referrerPolicy="no-referrer"
+              alt=""
+              className="w-9 h-9 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-divider flex items-center justify-center">
+              <span className="text-sm font-bold text-text-muted uppercase">
+                {notif.fromUsername.slice(0, 1)}
+              </span>
+            </div>
+          )}
+          <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-surface flex items-center justify-center">
+            {notifIcon(notif.type, notif.emoji)}
+          </span>
+        </div>
 
-      {/* Text */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-text leading-snug">{notifText(notif, t as Parameters<typeof notifText>[1])}</p>
-        <p className="text-[11px] text-text-muted mt-0.5">{formatRelativeTime(notif.createdAt, t)}</p>
-      </div>
+        {/* Text */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-text leading-snug">{notifText(notif, t as Parameters<typeof notifText>[1])}</p>
+          <p className="text-[11px] text-text-muted mt-0.5">{formatRelativeTime(notif.createdAt, t)}</p>
+        </div>
 
-      {/* Unread dot */}
-      {!notif.read && (
-        <span className="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-accent" />
-      )}
-    </button>
+        {/* Unread dot */}
+        {!notif.read && (
+          <span className="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-accent" />
+        )}
+      </button>
+
+      {/* Delete button */}
+      <button
+        onClick={() => onDelete(notif.id)}
+        aria-label={t('notifs.delete')}
+        className="shrink-0 flex items-center px-3 text-text-muted hover:text-red-500 transition-colors duration-150"
+      >
+        <X size={15} strokeWidth={2} />
+      </button>
+    </div>
   );
 }
 
@@ -130,8 +149,9 @@ type NavEntry = { type: 'list' } | { type: 'profile'; uid: string };
 
 export function Varsler({ uid, currentUser, onNavigate }: Props) {
   const { t } = useTranslation();
-  const { notifications, loading, markRead, markAllRead } = useNotifications(uid);
+  const { notifications, loading, markRead, markAllRead, deleteNotification, deleteAllRead } = useNotifications(uid);
   const unreadCount = notifications.filter(n => !n.read).length;
+  const readCount = notifications.filter(n => n.read).length;
   const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'list' }]);
   const currentView = navStack[navStack.length - 1];
 
@@ -167,14 +187,24 @@ export function Varsler({ uid, currentUser, onNavigate }: Props) {
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)', paddingBottom: 12 }}
       >
         <h1 className="text-[1.05rem] font-bold text-text">{t('notifs.title')}</h1>
-        {unreadCount > 0 && (
-          <button
-            onClick={() => markAllRead().catch(() => {})}
-            className="text-xs font-semibold text-accent"
-          >
-            {t('notifs.markAllRead')}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <button
+              onClick={() => markAllRead().catch(() => {})}
+              className="text-xs font-semibold text-accent"
+            >
+              {t('notifs.markAllRead')}
+            </button>
+          )}
+          {readCount > 0 && (
+            <button
+              onClick={() => deleteAllRead().catch(() => {})}
+              className="text-xs font-semibold text-red-500"
+            >
+              {t('notifs.deleteAllRead')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Push permission prompt */}
@@ -198,7 +228,7 @@ export function Varsler({ uid, currentUser, onNavigate }: Props) {
         ) : (
           <div className="bg-surface border-y border-divider">
             {notifications.map(n => (
-              <NotifItem key={n.id} notif={n} onTap={handleTap} />
+              <NotifItem key={n.id} notif={n} onTap={handleTap} onDelete={id => deleteNotification(id).catch(() => {})} />
             ))}
           </div>
         )}
