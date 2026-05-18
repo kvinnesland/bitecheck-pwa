@@ -128,11 +128,11 @@ export function UserProfile({ targetUid, currentUser, onBack, onTripClick, onUse
           );
         })()}
 
-        {/* Back button */}
+        {/* Back button — fixed so it stays visible when scrolling */}
         <button
           onClick={onBack}
           aria-label={t('log.back')}
-          className="absolute left-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          className="fixed left-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
           style={{ top: 'calc(env(safe-area-inset-top) + 10px)' }}
         >
           <ArrowLeft size={17} strokeWidth={1.75} />
