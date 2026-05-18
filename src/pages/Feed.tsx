@@ -16,6 +16,7 @@ import { TripDetail } from './TripDetail';
 import { UserProfile } from './UserProfile';
 import { useUnits } from '../contexts/UnitsContext';
 import { celsiusToDisplay, tempUnitLabel } from '../lib/units';
+import { getBiome } from '../lib/biomes';
 import { cn } from '@/lib/utils';
 import type { Trip } from '../types';
 
@@ -178,6 +179,9 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Biome gradient strip */}
+        <div className="h-[3px] -mx-5 mt-3" style={{ background: getBiome(profile?.biome).gradient }} />
 
         {/* Weather strip */}
         <div className="mt-3 flex items-center gap-3 rounded-[var(--radius-sm)] bg-bg px-3.5 py-2.5 border border-divider">

@@ -5,6 +5,8 @@ import { type User } from 'firebase/auth';
 import { BottomNav, type AppView } from './BottomNav';
 import { SettingsSheet } from '../settings/SettingsSheet';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useUserProfile } from '../../hooks/useUserProfile';
+import { getBiome } from '../../lib/biomes';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
@@ -18,12 +20,14 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
   const [view, setView] = useState<AppView>('feed');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { unreadCount } = useNotifications(user.uid);
+  const { profile } = useUserProfile(user.uid);
+  const biomeDef = getBiome(profile?.biome);
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden">
       {view !== 'profil' && view !== 'feed' && view !== 'varsler' && (
         <header
-          className="bg-surface border-b border-divider shrink-0 z-[100]"
+          className="bg-surface shrink-0 z-[100]"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className="flex items-center justify-between px-5 h-14">
@@ -60,6 +64,7 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
               </button>
             </div>
           </div>
+          <div className="h-[3px]" style={{ background: biomeDef.gradient }} />
         </header>
       )}
 
