@@ -122,7 +122,6 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
 
 ### Bugs og designendringer
-- **Varsler skal ikke være egen bunnfane** — fjern Alerts-fanen fra BottomNav. Erstatt med bjelle-ikon i topp-headeren med rød badge for uleste. Tapp åpner varselside.
 - **Topp-header skal reflektere biome** — headeren bør visuelt speile brukerens valgte biome (salt/ferskvann), f.eks. via fargetema eller bakgrunn.
 - **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
 - **"No fish" skal være første valg i artslisten** — legg til "No fish (yet) — log a moment from the trip" som første element i artslisten. Fjern tilsvarende knapp/element fra bunnen der det ligger i dag.
