@@ -8,6 +8,7 @@ import { createCatch } from '../lib/catches';
 import { startTrip, addCatchToTrip, closeTrip, fetchOpenTrip, setTripMultiDay } from '../lib/trips';
 import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
 import { consumePendingSpecies } from '../lib/navigationStore';
+import { getFixedSpeciesChoices, getSearchSpeciesResults, type FixedSpeciesChoice } from '../lib/speciesPicker';
 import { useUnits } from '../contexts/UnitsContext';
 import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } from '../lib/units';
 import { FishSvg } from '../components/species/FishSvg';
@@ -16,13 +17,6 @@ import { cn } from '@/lib/utils';
 import type { Trip, Biome, TripVisibility } from '../types';
 
 const TripMapSnippet = React.lazy(() => import('../components/TripMapSnippet'));
-
-const SALT_SPECIES = [
-  'Torsk', 'Kveite', 'Sei', 'Hyse', 'Lange', 'Brosme', 'Uer', 'Steinbit',
-  'Makrell', 'Rødspette', 'Lomre', 'Sandflyndre', 'Sild', 'Laks', 'Sjøørret', 'Sjørøye',
-];
-const FRESH_SPECIES = ['Ørret', 'Røye', 'Abbor', 'Gjedde', 'Harr'];
-const ALL_SPECIES = [...SALT_SPECIES, ...FRESH_SPECIES];
 
 type Step = 'trip' | 'details' | 'moment' | 'success';
 type WaterType = 'salt' | 'fresh';
@@ -115,20 +109,30 @@ export function LoggFangst({ user }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.biome]);
 
-  const searchQuery = query.trim().toLowerCase();
+  const searchQuery = query.trim();
   const isSearching = searchQuery.length > 0;
-  const displayedSpecies = isSearching
-    ? ALL_SPECIES.filter((s) =>
-        s.toLowerCase().includes(searchQuery) ||
-        t(`speciesNames.${s}`, { defaultValue: s }).toLowerCase().includes(searchQuery),
-      )
-    : (waterType === 'salt' ? SALT_SPECIES : FRESH_SPECIES);
+  const fixedSpeciesChoices = getFixedSpeciesChoices();
+  const displayedSpecies = getSearchSpeciesResults(query, waterType, (name) =>
+    t(`speciesNames.${name}`, { defaultValue: name }),
+  );
 
   function selectSpecies(name: string) {
     if (!tripLoaded) return;
     setSpecies(name);
     setStep('details');
     setTimeout(() => weightRef.current?.focus(), 100);
+  }
+
+  function selectFixedChoice(choice: FixedSpeciesChoice) {
+    if (!tripLoaded) return;
+    if (choice.action === 'moment') {
+      setCaption('');
+      setStep('moment');
+      return;
+    }
+    if (choice.speciesName) {
+      selectSpecies(choice.speciesName);
+    }
   }
 
   async function handleSave() {
@@ -694,6 +698,29 @@ export function LoggFangst({ user }: Props) {
           })}
         </div>
 
+        {/* Fixed choices */}
+        <div className="flex flex-col rounded-[var(--radius-md)] border border-divider bg-surface overflow-hidden">
+          {fixedSpeciesChoices.map((choice) => (
+            <button
+              key={choice.id}
+              className="flex items-center gap-3 w-full py-3 px-3 text-left border-b border-divider last:border-0 transition-colors duration-150 hover:bg-bg active:bg-bg/80 disabled:opacity-50"
+              onClick={() => selectFixedChoice(choice)}
+              disabled={!tripLoaded}
+            >
+              <FishSvg name={choice.speciesName ?? ''} className="w-10 h-7 shrink-0 text-text-muted" />
+              <span className="flex flex-1 flex-col gap-0.5">
+                <span className="text-[0.95rem] font-semibold text-text">{t(choice.labelKey)}</span>
+                {choice.descriptionKey && (
+                  <span className="text-xs text-text-muted">{t(choice.descriptionKey)}</span>
+                )}
+              </span>
+              <svg className="w-4 h-4 text-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          ))}
+        </div>
+
         {/* Search */}
         <div className="relative">
           <svg
@@ -713,47 +740,34 @@ export function LoggFangst({ user }: Props) {
       </div>
 
       {/* Species list */}
-      <div className="px-4 pb-2 flex flex-col">
-        {displayedSpecies.length > 0 ? (
-          displayedSpecies.map((name) => (
+      {isSearching && (
+        <div className="px-4 pb-6 flex flex-col">
+          {displayedSpecies.length > 0 ? (
+            displayedSpecies.map((name) => (
+              <button
+                key={name}
+                className="flex items-center gap-3 w-full py-3 px-1 text-left border-b border-divider last:border-0 transition-colors duration-150 hover:bg-surface active:bg-surface/60"
+                onClick={() => selectSpecies(name)}
+              >
+                <FishSvg name={name} className="w-10 h-7 shrink-0 text-text-muted" />
+                <span className="text-[0.95rem] font-medium text-text flex-1">
+                  {t(`speciesNames.${name}`, { defaultValue: name })}
+                </span>
+                <svg className="w-4 h-4 text-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            ))
+          ) : (
             <button
-              key={name}
-              className="flex items-center gap-3 w-full py-3 px-1 text-left border-b border-divider last:border-0 transition-colors duration-150 hover:bg-surface active:bg-surface/60"
-              onClick={() => selectSpecies(name)}
+              className="flex items-center gap-3 w-full py-3 px-3 text-accent font-semibold text-[0.95rem] border border-dashed border-accent rounded-[var(--radius-md)]"
+              onClick={() => selectSpecies(query.trim())}
             >
-              <FishSvg name={name} className="w-10 h-7 shrink-0 text-text-muted" />
-              <span className="text-[0.95rem] font-medium text-text flex-1">
-                {t(`speciesNames.${name}`, { defaultValue: name })}
-              </span>
-              <svg className="w-4 h-4 text-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              {t('log.addCustom', { name: query.trim() })}
             </button>
-          ))
-        ) : (
-          <button
-            className="flex items-center gap-3 w-full py-3 px-3 text-accent font-semibold text-[0.95rem] border border-dashed border-accent rounded-[var(--radius-md)]"
-            onClick={() => selectSpecies(query.trim())}
-          >
-            {t('log.addCustom', { name: query.trim() })}
-          </button>
-        )}
-      </div>
-
-      {/* Log a moment */}
-      <div className="px-4 pb-6">
-        <button
-          className="w-full flex items-center justify-center gap-2 text-text-muted text-sm py-3 border border-dashed border-divider rounded-[var(--radius-md)] hover:text-text hover:border-text-muted transition-colors duration-150"
-          onClick={() => { if (tripLoaded) setStep('moment'); }}
-          disabled={!tripLoaded}
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-            <circle cx="12" cy="13" r="4" />
-          </svg>
-          {t('log.logMoment')}
-        </button>
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
