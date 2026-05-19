@@ -63,6 +63,9 @@ Appen migreres til internasjonalisering (i18next + react-i18next). **Engelsk er 
 ## Design
 Full redesign pågår. Komponentbibliotek: **shadcn/ui + Tailwind**. Alle eksisterende `.module.css`-filer skal erstattes. Design tokens (farger, spacing, typografi) mappes fra `global.css` CSS-variabler til `tailwind.config.ts`. Ikke introduser nye CSS Module-komponenter — skriv nye komponenter med Tailwind-klasser og shadcn/ui som base.
 
+## Shell-kommandoer
+Bruk alltid **PowerShell** (ikke Bash) for alle shell-kommandoer i dette prosjektet. Bash-verktøyet håndterer ikke Windows-stier korrekt. Kjør alltid git-kommandoer direkte uten `cd` — arbeidskatalogens rot er `C:\Users\kvinn\bitecheck-pwa`.
+
 ## Kodestandarder
 
 ### Separasjon av ansvar
