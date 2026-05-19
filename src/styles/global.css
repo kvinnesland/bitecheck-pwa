@@ -2,58 +2,67 @@
 
 /* ─────────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — single source of truth
-   To replace the entire design system: edit only this block.
-   Font choice:   --font-display / --font-sans
-   Colors:        --color-* values below
-   Radius:        --radius-*
-   Shadows:       --shadow-*
+   To replace the design system: edit only this block.
+   Fonts:   --font-display (Fraunces, serif, emotional/editorial only)
+            --font-sans    (Inter, all functional UI)
+   Colors:  --color-* below
+   Radius:  --radius-*
+   Shadows: --shadow-*
+   Motion:  --duration-* / --ease-*
 ───────────────────────────────────────────────────────────────────────────── */
 
 @theme {
   /* ── Fonts ── */
-  --font-display: 'Playfair Display Variable', Georgia, serif;
+  --font-display: 'Fraunces Variable', Georgia, serif;
   --font-sans:    'Inter Variable', system-ui, sans-serif;
 
-  /* ── Light mode palette ── */
-  --color-bg:           #F7F5F1;
-  --color-surface:      #FCFBF8;
-  --color-elevated:     #FFFFFF;
-  --color-text:         #1F2326;
-  --color-text-muted:   #747A7F;
-  --color-accent:       #234E5F;
-  --color-accent-mist:  #7E9FA5;
-  --color-copper:       #B58A63;
-  --color-success:      #5F7A69;
-  --color-divider:      #E7E4DF;
-  --color-error:        #C0392B;
-  --color-warning:      #D4862A;
+  /* ── Light mode palette (limestone / fog / paper) ── */
+  --color-bg:            #F3F0E8;
+  --color-surface:       #EAE5DA;
+  --color-elevated:      #FBF8F0;
+  --color-text:          #14201C;
+  --color-text-muted:    #5F675F;
+  --color-text-subtle:   #8A9087;
+  --color-accent:        #3D5B4A;
+  --color-accent-subtle: rgba(61, 91, 74, 0.12);
+  --color-divider:       rgba(20, 32, 28, 0.09);
+  --color-success:       #4A6B55;
+  --color-error:         #8B3A2E;
+  --color-warning:       #7A5528;
 
-  /* ── Radius ── */
-  --radius-sm:   8px;
-  --radius-md:   16px;
-  --radius-lg:   24px;
+  /* ── Radius (three values only) ── */
+  --radius-sm:   12px;
+  --radius-md:   20px;
+  --radius-lg:   30px;
   --radius-full: 9999px;
 
-  /* ── Shadows (soft, luxury) ── */
-  --shadow-sm:   0 2px  8px  rgba(20, 30, 40, 0.06);
-  --shadow-md:   0 6px  20px rgba(20, 30, 40, 0.08);
-  --shadow-lg:   0 12px 40px rgba(20, 30, 40, 0.10);
+  /* ── Shadows (soft, diffuse) ── */
+  --shadow-sm:   0 2px 12px rgba(20, 32, 28, 0.05);
+  --shadow-md:   0 8px 28px rgba(20, 32, 28, 0.07);
+  --shadow-lg:   0 16px 56px rgba(20, 32, 28, 0.09);
+
+  /* ── Motion ── */
+  --duration-micro:   150ms;
+  --duration-default: 240ms;
+  --duration-slow:    320ms;
+  --duration-reveal:  420ms;
+  --ease-soft:        cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ── Dark mode overrides ── */
+/* ── Dark mode (deep water / wet slate / Nordic night) ── */
 .dark {
-  --color-bg:          #101517;
-  --color-surface:     #182024;
-  --color-elevated:    #1E282D;
-  --color-text:        #F3F1EC;
-  --color-text-muted:  #B2B7BA;
-  --color-accent:      #6E9AA6;
-  --color-accent-mist: #4A7A87;
-  --color-copper:      #C29A75;
-  --color-success:     #6E9A78;
-  --color-divider:     #283138;
-  --color-error:       #E05C4B;
-  --color-warning:     #E09A45;
+  --color-bg:            #07110F;
+  --color-surface:       #101C19;
+  --color-elevated:      #16231F;
+  --color-text:          #F1EFE7;
+  --color-text-muted:    #B4B8AE;
+  --color-text-subtle:   #7D887F;
+  --color-accent:        #8FAF9C;
+  --color-accent-subtle: rgba(143, 175, 156, 0.14);
+  --color-divider:       rgba(241, 239, 231, 0.08);
+  --color-success:       #6E9A78;
+  --color-error:         #C4594A;
+  --color-warning:       #C48C4A;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -68,6 +77,11 @@
 @keyframes slideModal {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -100,7 +114,7 @@ a {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   MAP OVERRIDES (MapLibre dark theme — kept separate from design tokens
+   MAP OVERRIDES (MapLibre — kept separate from design tokens
    so map styles don't break when tokens change)
 ───────────────────────────────────────────────────────────────────────────── */
 
@@ -143,7 +157,6 @@ a {
 ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --color-marker-own:    #234E5F;
-  --color-marker-others: #7E9FA5;
+  --color-marker-own:    #3D5B4A;
+  --color-marker-others: #8FAF9C;
 }
-

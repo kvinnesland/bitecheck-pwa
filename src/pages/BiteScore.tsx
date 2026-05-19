@@ -12,6 +12,9 @@ import { celsiusToDisplay, displayToCelsius, tempUnitLabel } from '../lib/units'
 import { SpeciesSheet } from '../components/species/SpeciesSheet';
 import { LocationDatePicker, type SelectedLocation } from '../components/LocationDatePicker';
 import { DailyScoreChart } from '../components/DailyScoreChart';
+import { AppText } from '../components/ui/AppText';
+import { AppCard } from '../components/ui/AppCard';
+import { QuietDivider } from '../components/ui/QuietDivider';
 import { cn } from '@/lib/utils';
 import type { PressureTrend, TidePhase, CurrentStrength } from '../types';
 import type { AppView } from '../components/layout/BottomNav';
@@ -20,7 +23,11 @@ const PRESSURE_VALUES: PressureTrend[] = ['falling_rapidly', 'falling', 'stable'
 const TIDE_VALUES: TidePhase[] = ['rising', 'high', 'falling', 'low', 'slack'];
 const CURRENT_VALUES: CurrentStrength[] = ['stille', 'moderat', 'sterk', 'sterkest'];
 
-const fieldInputCls = 'bg-bg border border-divider rounded-[var(--radius-sm)] text-text text-sm font-medium px-2.5 py-2 outline-none w-full transition-colors duration-150 focus:border-accent appearance-none';
+const fieldCls = [
+  'bg-elevated border border-divider rounded-[var(--radius-sm)]',
+  'text-text text-[0.9rem] font-medium px-3 py-2.5 outline-none w-full',
+  'transition-colors duration-150 focus:border-accent/50 appearance-none',
+].join(' ');
 
 interface Props {
   user: User;
@@ -37,12 +44,12 @@ export function BiteScore({ user, navigate }: Props) {
   const [customLocation, setCustomLocation] = useState<SelectedLocation | null>(null);
   const [datetime, setDatetime]             = useState<Date>(() => new Date());
 
-  const [pressure,         setPressure]         = useState<PressureTrend>('stable');
-  const [waterTempC,       setWaterTempC]       = useState(8);
-  const [waterTempStr,     setWaterTempStr]     = useState(() => String(celsiusToDisplay(8, prefs.temp)));
-  const [tide,             setTide]             = useState<TidePhase>('rising');
-  const [currentStrength,  setCurrentStrength]  = useState<CurrentStrength>('moderat');
-  const [waterFilter,      setWaterFilter]      = useState<'salt' | 'fresh'>('salt');
+  const [pressure,        setPressure]        = useState<PressureTrend>('stable');
+  const [waterTempC,      setWaterTempC]      = useState(8);
+  const [waterTempStr,    setWaterTempStr]    = useState(() => String(celsiusToDisplay(8, prefs.temp)));
+  const [tide,            setTide]            = useState<TidePhase>('rising');
+  const [currentStrength, setCurrentStrength] = useState<CurrentStrength>('moderat');
+  const [waterFilter,     setWaterFilter]     = useState<'salt' | 'fresh'>('salt');
 
   const effectiveLat = customLocation?.lat ?? position?.lat ?? 60.0;
   const effectiveLng = customLocation?.lng ?? position?.lng ?? 5.0;
@@ -84,20 +91,19 @@ export function BiteScore({ user, navigate }: Props) {
     return computeAllScores(inputs);
   }, [pressure, waterTempC, tide, currentStrength, weather.windSpeed, effectiveLat, effectiveLng, datetime]);
 
-  function handleSpeciesClick(s: SpeciesScore) {
-    setSelectedSpecies(s);
-  }
+  const filteredScores = scores.filter(s => s.water === waterFilter);
+  const topScore = filteredScores[0];
+
+  function handleSpeciesClick(s: SpeciesScore) { setSelectedSpecies(s); }
 
   function handleNavigateToLog() {
-    if (selectedSpecies) {
-      setPendingSpecies(selectedSpecies.name);
-    }
+    if (selectedSpecies) setPendingSpecies(selectedSpecies.name);
     setSelectedSpecies(null);
     navigate('logg');
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col h-full overflow-y-auto bg-bg">
       {selectedSpecies && (
         <SpeciesSheet
           score={selectedSpecies}
@@ -118,161 +124,114 @@ export function BiteScore({ user, navigate }: Props) {
         onDatetimeChange={setDatetime}
       />
 
-      <SolunarCard solunar={solunar} />
+      {/* ── Hero recommendation ───────────────────────────────────────────── */}
+      <SolunarHero solunar={solunar} topScore={topScore} waterFilter={waterFilter} />
 
-      <DailyScoreChart
-        datetime={datetime}
-        hourlyTide={hourlyTide}
-        hourlyWeather={weather.hourlyWeather}
-        pressure={pressure}
-        waterTemp={waterTempC}
-        windSpeed={weather.windSpeed ?? 5}
-        lat={effectiveLat}
-        lng={effectiveLng}
-        waterFilter={waterFilter}
-      />
+      {/* ── Daily score chart ─────────────────────────────────────────────── */}
+      <div className="px-5 pb-1">
+        <DailyScoreChart
+          datetime={datetime}
+          hourlyTide={hourlyTide}
+          hourlyWeather={weather.hourlyWeather}
+          pressure={pressure}
+          waterTemp={waterTempC}
+          windSpeed={weather.windSpeed ?? 5}
+          lat={effectiveLat}
+          lng={effectiveLng}
+          waterFilter={waterFilter}
+        />
+      </div>
 
-      <section className="border-b border-divider shrink-0">
-        <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-text-muted px-4 pt-3 pb-2">
-          {t('conditions.title')}
-        </h3>
+      {/* ── Conditions panel ─────────────────────────────────────────────── */}
+      <div className="px-5 pb-5">
+        <AppCard surface="surface" bordered padding="none">
+          <div className="px-5 pt-4 pb-1">
+            <AppText variant="labelM" color="tertiary">{t('conditions.title')}</AppText>
+          </div>
 
-        <div className="grid grid-cols-2 gap-2.5 px-4 pb-3.5">
-          <label className="flex flex-col gap-[5px]">
-            <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
-              {t('conditions.pressure')}
-            </span>
-            <select
-              className={fieldInputCls}
-              value={pressure}
-              onChange={(e) => setPressure(e.target.value as PressureTrend)}
-            >
-              {PRESSURE_VALUES.map((v) => (
-                <option key={v} value={v}>{t(`pressure.${v}`)}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-[5px]">
-            <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
-              {waterFilter === 'fresh' ? t('conditions.freshTemp') : t('conditions.seaTemp')}
-              {' '}({tempUnitLabel(prefs.temp)})
-            </span>
-            <input
-              className={fieldInputCls}
-              type="number"
-              inputMode="decimal"
-              value={waterTempStr}
-              min={prefs.temp === 'f' ? '28' : '-2'}
-              max={prefs.temp === 'f' ? '86' : '30'}
-              step="0.5"
-              onChange={(e) => {
-                setWaterTempStr(e.target.value);
-                const n = parseFloat(e.target.value);
-                if (!isNaN(n)) setWaterTempC(displayToCelsius(n, prefs.temp));
-              }}
-            />
-          </label>
-
-          {waterFilter === 'salt' && (
-            <label className="flex flex-col gap-[5px]">
-              <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
-                {t('conditions.tide')}
-                {tideLoading
-                  ? <AutoTag>{t('conditions.fetching')}</AutoTag>
-                  : autoTide
-                    ? <AutoTag ready>{t('conditions.auto')}</AutoTag>
-                    : null}
-              </span>
-              <select
-                className={fieldInputCls}
-                value={tide}
-                onChange={(e) => setTide(e.target.value as TidePhase)}
-              >
-                {TIDE_VALUES.map((v) => (
-                  <option key={v} value={v}>{t(`tide.${v}`)}</option>
+          <div className="grid grid-cols-2 gap-0">
+            <ConditionField label={t('conditions.pressure')}>
+              <select className={fieldCls} value={pressure} onChange={e => setPressure(e.target.value as PressureTrend)}>
+                {PRESSURE_VALUES.map(v => (
+                  <option key={v} value={v}>{t(`pressure.${v}`)}</option>
                 ))}
               </select>
-            </label>
-          )}
+            </ConditionField>
 
-          {waterFilter === 'salt' && (
-            <label className="flex flex-col gap-[5px]">
-              <span className="text-[0.68rem] font-semibold uppercase tracking-[0.05em] text-text-muted flex items-center gap-1.5">
-                {t('conditions.current')}
-                {tideLoading
-                  ? <AutoTag>{t('conditions.fetching')}</AutoTag>
-                  : autoCurrentStrength
-                    ? <AutoTag ready>{t('conditions.auto')}</AutoTag>
-                    : null}
-              </span>
-              <select
-                className={fieldInputCls}
-                value={currentStrength}
-                onChange={(e) => setCurrentStrength(e.target.value as CurrentStrength)}
+            <ConditionField label={`${waterFilter === 'fresh' ? t('conditions.freshTemp') : t('conditions.seaTemp')} (${tempUnitLabel(prefs.temp)})`}>
+              <input
+                className={fieldCls}
+                type="number"
+                inputMode="decimal"
+                value={waterTempStr}
+                min={prefs.temp === 'f' ? '28' : '-2'}
+                max={prefs.temp === 'f' ? '86' : '30'}
+                step="0.5"
+                onChange={e => {
+                  setWaterTempStr(e.target.value);
+                  const n = parseFloat(e.target.value);
+                  if (!isNaN(n)) setWaterTempC(displayToCelsius(n, prefs.temp));
+                }}
+              />
+            </ConditionField>
+
+            {waterFilter === 'salt' && (
+              <ConditionField label={t('conditions.tide')} autoTag={tideLoading ? t('conditions.fetching') : autoTide ? t('conditions.auto') : undefined} autoReady={!!autoTide}>
+                <select className={fieldCls} value={tide} onChange={e => setTide(e.target.value as TidePhase)}>
+                  {TIDE_VALUES.map(v => <option key={v} value={v}>{t(`tide.${v}`)}</option>)}
+                </select>
+              </ConditionField>
+            )}
+
+            {waterFilter === 'salt' && (
+              <ConditionField label={t('conditions.current')} autoTag={tideLoading ? t('conditions.fetching') : autoCurrentStrength ? t('conditions.auto') : undefined} autoReady={!!autoCurrentStrength}>
+                <select className={fieldCls} value={currentStrength} onChange={e => setCurrentStrength(e.target.value as CurrentStrength)}>
+                  {CURRENT_VALUES.map(v => <option key={v} value={v}>{t(`current.${v}`)}</option>)}
+                </select>
+              </ConditionField>
+            )}
+          </div>
+          <div className="h-4" />
+        </AppCard>
+      </div>
+
+      {/* ── Species predictions ───────────────────────────────────────────── */}
+      <div className="px-5 pb-8">
+        <div className="flex items-center justify-between mb-3">
+          <AppText variant="labelM" color="tertiary">{t('predictions.title')}</AppText>
+          {/* Saltwater / freshwater toggle */}
+          <div className="flex bg-surface rounded-[var(--radius-sm)] p-0.5 gap-0.5">
+            {(['salt', 'fresh'] as const).map(wt => (
+              <button
+                key={wt}
+                className={cn(
+                  'text-[0.72rem] font-semibold px-3 py-1.5 rounded-[10px] transition-colors duration-150',
+                  waterFilter === wt
+                    ? 'bg-elevated text-text shadow-sm'
+                    : 'text-text-subtle hover:text-text-muted',
+                )}
+                onClick={() => setWaterFilter(wt)}
               >
-                {CURRENT_VALUES.map((v) => (
-                  <option key={v} value={v}>{t(`current.${v}`)}</option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-      </section>
-
-      <section className="flex-1">
-        <div className="flex items-center justify-between pr-4">
-          <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-text-muted px-4 pt-3 pb-2">
-            {t('predictions.title')}
-          </h3>
-          <div className="flex bg-bg border border-divider rounded-[var(--radius-sm)] overflow-hidden shrink-0">
-            <button
-              className={cn('text-[0.72rem] font-semibold px-3 py-[5px] transition-colors duration-150', waterFilter === 'salt' ? 'bg-accent text-white' : 'text-text-muted')}
-              onClick={() => setWaterFilter('salt')}
-            >
-              {t('predictions.saltwater')}
-            </button>
-            <button
-              className={cn('text-[0.72rem] font-semibold px-3 py-[5px] transition-colors duration-150', waterFilter === 'fresh' ? 'bg-accent text-white' : 'text-text-muted')}
-              onClick={() => setWaterFilter('fresh')}
-            >
-              {t('predictions.freshwater')}
-            </button>
+                {t(wt === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="flex flex-col gap-[1px] bg-divider border-t border-divider">
-          {scores
-            .filter((s) => s.water === waterFilter)
-            .map((s, i) => (
-              <SpeciesCard key={`${s.name}-${s.method ?? ''}`} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
-            ))}
+
+        <div className="flex flex-col gap-px rounded-[var(--radius-md)] overflow-hidden bg-divider">
+          {filteredScores.map((s, i) => (
+            <SpeciesRow key={`${s.name}-${s.method ?? ''}`} score={s} rank={i + 1} onClick={() => handleSpeciesClick(s)} />
+          ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
 
-function AutoTag({ children, ready }: { children: React.ReactNode; ready?: boolean }) {
-  return (
-    <span className={cn(
-      'text-[0.6rem] font-semibold uppercase tracking-[0.04em] px-[5px] py-[1px] rounded-[3px]',
-      ready ? 'bg-accent/10 text-accent' : 'bg-divider text-text-muted',
-    )}>
-      {children}
-    </span>
-  );
-}
+// ─── Solunar hero + top recommendation ────────────────────────────────────────
 
-// ─── Solunar card ─────────────────────────────────────────────────────────────
-
-function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
+function SolunarHero({ solunar, topScore }: { solunar: SolunarInfo; topScore?: SpeciesScore; waterFilter: string }) {
   const { t } = useTranslation();
-  const periodLabel =
-    solunar.type === 'major' ? t('solunar.majorActive') :
-    solunar.type === 'minor' ? t('solunar.minorActive') :
-    solunar.nextType === 'major'
-      ? t('solunar.nextMajor', { minutes: solunar.minutesUntilNext })
-      : t('solunar.nextMinor', { minutes: solunar.minutesUntilNext });
 
   const moonPct = Math.round(
     solunar.moonPhase <= 0.5
@@ -280,92 +239,153 @@ function SolunarCard({ solunar }: { solunar: SolunarInfo }) {
       : (1 - solunar.moonPhase) * 200,
   );
 
-  const borderColor =
-    solunar.type === 'major' ? 'var(--color-accent)' :
-    solunar.type === 'minor' ? '#22c55e' :
-    'var(--color-divider)';
+  const isActiveWindow = solunar.type === 'major' || solunar.type === 'minor';
+  const windowLabel = isActiveWindow
+    ? solunar.type === 'major' ? t('solunar.majorActive') : t('solunar.minorActive')
+    : solunar.nextType === 'major'
+      ? t('solunar.nextMajor', { minutes: solunar.minutesUntilNext })
+      : t('solunar.nextMinor', { minutes: solunar.minutesUntilNext });
+
+  const topPct = topScore ? Math.round(topScore.score * 100) : null;
+  const topName = topScore
+    ? t(`speciesNames.${topScore.name}`, { defaultValue: topScore.name })
+    : null;
 
   return (
-    <div
-      className="flex items-center justify-between gap-4 px-4 py-4 border-b border-divider bg-surface shrink-0"
-      style={{ borderLeft: `3px solid ${borderColor}` }}
-    >
-      <div className="flex items-center gap-2.5 shrink-0">
-        <MoonIcon phase={solunar.moonPhase} />
-        <div>
-          <div className="text-[0.8rem] font-semibold text-text">{solunar.moonPhaseName}</div>
-          <div className="text-[0.7rem] text-text-muted">{t('solunar.illuminated', { pct: moonPct })}</div>
-        </div>
-      </div>
+    <div className="px-5 py-5">
+      {/* Main hero block */}
+      <div className="bg-surface rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="px-6 pt-6 pb-5">
+          {topScore && topPct !== null && (
+            <>
+              <AppText variant="labelM" color="tertiary" as="p" className="mb-3">
+                {t('predictions.bestNow', { defaultValue: 'Best window today' })}
+              </AppText>
+              <div className="flex items-end gap-4 mb-3">
+                <span className="font-sans font-[575] text-[4.5rem] leading-[1] tracking-[-0.03em] text-text">
+                  {topPct}
+                  <span className="text-[2rem] font-[450] text-text-muted">%</span>
+                </span>
+                <div className="pb-2">
+                  <AppText variant="titleL" color="primary" as="p">
+                    {topName}
+                  </AppText>
+                  {topScore.method && (
+                    <AppText variant="bodyM" color="secondary" as="p" className="mt-0.5">
+                      {topScore.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}
+                    </AppText>
+                  )}
+                </div>
+              </div>
+              <AppText variant="bodyM" color="secondary" as="p">
+                {topScore.outOfSeason
+                  ? t('predictions.outOfSeason')
+                  : topScore.label}
+              </AppText>
+              <QuietDivider className="my-4" />
+            </>
+          )}
 
-      <div className="text-right flex flex-col gap-0.5">
-        <div className="text-[0.8rem] font-semibold text-text">{periodLabel}</div>
-        <div className="text-[0.7rem] text-accent font-semibold">
-          {t('solunar.multiplier', { value: solunar.multiplier.toFixed(2) })}
+          {/* Solunar row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <MoonIcon phase={solunar.moonPhase} />
+              <div>
+                <AppText variant="bodyM" color="primary" as="p">
+                  {solunar.moonPhaseName}
+                </AppText>
+                <AppText variant="labelM" color="tertiary" as="p" className="mt-0.5 normal-case tracking-normal text-[0.7rem]">
+                  {t('solunar.illuminated', { pct: moonPct })}
+                </AppText>
+              </div>
+            </div>
+            <div className="text-right">
+              <AppText variant="bodyM" color={isActiveWindow ? 'accent' : 'secondary'} as="p">
+                {windowLabel}
+              </AppText>
+              <AppText variant="labelM" color="tertiary" as="p" className="mt-0.5 normal-case tracking-normal text-[0.7rem]">
+                {t('solunar.multiplier', { value: solunar.multiplier.toFixed(2) })}×
+              </AppText>
+            </div>
+          </div>
         </div>
-        <LightLabel lux={solunar.lightLux} />
       </div>
     </div>
   );
 }
 
-function LightLabel({ lux }: { lux: number }) {
-  const { t } = useTranslation();
-  let key = '';
-  if (lux === 0)          key = 'light.night';
-  else if (lux < 100)     key = 'light.astronomical';
-  else if (lux < 1000)    key = 'light.nautical';
-  else if (lux < 10_000)  key = 'light.civil';
-  else if (lux < 30_000)  key = 'light.sunrise';
-  else if (lux < 80_000)  key = 'light.daylight';
-  else                     key = 'light.fullDaylight';
-  return <div className="text-[0.68rem] text-text-muted">{t(key)}</div>;
+// ─── Condition field wrapper ───────────────────────────────────────────────────
+
+function ConditionField({
+  label, children, autoTag, autoReady,
+}: {
+  label: string;
+  children: React.ReactNode;
+  autoTag?: string;
+  autoReady?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-[5px] px-5 py-3 border-b border-r border-divider last-of-type:border-r-0 [&:nth-last-child(-n+2)]:border-b-0">
+      <span className="flex items-center gap-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-text-subtle">
+        {label}
+        {autoTag && (
+          <span className={cn(
+            'text-[0.6rem] font-semibold uppercase tracking-[0.04em] px-[5px] py-[1px] rounded-[3px]',
+            autoReady ? 'bg-accent-subtle text-accent' : 'bg-surface text-text-subtle',
+          )}>
+            {autoTag}
+          </span>
+        )}
+      </span>
+      {children}
+    </div>
+  );
 }
 
-// ─── Species score card ───────────────────────────────────────────────────────
+// ─── Species score row ────────────────────────────────────────────────────────
 
-function SpeciesCard({ score, rank, onClick }: { score: SpeciesScore; rank: number; onClick: () => void }) {
+function SpeciesRow({ score, rank, onClick }: { score: SpeciesScore; rank: number; onClick: () => void }) {
   const { t } = useTranslation();
-  const pct   = Math.round(score.score * 100);
-  const color = score.outOfSeason ? 'var(--color-warning)' : scoreColor(score.score);
+  const pct = Math.round(score.score * 100);
+  const accentColor = score.outOfSeason ? 'var(--color-text-subtle)' : quietScoreColor(score.score);
   const displayName = t(`speciesNames.${score.name}`, { defaultValue: score.name });
 
   return (
-    <div className="flex items-center gap-2.5 bg-bg px-4 py-2.5 cursor-pointer" onClick={onClick}>
-      <div className="text-[0.72rem] font-bold text-text-muted w-[18px] text-right shrink-0">{rank}</div>
-      <div className="flex-1 flex flex-col gap-[5px]">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-[0.9rem] font-semibold text-text flex-1 flex items-baseline gap-[5px]">
+    <button
+      className="flex items-center gap-3 bg-elevated px-5 py-3.5 w-full text-left transition-opacity duration-150 active:opacity-70"
+      onClick={onClick}
+    >
+      <span className="text-[0.7rem] font-medium text-text-subtle w-5 text-right shrink-0 tabular-nums">{rank}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-1.5 mb-1.5">
+          <AppText variant="bodyM" color="primary" as="span" className="flex-1 truncate font-[500]">
             {displayName}
-            {score.method && (
-              <span className="text-[0.65rem] font-medium text-text-muted lowercase">
-                {score.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}
-              </span>
-            )}
-          </span>
-          <span className="text-[0.68rem] font-semibold uppercase tracking-[0.04em]" style={{ color }}>
-            {score.outOfSeason ? t('predictions.outOfSeason') : score.label}
-          </span>
-          <span className="text-[0.85rem] font-bold min-w-[36px] text-right" style={{ color }}>
+          </AppText>
+          {score.method && (
+            <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.65rem]">
+              {score.method === 'land' ? t('predictions.fromShore') : t('predictions.fromBoat')}
+            </AppText>
+          )}
+          <span className="text-[0.82rem] font-[575] tabular-nums shrink-0" style={{ color: accentColor }}>
             {pct}%
           </span>
         </div>
-        <div className="h-1 bg-divider rounded-[2px] overflow-hidden">
+        {/* Quiet score line */}
+        <div className="h-[2px] rounded-full" style={{ background: 'var(--color-divider)' }}>
           <div
-            className="h-full rounded-[2px] transition-[width] duration-[400ms] ease-in-out"
-            style={{ width: `${pct}%`, background: color }}
+            className="h-full rounded-full transition-[width] duration-[400ms]"
+            style={{ width: `${pct}%`, background: accentColor, opacity: score.outOfSeason ? 0.4 : 0.7 }}
           />
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
-function scoreColor(score: number): string {
-  if (score >= 0.75) return 'var(--color-accent)';
-  if (score >= 0.5)  return '#22c55e';
-  if (score >= 0.25) return '#f59e0b';
-  return '#ef4444';
+function quietScoreColor(score: number): string {
+  if (score >= 0.7) return 'var(--color-accent)';
+  if (score >= 0.45) return 'var(--color-text-muted)';
+  return 'var(--color-text-subtle)';
 }
 
 // ─── Moon icon ────────────────────────────────────────────────────────────────
@@ -373,16 +393,15 @@ function scoreColor(score: number): string {
 function MoonIcon({ phase }: { phase: number }) {
   const isWaxing = phase < 0.5;
   const pct      = isWaxing ? phase * 2 : (1 - phase) * 2;
-
-  const r = 14;
-  const cx = 16;
-  const cy = 16;
+  const r = 12;
+  const cx = 14;
+  const cy = 14;
   const offset = r * (1 - pct * 2);
 
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+    <svg width="28" height="28" viewBox="0 0 28 28" className="shrink-0">
       <defs>
-        <clipPath id="moon-clip">
+        <clipPath id="moon-clip-2">
           <circle cx={cx} cy={cy} r={r} />
         </clipPath>
       </defs>
@@ -392,8 +411,8 @@ function MoonIcon({ phase }: { phase: number }) {
         cy={cy}
         rx={Math.abs(offset) < r ? Math.sqrt(r * r - offset * offset) : r}
         ry={r}
-        fill="var(--color-text)"
-        clipPath="url(#moon-clip)"
+        fill="var(--color-text-muted)"
+        clipPath="url(#moon-clip-2)"
       />
     </svg>
   );

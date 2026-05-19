@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Settings, Search, Bell,
-  Sun, Cloud, CloudSun, CloudRain, CloudSnow, CloudLightning, Wind,
-} from 'lucide-react';
+import { Search, Bell, Settings } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import type { AppView } from '../components/layout/BottomNav';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -14,6 +11,8 @@ import { TripCard } from '../components/social/TripCard';
 import { UserSearchSheet } from '../components/social/UserSearchSheet';
 import { TripDetail } from './TripDetail';
 import { UserProfile } from './UserProfile';
+import { AppText } from '../components/ui/AppText';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useUnits } from '../contexts/UnitsContext';
 import { celsiusToDisplay, tempUnitLabel } from '../lib/units';
 import { getBiome } from '../lib/biomes';
@@ -32,26 +31,15 @@ interface Props {
   unreadCount: number;
 }
 
-function weatherIcon(code: number | null, size = 20) {
-  if (code == null) return <Cloud size={size} />;
-  if (code === 0) return <Sun size={size} />;
-  if (code <= 3) return <CloudSun size={size} />;
-  if (code <= 48) return <Cloud size={size} />;
-  if (code <= 67) return <CloudRain size={size} />;
-  if (code <= 77) return <CloudSnow size={size} />;
-  if (code <= 82) return <CloudRain size={size} />;
-  return <CloudLightning size={size} />;
-}
-
-function weatherDescKey(code: number | null): string {
-  if (code == null) return 'feed.weather.unknown';
-  if (code === 0) return 'feed.weather.clear';
-  if (code <= 3) return 'feed.weather.cloudy';
-  if (code <= 48) return 'feed.weather.fog';
-  if (code <= 67) return 'feed.weather.rain';
-  if (code <= 77) return 'feed.weather.snow';
-  if (code <= 82) return 'feed.weather.showers';
-  return 'feed.weather.storm';
+function weatherConditionText(code: number | null, t: (k: string) => string): string {
+  if (code == null) return '';
+  if (code === 0) return t('feed.weather.clear');
+  if (code <= 3) return t('feed.weather.cloudy');
+  if (code <= 48) return t('feed.weather.fog');
+  if (code <= 67) return t('feed.weather.rain');
+  if (code <= 77) return t('feed.weather.snow');
+  if (code <= 82) return t('feed.weather.showers');
+  return t('feed.weather.storm');
 }
 
 export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
@@ -87,14 +75,14 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
     user.email?.split('@')[0] ??
     t('feed.angler');
 
-  const tempDisplay =
-    weather.temp != null
-      ? `${celsiusToDisplay(weather.temp, prefs.temp).toFixed(0)}${tempUnitLabel(prefs.temp)}`
-      : null;
-
   const displayName = profile?.displayName ?? user.displayName ?? user.email?.split('@')[0] ?? '';
+  const biomeDef = getBiome(profile?.biome);
 
-  // ── Trip detail ─────────────────────────────────────────────────────────────
+  const tempDisplay = weather.temp != null
+    ? `${celsiusToDisplay(weather.temp, prefs.temp).toFixed(0)}${tempUnitLabel(prefs.temp)}`
+    : null;
+  const conditionText = weatherConditionText(weather.weathercode, t);
+
   if (currentView.type === 'trip') {
     return (
       <TripDetail
@@ -111,7 +99,6 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
     );
   }
 
-  // ── User profile ─────────────────────────────────────────────────────────────
   if (currentView.type === 'profile') {
     return (
       <UserProfile
@@ -124,44 +111,45 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
     );
   }
 
-  // ── Main feed ───────────────────────────────────────────────────────────────
   return (
     <div className="h-full overflow-y-auto bg-bg">
 
-      {/* Greeting header */}
-      <div
-        className="px-5 pb-4 bg-surface border-b border-divider"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-text-muted">{t(greetingKey)},</p>
-            <h1 className="text-[1.3rem] font-bold text-text leading-tight tracking-tight">{firstName}</h1>
-          </div>
-          <div className="flex gap-2 mt-1">
+      {/* ── Atmospheric header ──────────────────────────────────────────── */}
+      <div className="relative">
+        {/* Biome hero strip */}
+        <div className="relative h-32 overflow-hidden">
+          <div className="absolute inset-0" style={{ background: biomeDef.gradient }} />
+          <img
+            src={biomeDef.image}
+            className="absolute inset-0 w-full h-full object-cover"
+            alt=""
+            onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)' }}
+          />
+
+          {/* Header actions */}
+          <div
+            className="absolute top-0 right-0 flex items-center gap-1.5 px-4"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 10px)' }}
+          >
             <button
               onClick={() => setSearchOpen(true)}
               aria-label={t('search.title')}
-              className={cn(
-                'w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
-                'text-text-muted border border-divider',
-                'transition-colors duration-150 hover:text-text hover:border-accent',
-              )}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-black/25 backdrop-blur-sm text-white/80 hover:text-white transition-colors"
             >
-              <Search size={18} strokeWidth={1.75} />
+              <Search size={16} strokeWidth={1.75} />
             </button>
             <button
               onClick={() => onNavigate('varsler')}
               aria-label={t('notifs.title')}
-              className={cn(
-                'relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
-                'text-text-muted border border-divider',
-                'transition-colors duration-150 hover:text-text hover:border-accent',
-              )}
+              className="relative w-8 h-8 flex items-center justify-center rounded-full bg-black/25 backdrop-blur-sm text-white/80 hover:text-white transition-colors"
             >
-              <Bell size={18} strokeWidth={1.75} />
+              <Bell size={16} strokeWidth={1.75} />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 bg-accent text-bg text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -169,48 +157,57 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
             <button
               onClick={onSettingsOpen}
               aria-label={t('settings.title')}
-              className={cn(
-                'w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
-                'text-text-muted border border-divider',
-                'transition-colors duration-150 hover:text-text hover:border-accent',
-              )}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-black/25 backdrop-blur-sm text-white/80 hover:text-white transition-colors"
             >
-              <Settings size={18} strokeWidth={1.75} />
+              <Settings size={16} strokeWidth={1.75} />
             </button>
+          </div>
+
+          {/* Greeting */}
+          <div className="absolute bottom-3 left-5">
+            <p className="text-[0.72rem] font-medium text-white/70">{t(greetingKey)}</p>
+            <AppText variant="titleL" as="h1" className="text-white leading-tight drop-shadow-sm">
+              {firstName}
+            </AppText>
           </div>
         </div>
 
-        {/* Biome gradient strip */}
-        <div className="h-[3px] -mx-5 mt-3" style={{ background: getBiome(profile?.biome).gradient }} />
-
-        {/* Weather strip */}
-        <div className="mt-3 flex items-center gap-3 rounded-[var(--radius-sm)] bg-bg px-3.5 py-2.5 border border-divider">
-          <span className="text-accent">{weatherIcon(weather.weathercode)}</span>
-          <span className="flex-1 text-sm text-text">
-            {weather.loading ? '…' : t(weatherDescKey(weather.weathercode))}
-          </span>
-          {weather.windspeed != null && (
-            <span className="flex items-center gap-1 text-sm text-text-muted">
-              <Wind size={14} strokeWidth={1.75} />
-              {weather.windspeed.toFixed(0)} m/s
-            </span>
-          )}
-          {tempDisplay && <span className="text-sm font-semibold text-text">{tempDisplay}</span>}
-        </div>
+        {/* Condition strip */}
+        {(conditionText || tempDisplay || weather.windspeed != null) && !weather.loading && (
+          <div className="flex items-center gap-2 px-5 py-3 bg-surface border-b border-divider">
+            {conditionText && (
+              <AppText variant="bodyM" color="secondary" as="span">{conditionText}</AppText>
+            )}
+            {tempDisplay && (
+              <>
+                <span className="w-px h-3.5 bg-divider" />
+                <AppText variant="bodyM" color="primary" as="span" className="font-[500]">{tempDisplay}</AppText>
+              </>
+            )}
+            {weather.windspeed != null && (
+              <>
+                <span className="w-px h-3.5 bg-divider" />
+                <AppText variant="bodyM" color="secondary" as="span">{weather.windspeed.toFixed(0)} m/s</AppText>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Trip list */}
-      <div className="px-4 pt-4 pb-24 space-y-3">
+      {/* ── Trip list ───────────────────────────────────────────────────── */}
+      <div className="px-4 pt-5 pb-28 space-y-4">
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-surface rounded-[var(--radius-md)] border border-divider animate-pulse" />
+              <div key={i} className="h-64 bg-elevated rounded-[var(--radius-lg)] animate-pulse" />
             ))}
           </div>
         ) : trips.length === 0 ? (
-          <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-6 text-center">
-            <p className="text-sm text-text-muted">{t('feed.empty')}</p>
-          </div>
+          <EmptyState
+            headline="Nothing new from the water."
+            body="The people you follow haven't shared anything yet. Try exploring new anglers."
+            action={{ label: t('search.title'), onClick: () => setSearchOpen(true) }}
+          />
         ) : (
           <>
             {trips.map(trip => (
@@ -228,7 +225,11 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
             {hasMore && (
               <button
                 onClick={loadMore}
-                className="w-full py-3 text-sm text-accent font-semibold border border-accent/30 rounded-[var(--radius-md)] hover:bg-accent/5 transition-colors duration-150"
+                className={cn(
+                  'w-full py-4 text-[0.82rem] font-medium text-text-muted',
+                  'border border-divider rounded-[var(--radius-md)]',
+                  'hover:text-text transition-colors duration-150',
+                )}
               >
                 {t('feed.loadMore')}
               </button>

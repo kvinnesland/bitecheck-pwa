@@ -13,6 +13,10 @@ import { useUnits } from '../contexts/UnitsContext';
 import { weightUnitLabel, lengthUnitLabel, parseWeightToKg, parseLengthToCm } from '../lib/units';
 import { FishSvg } from '../components/species/FishSvg';
 import { SpeciesCardHeader } from '../components/species/SpeciesCardHeader';
+import { AppText } from '../components/ui/AppText';
+import { AppButton } from '../components/ui/AppButton';
+import { AppCard } from '../components/ui/AppCard';
+import { QuietDivider } from '../components/ui/QuietDivider';
 import { cn } from '@/lib/utils';
 import type { Trip, Biome, TripVisibility } from '../types';
 
@@ -23,11 +27,21 @@ type WaterType = 'salt' | 'fresh';
 type LocationPref = 'exact' | 'approximate' | 'hidden';
 type TripState = 'loading' | Trip | null;
 
-const LOCATION_ZOOM: Record<LocationPref, number> = {
-  exact: 12,
-  approximate: 9,
-  hidden: 5,
-};
+const LOCATION_ZOOM: Record<LocationPref, number> = { exact: 12, approximate: 9, hidden: 5 };
+
+const inputCls = [
+  'bg-elevated border border-divider rounded-[var(--radius-md)]',
+  'text-text text-[1rem] font-medium px-4 py-3.5 outline-none',
+  'transition-colors duration-150 w-full',
+  'focus:border-accent/60 placeholder:text-text-subtle placeholder:font-normal',
+].join(' ');
+
+const inputSmCls = [
+  'bg-elevated border border-divider rounded-[var(--radius-md)]',
+  'text-text text-[0.95rem] px-4 py-3 outline-none',
+  'transition-colors duration-150 w-full',
+  'focus:border-accent/60 placeholder:text-text-subtle',
+].join(' ');
 
 interface Props { user: User; }
 
@@ -49,16 +63,16 @@ export function LoggFangst({ user }: Props) {
   const [waterType, setWaterType] = useState<WaterType>(
     () => (localStorage.getItem('bc_water_type') as WaterType) ?? 'salt',
   );
-  const [tripTitle, setTripTitle] = useState('');
+  const [tripTitle, setTripTitle]     = useState('');
   const [titleEdited, setTitleEdited] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [query, setQuery] = useState('');
+  const [notes, setNotes]             = useState('');
+  const [query, setQuery]             = useState('');
 
-  const [species, setSpecies] = useState('');
-  const [weight, setWeight] = useState('');
-  const [length, setLength] = useState('');
-  const [caption, setCaption] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [species,  setSpecies]  = useState('');
+  const [weight,   setWeight]   = useState('');
+  const [length,   setLength]   = useState('');
+  const [caption,  setCaption]  = useState('');
+  const [saving,   setSaving]   = useState(false);
   const [visibility, setVisibility] = useState<TripVisibility>('everyone');
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [showPhotoMessage, setShowPhotoMessage] = useState(false);
@@ -66,9 +80,7 @@ export function LoggFangst({ user }: Props) {
   const placeName = useReverseGeocode(position, locationPref, i18n.language);
 
   useEffect(() => {
-    if (placeName && !titleEdited) {
-      setTripTitle(t('log.tripNear', { place: placeName }));
-    }
+    if (placeName && !titleEdited) setTripTitle(t('log.tripNear', { place: placeName }));
   }, [placeName, titleEdited, t]);
 
   useEffect(() => { localStorage.setItem('bc_location_pref', locationPref); }, [locationPref]);
@@ -87,7 +99,6 @@ export function LoggFangst({ user }: Props) {
     }
   }, []);
 
-  // Pre-fill title/notes/waterType/biome from an existing open trip (runs once when trip loads).
   const tripLoaded = activeTrip !== 'loading';
   useEffect(() => {
     if (typeof activeTrip === 'object' && activeTrip !== null && !titleEdited) {
@@ -101,11 +112,8 @@ export function LoggFangst({ user }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripLoaded]);
 
-  // Set default biome from profile when it loads (unless user already changed it).
   useEffect(() => {
-    if (profile?.biome && !biomeEdited) {
-      setBiome(profile.biome);
-    }
+    if (profile?.biome && !biomeEdited) setBiome(profile.biome);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.biome]);
 
@@ -125,14 +133,8 @@ export function LoggFangst({ user }: Props) {
 
   function selectFixedChoice(choice: FixedSpeciesChoice) {
     if (!tripLoaded) return;
-    if (choice.action === 'moment') {
-      setCaption('');
-      setStep('moment');
-      return;
-    }
-    if (choice.speciesName) {
-      selectSpecies(choice.speciesName);
-    }
+    if (choice.action === 'moment') { setCaption(''); setStep('moment'); return; }
+    if (choice.speciesName) selectSpecies(choice.speciesName);
   }
 
   async function handleSave() {
@@ -140,64 +142,39 @@ export function LoggFangst({ user }: Props) {
     setSaving(true);
     try {
       let tripId: string;
-      const existingTrip = activeTrip; // tripLoaded guard above rules out 'loading'
+      const existingTrip = activeTrip;
 
       if (existingTrip) {
         tripId = existingTrip.tripId;
         addCatchToTrip(tripId, species);
         setActiveTrip(prev =>
           typeof prev === 'object' && prev !== null
-            ? {
-                ...prev,
-                catchCount: prev.catchCount + 1,
-                species: prev.species.includes(species) ? prev.species : [...prev.species, species],
-              }
+            ? { ...prev, catchCount: prev.catchCount + 1, species: prev.species.includes(species) ? prev.species : [...prev.species, species] }
             : prev,
         );
       } else {
         tripId = startTrip({
-          uid: user.uid,
-          title: tripTitle || null,
-          note: notes || null,
-          location: position,
-          locationShare: locationPref,
-          approximateLocationName: placeName,
-          firstSpecies: species,
-          waterType,
-          visibility,
-          isMultiDay,
-          biome,
+          uid: user.uid, title: tripTitle || null, note: notes || null,
+          location: position, locationShare: locationPref,
+          approximateLocationName: placeName, firstSpecies: species,
+          waterType, visibility, isMultiDay, biome,
         });
         setActiveTrip({
-          tripId,
-          uid: user.uid,
-          status: 'open',
-          visibility,
-          isMultiDay,
-          title: tripTitle || null,
-          note: notes || null,
-          startedAt: new Date().toISOString(),
-          closedAt: null,
-          location: position,
-          locationShare: locationPref,
-          approximateLocationName: placeName,
-          catchCount: 1,
-          species: [species],
-          waterType,
-          biome,
+          tripId, uid: user.uid, status: 'open', visibility, isMultiDay,
+          title: tripTitle || null, note: notes || null,
+          startedAt: new Date().toISOString(), closedAt: null,
+          location: position, locationShare: locationPref,
+          approximateLocationName: placeName, catchCount: 1,
+          species: [species], waterType, biome,
         });
       }
 
       await createCatch({
-        userId: user.uid,
-        species,
+        userId: user.uid, species,
         weight_kg: weight ? parseWeightToKg(weight, prefs.weight) : null,
         length_cm: length ? parseLengthToCm(length, prefs.length) : null,
-        location: position,
-        tripId,
-        locationShare: locationPref,
-        approximateLocationName: placeName,
-        caption: caption || undefined,
+        location: position, tripId, locationShare: locationPref,
+        approximateLocationName: placeName, caption: caption || undefined,
       });
       setCaption('');
       setStep('success');
@@ -208,24 +185,12 @@ export function LoggFangst({ user }: Props) {
 
   async function handleEndTrip() {
     const trip = activeTrip !== 'loading' ? activeTrip : null;
-    if (trip) {
-      await closeTrip(trip.tripId).catch(() => {});
-    }
-    setActiveTrip(null);
-    setStep('trip');
-    setSpecies('');
-    setWeight('');
-    setLength('');
-    setQuery('');
-    setTripTitle('');
-    setNotes('');
-    setCaption('');
-    setTitleEdited(false);
-    setBiomeEdited(false);
+    if (trip) await closeTrip(trip.tripId).catch(() => {});
+    setActiveTrip(null); setStep('trip'); setSpecies(''); setWeight('');
+    setLength(''); setQuery(''); setTripTitle(''); setNotes(''); setCaption('');
+    setTitleEdited(false); setBiomeEdited(false);
     setBiome(profile?.biome ?? DEFAULT_BIOME);
-    setVisibility('everyone');
-    setIsMultiDay(false);
-    setShowPhotoMessage(false);
+    setVisibility('everyone'); setIsMultiDay(false); setShowPhotoMessage(false);
   }
 
   async function handleSaveMoment() {
@@ -233,7 +198,7 @@ export function LoggFangst({ user }: Props) {
     setSaving(true);
     try {
       let tripId: string;
-      const existingTrip = activeTrip; // tripLoaded guard above rules out 'loading'
+      const existingTrip = activeTrip;
 
       if (existingTrip) {
         tripId = existingTrip.tripId;
@@ -245,49 +210,25 @@ export function LoggFangst({ user }: Props) {
         );
       } else {
         tripId = startTrip({
-          uid: user.uid,
-          title: tripTitle || null,
-          note: notes || null,
-          location: position,
-          locationShare: locationPref,
-          approximateLocationName: placeName,
-          firstSpecies: '',
-          waterType,
-          visibility,
-          isMultiDay,
-          biome,
+          uid: user.uid, title: tripTitle || null, note: notes || null,
+          location: position, locationShare: locationPref,
+          approximateLocationName: placeName, firstSpecies: '',
+          waterType, visibility, isMultiDay, biome,
         });
         setActiveTrip({
-          tripId,
-          uid: user.uid,
-          status: 'open',
-          visibility,
-          isMultiDay,
-          title: tripTitle || null,
-          note: notes || null,
-          startedAt: new Date().toISOString(),
-          closedAt: null,
-          location: position,
-          locationShare: locationPref,
-          approximateLocationName: placeName,
-          catchCount: 1,
-          species: [],
-          waterType,
-          biome,
+          tripId, uid: user.uid, status: 'open', visibility, isMultiDay,
+          title: tripTitle || null, note: notes || null,
+          startedAt: new Date().toISOString(), closedAt: null,
+          location: position, locationShare: locationPref,
+          approximateLocationName: placeName, catchCount: 1,
+          species: [], waterType, biome,
         });
       }
 
       await createCatch({
-        userId: user.uid,
-        species: '',
-        weight_kg: null,
-        length_cm: null,
-        location: position,
-        tripId,
-        locationShare: locationPref,
-        approximateLocationName: placeName,
-        caption: caption.trim(),
-        isMoment: true,
+        userId: user.uid, species: '', weight_kg: null, length_cm: null,
+        location: position, tripId, locationShare: locationPref,
+        approximateLocationName: placeName, caption: caption.trim(), isMoment: true,
       });
       setCaption('');
       setStep('success');
@@ -297,214 +238,188 @@ export function LoggFangst({ user }: Props) {
   }
 
   function handleContinueTrip() {
-    setStep('trip');
-    setSpecies('');
-    setWeight('');
-    setLength('');
-    setQuery('');
-    setCaption('');
+    setStep('trip'); setSpecies(''); setWeight(''); setLength(''); setQuery(''); setCaption('');
   }
 
-
-  // ─── Success ─────────────────────────────────────────────────────────────────
+  // ─── Success ──────────────────────────────────────────────────────────────────
 
   if (step === 'success') {
     const trip = activeTrip !== 'loading' ? activeTrip : null;
-    const tripSpeciesCount = trip ? trip.species.length : 0;
     const tripCatchCount = trip ? trip.catchCount : 1;
+    const tripSpeciesCount = trip ? trip.species.length : 0;
 
     return (
-      <div className="flex flex-col items-center justify-center h-full px-6 py-8 gap-2.5 text-center">
-        <div className="w-16 h-16 bg-success/10 border-2 border-success rounded-full flex items-center justify-center mb-2">
-          <svg className="w-8 h-8 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="flex flex-col items-center justify-center h-full px-6 py-10 gap-6 text-center bg-bg">
+        <div className="w-14 h-14 bg-accent-subtle rounded-full flex items-center justify-center">
+          <svg className="w-7 h-7 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <polyline points="9 12 11 14 15 10" />
           </svg>
         </div>
-        <h2 className="text-[1.4rem] font-bold">{t('log.saved')}</h2>
-        <p className="text-[1.1rem] font-semibold text-accent">{t(`speciesNames.${species}`, { defaultValue: species })}</p>
-        {weight && (
-          <p className="text-[0.9rem] text-text-muted">
-            {weight} {weightUnitLabel(prefs.weight)}{length ? ` · ${length} ${lengthUnitLabel(prefs.length)}` : ''}
-          </p>
-        )}
-        <p className="text-xs text-text-muted">
-          {geoStatus === 'ok' ? t('log.gpsRecorded') : t('log.noGps')}
-        </p>
 
-        {/* Trip summary pill */}
-        {trip && (
-          <div className="flex items-center gap-2 bg-surface border border-divider rounded-full px-3 py-1.5 text-xs text-text-muted mt-1">
-            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <span>{t('log.tripSummary', { catches: tripCatchCount, species: tripSpeciesCount })}</span>
-          </div>
-        )}
+        <div className="space-y-1.5">
+          <AppText variant="titleL" color="primary" as="h2">{t('log.saved')}</AppText>
+          <AppText variant="bodyL" color="accent" as="p" className="font-[500]">
+            {t(`speciesNames.${species}`, { defaultValue: species })}
+          </AppText>
+          {weight && (
+            <AppText variant="bodyM" color="secondary" as="p">
+              {weight} {weightUnitLabel(prefs.weight)}{length ? ` · ${length} ${lengthUnitLabel(prefs.length)}` : ''}
+            </AppText>
+          )}
+        </div>
 
-        {/* Multi-day toggle */}
         {trip && (
-          <div className="flex items-center justify-between w-full bg-surface border border-divider rounded-[var(--radius-md)] px-4 py-3">
-            <span className="text-sm text-text">{t('log.multiDay')}</span>
-            <button
-              role="switch"
-              aria-checked={isMultiDay}
-              onClick={async () => {
-                const next = !isMultiDay;
-                setIsMultiDay(next);
-                await setTripMultiDay(trip.tripId, next).catch(() => {});
-              }}
-              className={cn(
-                'relative w-11 h-6 rounded-full transition-colors duration-200',
-                isMultiDay ? 'bg-accent' : 'bg-divider',
-              )}
-            >
-              <span className={cn(
-                'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200',
-                isMultiDay ? 'translate-x-5' : 'translate-x-0',
-              )} />
-            </button>
-          </div>
+          <>
+            <div className="flex items-center gap-2 text-text-subtle text-[0.75rem]">
+              <span>{t('log.tripSummary', { catches: tripCatchCount, species: tripSpeciesCount })}</span>
+            </div>
+
+            <div className="flex items-center justify-between w-full bg-surface rounded-[var(--radius-md)] px-4 py-3.5">
+              <AppText variant="bodyM" color="primary">{t('log.multiDay')}</AppText>
+              <button
+                role="switch"
+                aria-checked={isMultiDay}
+                onClick={async () => {
+                  const next = !isMultiDay;
+                  setIsMultiDay(next);
+                  await setTripMultiDay(trip.tripId, next).catch(() => {});
+                }}
+                className={cn(
+                  'relative w-10 h-[22px] rounded-full transition-colors duration-200',
+                  isMultiDay ? 'bg-accent' : 'bg-divider',
+                )}
+              >
+                <span className={cn(
+                  'absolute top-[2px] left-[2px] w-[18px] h-[18px] rounded-full bg-white transition-transform duration-200',
+                  isMultiDay ? 'translate-x-[18px]' : 'translate-x-0',
+                )} />
+              </button>
+            </div>
+          </>
         )}
 
         <div className="flex flex-col gap-3 w-full">
-          <button
-            onClick={handleContinueTrip}
-            className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-accent/80"
-          >
+          <AppButton variant="primary" fullWidth onClick={handleContinueTrip}>
             {t('log.continueTrip')}
-          </button>
-          <button
-            onClick={handleEndTrip}
-            className="bg-surface border border-divider text-text text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-colors duration-150 hover:bg-surface/80"
-          >
+          </AppButton>
+          <AppButton variant="ghost" fullWidth onClick={handleEndTrip}>
             {t('log.endTrip')}
-          </button>
+          </AppButton>
         </div>
       </div>
     );
   }
 
-  // ─── Details ─────────────────────────────────────────────────────────────────
+  // ─── Details ──────────────────────────────────────────────────────────────────
 
   if (step === 'details') {
     const gpsColors: Record<string, string> = {
-      ok:        'text-success border-success',
-      acquiring: 'text-warning border-warning',
+      ok:        'text-success',
+      acquiring: 'text-warning',
     };
-    const gpsRowCls = cn(
-      'flex items-center gap-2 text-[0.8rem] px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-surface border',
-      gpsColors[geoStatus] ?? 'text-text-muted border-divider',
-    );
 
     return (
-      <div className="h-full overflow-y-auto px-4 py-5 pb-6 space-y-4">
+      <div className="h-full overflow-y-auto bg-bg px-4 py-5 pb-8 space-y-4">
         <button
-          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 hover:text-text transition-colors duration-150"
+          className="flex items-center gap-1.5 text-text-muted text-sm hover:text-text transition-colors duration-150"
           onClick={() => setStep('trip')}
         >
-          <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           {t('log.back')}
         </button>
 
-        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden">
+        <AppCard surface="surface" bordered padding="none">
           <div className="px-5 py-4 border-b border-divider">
             <SpeciesCardHeader
               name={species}
               action={
-                <button
-                  className="bg-transparent text-accent text-[0.8rem] p-0"
-                  onClick={() => setStep('trip')}
-                >
+                <button className="text-accent text-[0.82rem]" onClick={() => setStep('trip')}>
                   {t('log.change')}
                 </button>
               }
             />
           </div>
 
-          <div className="px-5 py-5 flex flex-col gap-4">
-            <div className="flex flex-col gap-3 shrink-0">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
-                  {t('log.weight')} <span className="font-normal normal-case tracking-normal">({weightUnitLabel(prefs.weight)})</span>
-                </span>
+          <div className="px-5 py-5 space-y-5">
+            {/* Measurements */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <AppText variant="labelM" color="tertiary" as="label">
+                  {t('log.weight')} <span className="normal-case font-normal tracking-normal">({weightUnitLabel(prefs.weight)})</span>
+                </AppText>
                 <input
                   ref={weightRef}
-                  className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[1.2rem] font-semibold px-4 py-3.5 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-divider placeholder:font-normal"
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0.0"
-                  min="0"
-                  step="0.1"
+                  className={inputCls}
+                  type="number" inputMode="decimal"
+                  placeholder="0.0" min="0" step="0.1"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={e => setWeight(e.target.value)}
                 />
-              </label>
-
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
-                  {t('log.length')} <span className="font-normal normal-case tracking-normal">({lengthUnitLabel(prefs.length)})</span>
-                </span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <AppText variant="labelM" color="tertiary" as="label">
+                  {t('log.length')} <span className="normal-case font-normal tracking-normal">({lengthUnitLabel(prefs.length)})</span>
+                </AppText>
                 <input
-                  className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[1.2rem] font-semibold px-4 py-3.5 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-divider placeholder:font-normal"
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  min="0"
-                  step="1"
+                  className={inputCls}
+                  type="number" inputMode="decimal"
+                  placeholder="0" min="0" step="1"
                   value={length}
-                  onChange={(e) => setLength(e.target.value)}
+                  onChange={e => setLength(e.target.value)}
                 />
-              </label>
+              </div>
             </div>
 
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-text-muted">
-                {t('log.caption')} <span className="font-normal normal-case tracking-normal text-text-muted">({t('log.optional')})</span>
-              </span>
+            <QuietDivider />
+
+            {/* Caption */}
+            <div className="flex flex-col gap-1.5">
+              <AppText variant="labelM" color="tertiary" as="label">
+                {t('log.caption')} <span className="normal-case font-normal tracking-normal text-[0.68rem]">({t('log.optional')})</span>
+              </AppText>
               <textarea
-                className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.9rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none"
+                className={cn(inputSmCls, 'resize-none')}
                 placeholder={t('log.captionPlaceholder')}
                 rows={2}
                 value={caption}
-                onChange={(e) => setCaption(e.target.value)}
+                onChange={e => setCaption(e.target.value)}
               />
-            </label>
+            </div>
 
-            {/* Photo button — visible but gated on Firebase Blaze */}
-            <div className="flex flex-col gap-1">
+            {/* Photo placeholder */}
+            <div className="flex flex-col gap-1.5">
               <button
-                className="flex items-center gap-2 text-sm text-text-muted border border-dashed border-divider rounded-[var(--radius-md)] px-4 py-2.5 transition-colors hover:border-text-muted"
+                className={cn(
+                  'flex items-center gap-2.5 text-text-subtle border border-dashed border-divider',
+                  'rounded-[var(--radius-md)] px-4 py-3.5 transition-colors hover:border-text-subtle hover:text-text-muted',
+                )}
                 onClick={() => setShowPhotoMessage(v => !v)}
               >
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
-                {t('log.addPhoto')}
+                <AppText variant="bodyM" color="tertiary" as="span">{t('log.addPhoto')}</AppText>
               </button>
               {showPhotoMessage && (
-                <p className="text-xs text-text-muted px-1">{t('log.photoBlaze')}</p>
+                <AppText variant="bodyM" color="tertiary" as="p" className="px-1">{t('log.photoBlaze')}</AppText>
               )}
             </div>
 
-            <div className={gpsRowCls}>
+            {/* GPS status */}
+            <div className={cn('flex items-center gap-2 text-[0.8rem] py-1', gpsColors[geoStatus] ?? 'text-text-subtle')}>
               <GpsIcon status={geoStatus} />
               <GpsLabel status={geoStatus} accuracy={position?.accuracy_m} />
             </div>
 
-            <button
-              className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-[background,opacity] duration-150 disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent/80"
-              onClick={handleSave}
-              disabled={saving}
-            >
+            <AppButton variant="primary" fullWidth onClick={handleSave} disabled={saving}>
               {saving ? t('log.saving') : t('log.save')}
-            </button>
+            </AppButton>
           </div>
-        </div>
+        </AppCard>
       </div>
     );
   }
@@ -513,40 +428,36 @@ export function LoggFangst({ user }: Props) {
 
   if (step === 'moment') {
     return (
-      <div className="h-full overflow-y-auto px-4 py-5 pb-6 space-y-4">
+      <div className="h-full overflow-y-auto bg-bg px-4 py-5 pb-8 space-y-4">
         <button
-          className="flex items-center gap-1 bg-transparent text-text-muted text-sm p-0 hover:text-text transition-colors duration-150"
+          className="flex items-center gap-1.5 text-text-muted text-sm hover:text-text transition-colors duration-150"
           onClick={() => setStep('trip')}
         >
-          <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           {t('log.back')}
         </button>
 
-        <div className="bg-surface border border-divider rounded-[var(--radius-lg)] overflow-hidden">
+        <AppCard surface="surface" bordered padding="none">
           <div className="px-5 py-4 border-b border-divider">
-            <p className="text-base font-semibold text-text">{t('log.logMoment')}</p>
-            <p className="text-xs text-text-muted mt-0.5">{t('log.momentHint')}</p>
+            <AppText variant="titleM" color="primary" as="p">{t('log.logMoment')}</AppText>
+            <AppText variant="bodyM" color="secondary" as="p" className="mt-1">{t('log.momentHint')}</AppText>
           </div>
-          <div className="px-5 py-5 flex flex-col gap-4">
+          <div className="px-5 py-5 space-y-4">
             <textarea
-              className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none flex-1"
+              className={cn(inputSmCls, 'resize-none')}
               placeholder={t('log.momentPlaceholder')}
               rows={5}
               value={caption}
-              onChange={(e) => setCaption(e.target.value)}
+              onChange={e => setCaption(e.target.value)}
               autoFocus
             />
-            <button
-              className="bg-accent text-white text-base font-semibold py-[15px] rounded-[var(--radius-md)] w-full transition-[background,opacity] duration-150 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent/80"
-              onClick={handleSaveMoment}
-              disabled={saving || !caption.trim()}
-            >
+            <AppButton variant="primary" fullWidth onClick={handleSaveMoment} disabled={saving || !caption.trim()}>
               {saving ? t('log.saving') : t('log.saveMoment')}
-            </button>
+            </AppButton>
           </div>
-        </div>
+        </AppCard>
       </div>
     );
   }
@@ -556,33 +467,30 @@ export function LoggFangst({ user }: Props) {
   const zoom = LOCATION_ZOOM[locationPref];
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col h-full overflow-y-auto bg-bg">
 
-      {/* Map snippet */}
-      <div className="relative h-44 shrink-0 bg-surface border-b border-divider overflow-hidden">
+      {/* Map banner */}
+      <div className="relative h-48 shrink-0 bg-surface overflow-hidden">
         {position ? (
           <Suspense fallback={<div className="w-full h-full bg-surface animate-pulse" />}>
             <TripMapSnippet position={position} zoom={zoom} showMarker={locationPref === 'exact'} />
           </Suspense>
         ) : (
-          <div className="flex items-center justify-center h-full gap-2 text-text-muted text-sm">
-            <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="flex items-center justify-center h-full gap-2 text-text-subtle text-sm">
+            <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
             </svg>
             {t('log.mapLoading')}
           </div>
         )}
-
-        {/* Privacy pills */}
-        <div className="absolute bottom-2 left-2 flex gap-1">
-          {(['exact', 'approximate', 'hidden'] as const).map((pref) => (
+        {/* Location precision chips */}
+        <div className="absolute bottom-3 left-3 flex gap-1.5">
+          {(['exact', 'approximate', 'hidden'] as const).map(pref => (
             <button
               key={pref}
               className={cn(
-                'text-[0.65rem] font-semibold px-2 py-0.5 rounded-full transition-colors duration-150 backdrop-blur-sm',
-                locationPref === pref
-                  ? 'bg-accent text-white'
-                  : 'bg-black/40 text-white hover:bg-black/60',
+                'text-[0.65rem] font-semibold px-2.5 py-1 rounded-full transition-colors duration-150 backdrop-blur-sm',
+                locationPref === pref ? 'bg-accent text-bg' : 'bg-black/35 text-white/90 hover:bg-black/50',
               )}
               onClick={() => setLocationPref(pref)}
             >
@@ -592,57 +500,51 @@ export function LoggFangst({ user }: Props) {
         </div>
       </div>
 
-      {/* Active trip indicator / loading */}
+      {/* Trip status */}
       {!tripLoaded && (
-        <div className="px-4 pt-3 shrink-0">
-          <div className="flex items-center gap-1.5 text-[0.72rem] text-text-muted">
+        <div className="px-5 pt-3 shrink-0">
+          <span className="text-[0.72rem] text-text-subtle flex items-center gap-1.5">
             <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
             </svg>
             {t('log.mapLoading')}
-          </div>
+          </span>
         </div>
       )}
       {typeof activeTrip === 'object' && activeTrip !== null && (
-        <div className="px-4 pt-3 shrink-0">
-          <div className="flex items-center gap-1.5 text-[0.72rem] text-accent font-semibold">
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="5" />
-            </svg>
+        <div className="px-5 pt-3 shrink-0">
+          <span className="text-[0.72rem] text-accent font-semibold flex items-center gap-1.5">
+            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5" /></svg>
             {t('log.activeTrip', { count: activeTrip.catchCount })}
-          </div>
+          </span>
         </div>
       )}
 
-      {/* Trip context fields */}
-      <div className="px-4 pt-4 pb-2 flex flex-col gap-3 shrink-0">
+      {/* Trip context */}
+      <div className="px-4 pt-4 pb-3 space-y-3 shrink-0">
         <input
-          className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[1rem] font-semibold px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted placeholder:font-normal"
+          className={inputCls}
           type="text"
           placeholder={t('log.tripTitlePlaceholder')}
           value={tripTitle}
-          onChange={(e) => {
-            setTripTitle(e.target.value);
-            setTitleEdited(true);
-          }}
+          onChange={e => { setTripTitle(e.target.value); setTitleEdited(true); }}
         />
-
         <textarea
-          className="bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.9rem] px-4 py-3 outline-none transition-colors duration-150 w-full focus:border-accent placeholder:text-text-muted resize-none"
+          className={cn(inputSmCls, 'resize-none')}
           placeholder={t('log.tripNotesPlaceholder')}
           rows={2}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={e => setNotes(e.target.value)}
         />
 
         {/* Water type toggle */}
-        <div className="flex gap-1 bg-surface border border-divider rounded-[var(--radius-md)] p-1">
-          {(['salt', 'fresh'] as const).map((wt) => (
+        <div className="flex gap-1 bg-surface rounded-[var(--radius-md)] p-1">
+          {(['salt', 'fresh'] as const).map(wt => (
             <button
               key={wt}
               className={cn(
-                'flex-1 py-2 text-sm font-semibold rounded-[calc(var(--radius-md)-4px)] transition-colors duration-150',
-                waterType === wt ? 'bg-accent text-white' : 'text-text-muted hover:text-text',
+                'flex-1 py-2 text-sm font-semibold rounded-[16px] transition-colors duration-150',
+                waterType === wt ? 'bg-elevated text-text shadow-sm' : 'text-text-subtle hover:text-text-muted',
               )}
               onClick={() => setWaterType(wt)}
             >
@@ -651,15 +553,15 @@ export function LoggFangst({ user }: Props) {
           ))}
         </div>
 
-        {/* Visibility — only shown when no active trip (can't change mid-trip) */}
+        {/* Visibility — only when no active trip */}
         {!(typeof activeTrip === 'object' && activeTrip !== null) && (
-          <div className="flex gap-1 bg-surface border border-divider rounded-[var(--radius-md)] p-1">
+          <div className="flex gap-1 bg-surface rounded-[var(--radius-md)] p-1">
             {(['everyone', 'followers', 'only_me'] as TripVisibility[]).map(v => (
               <button
                 key={v}
                 className={cn(
-                  'flex-1 py-1.5 text-xs font-semibold rounded-[calc(var(--radius-md)-4px)] transition-colors duration-150',
-                  visibility === v ? 'bg-accent text-white' : 'text-text-muted hover:text-text',
+                  'flex-1 py-1.5 text-[0.75rem] font-semibold rounded-[16px] transition-colors duration-150',
+                  visibility === v ? 'bg-elevated text-text shadow-sm' : 'text-text-subtle hover:text-text-muted',
                 )}
                 onClick={() => setVisibility(v)}
               >
@@ -670,97 +572,98 @@ export function LoggFangst({ user }: Props) {
         )}
 
         {/* Biome picker */}
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+        <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4">
           {BIOMES.map(b => {
             const def = getBiome(b.id);
             const selected = biome === b.id;
             return (
-              <button
-                key={b.id}
-                onClick={() => { setBiome(b.id); setBiomeEdited(true); }}
-                className="flex flex-col items-center gap-1 shrink-0"
-              >
+              <button key={b.id} onClick={() => { setBiome(b.id); setBiomeEdited(true); }} className="flex flex-col items-center gap-1.5 shrink-0">
                 <div
-                  className={cn(
-                    'w-10 h-10 rounded-lg overflow-hidden transition-all duration-150 relative',
-                    selected ? 'ring-2 ring-accent ring-offset-1' : 'opacity-60',
-                  )}
+                  className={cn('w-10 h-10 rounded-[10px] overflow-hidden transition-all duration-150 relative', selected ? 'ring-2 ring-accent ring-offset-1 ring-offset-bg' : 'opacity-50')}
                   style={{ background: def.gradient }}
                 />
-                <span className={cn(
-                  'text-[9px] text-center w-10 leading-tight',
-                  selected ? 'text-accent font-semibold' : 'text-text-muted',
-                )}>
+                <AppText variant="labelM" color={selected ? 'accent' : 'tertiary'} as="span" className="normal-case tracking-normal text-[9px] text-center w-10 leading-tight">
                   {t(`biome.${b.id}`)}
-                </span>
+                </AppText>
               </button>
             );
           })}
         </div>
+      </div>
 
-        {/* Fixed choices */}
-        <div className="flex flex-col rounded-[var(--radius-md)] border border-divider bg-surface overflow-hidden">
-          {fixedSpeciesChoices.map((choice) => (
-            <button
-              key={choice.id}
-              className="flex items-center gap-3 w-full py-3 px-3 text-left border-b border-divider last:border-0 transition-colors duration-150 hover:bg-bg active:bg-bg/80 disabled:opacity-50"
-              onClick={() => selectFixedChoice(choice)}
-              disabled={!tripLoaded}
-            >
-              <FishSvg name={choice.speciesName ?? ''} className="w-10 h-7 shrink-0 text-text-muted" />
-              <span className="flex flex-1 flex-col gap-0.5">
-                <span className="text-[0.95rem] font-semibold text-text">{t(choice.labelKey)}</span>
-                {choice.descriptionKey && (
-                  <span className="text-xs text-text-muted">{t(choice.descriptionKey)}</span>
-                )}
-              </span>
-              <svg className="w-4 h-4 text-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          ))}
-        </div>
+      <QuietDivider className="mx-4" />
 
-        {/* Search */}
-        <div className="relative">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      {/* Fixed choices */}
+      <div className="px-4 pt-3 pb-3 space-y-px shrink-0">
+        {fixedSpeciesChoices.map((choice) => (
+          <button
+            key={choice.id}
+            className={cn(
+              'flex items-center gap-3 w-full py-3.5 px-1 text-left',
+              'border-b border-divider last:border-0',
+              'transition-colors duration-150 hover:bg-surface/50 active:bg-surface/80 disabled:opacity-40',
+            )}
+            onClick={() => selectFixedChoice(choice)}
+            disabled={!tripLoaded}
           >
+            <FishSvg name={choice.speciesName ?? ''} className="w-10 h-7 shrink-0 text-text-subtle" />
+            <span className="flex flex-1 flex-col gap-0.5">
+              <AppText variant="bodyM" color="primary" as="span" className="font-[500]">{t(choice.labelKey)}</AppText>
+              {choice.descriptionKey && (
+                <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.72rem]">{t(choice.descriptionKey)}</AppText>
+              )}
+            </span>
+            <svg className="w-4 h-4 text-text-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="px-4 pb-4 shrink-0">
+        <div className="relative">
+          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
-            className="w-full bg-surface border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] py-2.5 pl-[38px] pr-3 outline-none transition-colors duration-150 focus:border-accent placeholder:text-text-muted"
+            className={cn(inputSmCls, 'pl-10')}
             type="text"
             placeholder={t('log.searchPlaceholder')}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {/* Species list */}
+      {/* Species search results */}
       {isSearching && (
-        <div className="px-4 pb-6 flex flex-col">
+        <div className="px-4 pb-8">
           {displayedSpecies.length > 0 ? (
-            displayedSpecies.map((name) => (
-              <button
-                key={name}
-                className="flex items-center gap-3 w-full py-3 px-1 text-left border-b border-divider last:border-0 transition-colors duration-150 hover:bg-surface active:bg-surface/60"
-                onClick={() => selectSpecies(name)}
-              >
-                <FishSvg name={name} className="w-10 h-7 shrink-0 text-text-muted" />
-                <span className="text-[0.95rem] font-medium text-text flex-1">
-                  {t(`speciesNames.${name}`, { defaultValue: name })}
-                </span>
-                <svg className="w-4 h-4 text-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            ))
+            <div className="bg-surface rounded-[var(--radius-md)] overflow-hidden">
+              {displayedSpecies.map((name) => (
+                <button
+                  key={name}
+                  className={cn(
+                    'flex items-center gap-3 w-full py-3.5 px-4 text-left',
+                    'border-b border-divider last:border-0',
+                    'transition-colors duration-150 hover:bg-elevated active:bg-elevated/60',
+                  )}
+                  onClick={() => selectSpecies(name)}
+                >
+                  <FishSvg name={name} className="w-9 h-6 shrink-0 text-text-subtle" />
+                  <AppText variant="bodyM" color="primary" as="span" className="flex-1 font-[500]">
+                    {t(`speciesNames.${name}`, { defaultValue: name })}
+                  </AppText>
+                  <svg className="w-4 h-4 text-text-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              ))}
+            </div>
           ) : (
             <button
-              className="flex items-center gap-3 w-full py-3 px-3 text-accent font-semibold text-[0.95rem] border border-dashed border-accent rounded-[var(--radius-md)]"
+              className="flex items-center gap-3 w-full py-3.5 px-4 text-accent font-semibold text-[0.9rem] border border-dashed border-accent/40 rounded-[var(--radius-md)]"
               onClick={() => selectSpecies(query.trim())}
             >
               {t('log.addCustom', { name: query.trim() })}
@@ -774,22 +677,13 @@ export function LoggFangst({ user }: Props) {
 
 function GpsIcon({ status }: { status: string }) {
   return (
-    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       {status === 'ok' ? (
-        <>
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-        </>
+        <><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></>
       ) : status === 'acquiring' ? (
-        <>
-          <circle cx="12" cy="12" r="3" strokeDasharray="4 2" />
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeDasharray="4 2" />
-        </>
+        <><circle cx="12" cy="12" r="3" strokeDasharray="4 2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeDasharray="4 2" /></>
       ) : (
-        <>
-          <line x1="2" y1="2" x2="22" y2="22" />
-          <circle cx="12" cy="12" r="3" />
-        </>
+        <><line x1="2" y1="2" x2="22" y2="22" /><circle cx="12" cy="12" r="3" /></>
       )}
     </svg>
   );

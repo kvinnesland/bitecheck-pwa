@@ -12,6 +12,10 @@ import { FollowListSheet } from '../components/social/FollowListSheet';
 import { useFollowCounts } from '../hooks/social/useFollowCounts';
 import { UserProfile } from './UserProfile';
 import { TripDetail } from './TripDetail';
+import { AppText } from '../components/ui/AppText';
+import { AppButton } from '../components/ui/AppButton';
+import { AppCard } from '../components/ui/AppCard';
+import { QuietDivider } from '../components/ui/QuietDivider';
 import { cn } from '@/lib/utils';
 import type { CatchRecord, LocationPref, Biome, Trip } from '../types';
 
@@ -22,7 +26,6 @@ interface Props {
   onSettingsOpen: () => void;
 }
 
-
 function computeStats(catches: CatchRecord[]) {
   const active = catches.filter(c => !c.deleted);
   const total = active.length;
@@ -31,10 +34,8 @@ function computeStats(catches: CatchRecord[]) {
   let bestWeight: number | null = null;
   let bestLength: number | null = null;
   for (const c of active) {
-    if (c.species.weight_kg != null && (bestWeight == null || c.species.weight_kg > bestWeight))
-      bestWeight = c.species.weight_kg;
-    if (c.species.length_cm != null && (bestLength == null || c.species.length_cm > bestLength))
-      bestLength = c.species.length_cm;
+    if (c.species.weight_kg != null && (bestWeight == null || c.species.weight_kg > bestWeight)) bestWeight = c.species.weight_kg;
+    if (c.species.length_cm != null && (bestLength == null || c.species.length_cm > bestLength)) bestLength = c.species.length_cm;
   }
 
   const now = new Date();
@@ -69,7 +70,6 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const catches = useUserCatches(user.uid);
   const { profile } = useUserProfile(user.uid);
   const stats = useMemo(() => computeStats(catches), [catches]);
-
   const { followersCount, followingCount } = useFollowCounts(user.uid);
   const [navStack, setNavStack] = useState<NavEntry[]>([{ type: 'own' }]);
   const [editing, setEditing] = useState(false);
@@ -85,29 +85,15 @@ export function Profil({ user, onSettingsOpen }: Props) {
   const currentView = navStack[navStack.length - 1];
 
   if (currentView.type === 'profile') {
-    return (
-      <UserProfile
-        targetUid={currentView.uid}
-        currentUser={user}
-        onBack={pop}
-        onTripClick={pushTrip}
-        onUserClick={pushProfile}
-      />
-    );
+    return <UserProfile targetUid={currentView.uid} currentUser={user} onBack={pop} onTripClick={pushTrip} onUserClick={pushProfile} />;
   }
-
   if (currentView.type === 'trip') {
     return (
       <TripDetail
-        trip={currentView.trip}
-        isOwn={currentView.trip.uid === user.uid}
-        displayName={user.displayName ?? ''}
-        photoUrl={user.photoURL}
-        currentUserId={user.uid}
-        currentUsername={profile?.username ?? ''}
-        currentPhotoURL={user.photoURL ?? null}
-        onBack={pop}
-        onAddCatch={pop}
+        trip={currentView.trip} isOwn={currentView.trip.uid === user.uid}
+        displayName={user.displayName ?? ''} photoUrl={user.photoURL}
+        currentUserId={user.uid} currentUsername={profile?.username ?? ''}
+        currentPhotoURL={user.photoURL ?? null} onBack={pop} onAddCatch={pop}
       />
     );
   }
@@ -125,121 +111,92 @@ export function Profil({ user, onSettingsOpen }: Props) {
 
   async function saveEdit() {
     setSaving(true);
-    try {
-      await updateUserProfile(user.uid, draft);
-    } finally {
-      setSaving(false);
-      setEditing(false);
-    }
+    try { await updateUserProfile(user.uid, draft); }
+    finally { setSaving(false); setEditing(false); }
   }
 
   const displayName = profile?.displayName ?? user.displayName ?? '';
-
-  const initials = (displayName || user.email || '?')
-    .split(' ')
-    .map(w => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
+  const initials = (displayName || user.email || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const bestDisplay = stats.bestWeight != null
     ? formatWeight(stats.bestWeight, prefs.weight)
-    : stats.bestLength != null
-      ? formatLength(stats.bestLength, prefs.length)
-      : null;
-
+    : stats.bestLength != null ? formatLength(stats.bestLength, prefs.length) : null;
   const maxMonth = Math.max(...stats.months.map(m => m.count), 1);
   const topMax = stats.topSpecies[0]?.[1] ?? 1;
 
   return (
     <div className="h-full overflow-y-auto bg-bg">
 
-      {/* ── Hero banner ─────────────────────────────────────────────
-          Goes to the very top of the viewport (no app header on this tab).
-          Safe-area padding keeps the settings button clear of status bar.
-      ──────────────────────────────────────────────────────────── */}
-      <div className="relative" style={{ height: 220 }}>
-
-        {/* Biome banner */}
+      {/* ── Atmospheric hero banner ─────────────────────────────────────── */}
+      <div className="relative" style={{ height: 240 }}>
         {(() => {
           const def = getBiome(profile?.biome);
           return (
             <>
               <div className="absolute inset-0" style={{ background: def.gradient }} />
-              <img
-                src={def.image}
-                className="absolute inset-0 w-full h-full object-cover"
-                alt=""
-                onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
-              />
+              <img src={def.image} className="absolute inset-0 w-full h-full object-cover" alt=""
+                onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }} />
+              {/* Bottom-to-top fade so avatar edge is smooth */}
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)' }} />
             </>
           );
         })()}
 
-        {/* Settings button — top-right, respects status bar */}
+        {/* Settings button */}
         <button
           onClick={onSettingsOpen}
           aria-label={t('settings.title')}
-          className="absolute right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          className="absolute right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/25 backdrop-blur-sm text-white/80 hover:text-white transition-colors"
           style={{ top: 'calc(env(safe-area-inset-top) + 10px)' }}
         >
-          <Settings size={17} strokeWidth={1.75} />
+          <Settings size={17} strokeWidth={1.5} />
         </button>
 
-        {/* Wave cutout — SVG paints over image with page bg color */}
-        <svg
-          aria-hidden="true"
-          className="absolute bottom-0 left-0 w-full"
-          style={{ height: 44 }}
-          viewBox="0 0 390 44"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,22 C110,42 280,2 390,26 L390,44 L0,44 Z"
-            style={{ fill: 'var(--color-bg)' }}
-          />
+        {/* Wave cutout */}
+        <svg aria-hidden="true" className="absolute bottom-0 left-0 w-full" style={{ height: 48 }}
+          viewBox="0 0 390 48" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,24 C110,46 280,2 390,28 L390,48 L0,48 Z" style={{ fill: 'var(--color-bg)' }} />
         </svg>
 
-        {/* Avatar — sits at the wave boundary, left-aligned */}
-        <div className="absolute left-5" style={{ bottom: -30 }}>
+        {/* Avatar */}
+        <div className="absolute left-5" style={{ bottom: -32 }}>
           {user.photoURL ? (
-            <img
-              src={user.photoURL}
-              alt={user.displayName ?? ''}
-              referrerPolicy="no-referrer"
-              className="w-[68px] h-[68px] rounded-full object-cover"
-              style={{ border: '3px solid var(--color-bg)' }}
-            />
+            <img src={user.photoURL} alt={user.displayName ?? ''} referrerPolicy="no-referrer"
+              className="w-[72px] h-[72px] rounded-full object-cover"
+              style={{ border: '3px solid var(--color-bg)' }} />
           ) : (
-            <div
-              className="w-[68px] h-[68px] rounded-full bg-accent flex items-center justify-center text-white text-xl font-bold"
-              style={{ border: '3px solid var(--color-bg)' }}
-            >
+            <div className="w-[72px] h-[72px] rounded-full bg-accent flex items-center justify-center text-bg text-xl font-semibold"
+              style={{ border: '3px solid var(--color-bg)' }}>
               {initials}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Profile body ──────────────────────────────────────────── */}
-      <div className="px-5 pb-8 space-y-4" style={{ paddingTop: 40 }}>
+      {/* ── Profile body ────────────────────────────────────────────────── */}
+      <div className="px-5 pb-10 space-y-5" style={{ paddingTop: 44 }}>
 
         {/* Name + username + edit */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[1.35rem] font-bold text-text leading-tight tracking-tight">
+            <AppText variant="titleL" color="primary" as="h1">
               {displayName || t('profile.title')}
-            </h1>
+            </AppText>
             {profile?.username && (
-              <p className="text-sm text-text-muted mt-0.5">@{profile.username}</p>
+              <AppText variant="bodyM" color="secondary" as="p" className="mt-1">
+                @{profile.username}
+              </AppText>
+            )}
+            {profile?.mainLocation && (
+              <AppText variant="labelM" color="tertiary" as="p" className="mt-1.5 normal-case tracking-normal text-[0.72rem]">
+                {profile.mainLocation}
+              </AppText>
             )}
           </div>
           {!editing && (
             <button
               onClick={startEdit}
               aria-label={t('profileEdit.edit')}
-              className="mt-1 w-8 h-8 flex items-center justify-center rounded-full bg-surface border border-divider text-text-muted"
+              className="mt-1 w-8 h-8 flex items-center justify-center rounded-full bg-surface text-text-subtle hover:text-text-muted transition-colors"
             >
               <Pencil size={14} strokeWidth={1.75} />
             </button>
@@ -248,218 +205,175 @@ export function Profil({ user, onSettingsOpen }: Props) {
 
         {/* Edit card */}
         {editing && (
-          <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-widest text-text-muted">{t('profileEdit.title')}</span>
-              <button onClick={() => setEditing(false)} className="text-text-muted">
+          <AppCard surface="surface" bordered padding="md">
+            <div className="flex items-center justify-between mb-4">
+              <AppText variant="labelM" color="tertiary">{t('profileEdit.title')}</AppText>
+              <button onClick={() => setEditing(false)} className="text-text-subtle hover:text-text-muted">
                 <X size={16} />
               </button>
             </div>
 
-            {/* Display name */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-muted">{t('profileEdit.displayName')}</label>
-              <input
-                className="w-full bg-bg border border-divider rounded-[var(--radius-md)] text-text text-sm px-3 py-2 outline-none focus:border-accent"
-                value={draft.displayName}
-                onChange={(e) => setDraft(d => ({ ...d, displayName: e.target.value }))}
-              />
-            </div>
-
-            {/* Main location */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-muted">{t('profileEdit.location')}</label>
-              <input
-                className="w-full bg-bg border border-divider rounded-[var(--radius-md)] text-text text-sm px-3 py-2 outline-none focus:border-accent"
-                placeholder={t('profileEdit.locationPlaceholder')}
-                value={draft.mainLocation}
-                onChange={(e) => setDraft(d => ({ ...d, mainLocation: e.target.value }))}
-              />
-            </div>
-
-            {/* Private account */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-text">{t('profileEdit.privateAccount')}</span>
-              <button
-                role="switch"
-                aria-checked={draft.isPrivate}
-                onClick={() => setDraft(d => ({ ...d, isPrivate: !d.isPrivate }))}
-                className={cn(
-                  'relative w-11 h-6 rounded-full transition-colors duration-200',
-                  draft.isPrivate ? 'bg-accent' : 'bg-divider',
-                )}
-              >
-                <span className={cn(
-                  'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200',
-                  draft.isPrivate ? 'translate-x-5' : 'translate-x-0',
-                )} />
-              </button>
-            </div>
-
-            {/* Location precision */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs text-text-muted">{t('profileEdit.locationPref')}</span>
-              <div className="flex gap-2">
-                {(['exact', 'approximate', 'hidden'] as LocationPref[]).map((pref) => (
-                  <button
-                    key={pref}
-                    onClick={() => setDraft(d => ({ ...d, locationPref: pref }))}
-                    className={cn(
-                      'flex-1 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-150',
-                      draft.locationPref === pref
-                        ? 'bg-accent text-white border-accent'
-                        : 'bg-bg text-text-muted border-divider',
-                    )}
-                  >
-                    {t(`log.location${pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
-                  </button>
-                ))}
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <AppText variant="labelM" color="tertiary" as="label">{t('profileEdit.displayName')}</AppText>
+                <input
+                  className="w-full bg-bg border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] px-4 py-3 outline-none focus:border-accent/60"
+                  value={draft.displayName}
+                  onChange={e => setDraft(d => ({ ...d, displayName: e.target.value }))}
+                />
               </div>
-            </div>
 
-            {/* Biome picker */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs text-text-muted">{t('biome.label')}</span>
-              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                {BIOMES.map(b => (
-                  <button
-                    key={b.id}
-                    onClick={() => setDraft(d => ({ ...d, biome: b.id }))}
-                    className="flex flex-col items-center gap-1 shrink-0"
-                  >
-                    <div
+              <div className="flex flex-col gap-1.5">
+                <AppText variant="labelM" color="tertiary" as="label">{t('profileEdit.location')}</AppText>
+                <input
+                  className="w-full bg-bg border border-divider rounded-[var(--radius-md)] text-text text-[0.95rem] px-4 py-3 outline-none focus:border-accent/60"
+                  placeholder={t('profileEdit.locationPlaceholder')}
+                  value={draft.mainLocation}
+                  onChange={e => setDraft(d => ({ ...d, mainLocation: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <AppText variant="bodyM" color="primary">{t('profileEdit.privateAccount')}</AppText>
+                <button
+                  role="switch" aria-checked={draft.isPrivate}
+                  onClick={() => setDraft(d => ({ ...d, isPrivate: !d.isPrivate }))}
+                  className={cn('relative w-10 h-[22px] rounded-full transition-colors duration-200', draft.isPrivate ? 'bg-accent' : 'bg-divider')}
+                >
+                  <span className={cn('absolute top-[2px] left-[2px] w-[18px] h-[18px] rounded-full bg-white transition-transform duration-200', draft.isPrivate ? 'translate-x-[18px]' : 'translate-x-0')} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <AppText variant="labelM" color="tertiary">{t('profileEdit.locationPref')}</AppText>
+                <div className="flex gap-1 bg-bg rounded-[var(--radius-sm)] p-0.5">
+                  {(['exact', 'approximate', 'hidden'] as LocationPref[]).map(pref => (
+                    <button
+                      key={pref}
+                      onClick={() => setDraft(d => ({ ...d, locationPref: pref }))}
                       className={cn(
-                        'w-11 h-11 rounded-lg transition-all duration-150 overflow-hidden',
-                        draft.biome === b.id ? 'ring-2 ring-accent ring-offset-1' : 'opacity-70',
+                        'flex-1 py-1.5 rounded-[10px] text-xs font-semibold transition-colors duration-150',
+                        draft.locationPref === pref ? 'bg-surface text-text shadow-sm' : 'text-text-subtle hover:text-text-muted',
                       )}
-                      style={{ background: b.gradient }}
-                    />
-                    <span className="text-[9px] text-text-muted text-center w-11 leading-tight line-clamp-2">
-                      {t(`biome.${b.id}`)}
-                    </span>
-                  </button>
-                ))}
+                    >
+                      {t(`log.location${pref.charAt(0).toUpperCase() + pref.slice(1)}`)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <button
-              onClick={saveEdit}
-              disabled={saving}
-              className="w-full bg-accent text-white text-sm font-semibold py-2.5 rounded-[var(--radius-md)] disabled:opacity-40"
-            >
-              {saving ? t('profileEdit.saving') : t('profileEdit.save')}
-            </button>
-          </div>
+              {/* Biome */}
+              <div className="flex flex-col gap-2">
+                <AppText variant="labelM" color="tertiary">{t('biome.label')}</AppText>
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  {BIOMES.map(b => (
+                    <button key={b.id} onClick={() => setDraft(d => ({ ...d, biome: b.id }))} className="flex flex-col items-center gap-1.5 shrink-0">
+                      <div className={cn('w-10 h-10 rounded-[10px] transition-all duration-150 overflow-hidden', draft.biome === b.id ? 'ring-2 ring-accent ring-offset-1' : 'opacity-50')} style={{ background: b.gradient }} />
+                      <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[9px] text-center w-10 leading-tight line-clamp-2">{t(`biome.${b.id}`)}</AppText>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <AppButton variant="primary" fullWidth onClick={saveEdit} disabled={saving}>
+                {saving ? t('profileEdit.saving') : t('profileEdit.save')}
+              </AppButton>
+            </div>
+          </AppCard>
         )}
 
         {/* Stats row */}
-        <div className="flex items-start gap-3">
-          <StatItem value={String(stats.total)} label={t('profile.catches')} />
-          <div className="w-px self-stretch bg-divider" />
-          <StatItem value={String(stats.species)} label={t('profile.species')} />
-          <div className="w-px self-stretch bg-divider" />
-          <button
-            className="flex flex-col gap-0.5 text-left"
-            onClick={() => setFollowSheet('followers')}
-          >
-            <span className="text-xl font-bold text-text leading-none">{followersCount}</span>
-            <span className="text-[11px] text-text-muted">{t('follow.followers')}</span>
+        <div className="flex items-start gap-4">
+          <StatPill value={String(stats.total)} label={t('profile.catches')} />
+          <QuietDivider orientation="vertical" />
+          <StatPill value={String(stats.species)} label={t('profile.species')} />
+          <QuietDivider orientation="vertical" />
+          <button className="flex flex-col gap-0.5 text-left" onClick={() => setFollowSheet('followers')}>
+            <AppText variant="numberM" color="primary" as="span">{followersCount}</AppText>
+            <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.68rem]">{t('follow.followers')}</AppText>
           </button>
-          <div className="w-px self-stretch bg-divider" />
-          <button
-            className="flex flex-col gap-0.5 text-left"
-            onClick={() => setFollowSheet('following')}
-          >
-            <span className="text-xl font-bold text-text leading-none">{followingCount}</span>
-            <span className="text-[11px] text-text-muted">{t('follow.following')}</span>
+          <QuietDivider orientation="vertical" />
+          <button className="flex flex-col gap-0.5 text-left" onClick={() => setFollowSheet('following')}>
+            <AppText variant="numberM" color="primary" as="span">{followingCount}</AppText>
+            <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.68rem]">{t('follow.following')}</AppText>
           </button>
           {bestDisplay && (
             <>
-              <div className="w-px self-stretch bg-divider" />
-              <StatItem value={bestDisplay} label={t('profile.personalBest')} />
+              <QuietDivider orientation="vertical" />
+              <StatPill value={bestDisplay} label={t('profile.personalBest')} />
             </>
           )}
         </div>
 
         {/* Empty state */}
         {stats.total === 0 ? (
-          <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-6 text-center">
-            <p className="text-sm text-text-muted">{t('profile.emptyHint')}</p>
+          <div className="py-12 text-center">
+            <AppText variant="titleL" color="primary" as="p" className="mb-2">
+              The waters are quiet.
+            </AppText>
+            <AppText variant="bodyM" color="secondary" as="p">
+              {t('profile.emptyHint')}
+            </AppText>
           </div>
         ) : (
-          <>
+          <div className="space-y-4">
             {/* Monthly trend */}
-            <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-4">
-              <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-                {t('profile.monthlyTrend')}
-              </p>
-              <div className="flex items-end gap-1.5 h-[68px]">
+            <AppCard surface="surface" bordered padding="md">
+              <AppText variant="labelM" color="tertiary" as="p" className="mb-4">{t('profile.monthlyTrend')}</AppText>
+              <div className="flex items-end gap-1.5 h-[60px]">
                 {stats.months.map(({ label, count }) => (
-                  <div key={label} className="flex flex-1 flex-col items-center gap-1">
+                  <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
                     <div
-                      className="w-full rounded-t-[3px] transition-all duration-300"
+                      className="w-full rounded-t-sm transition-all duration-300"
                       style={{
-                        height: count > 0 ? `${Math.round((count / maxMonth) * 52)}px` : 0,
+                        height: count > 0 ? `${Math.round((count / maxMonth) * 44)}px` : 0,
                         background: 'var(--color-accent)',
-                        opacity: count > 0 ? 1 : 0,
+                        opacity: count > 0 ? 0.75 : 0,
                       }}
                     />
-                    <span className="text-[10px] leading-none text-text-muted">{label}</span>
+                    <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[9px]">{label}</AppText>
                   </div>
                 ))}
               </div>
-            </div>
+            </AppCard>
 
             {/* Top species */}
             {stats.topSpecies.length > 0 && (
-              <div className="rounded-[var(--radius-md)] border border-divider bg-surface p-4">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-                  {t('profile.topSpecies')}
-                </p>
-                <div className="space-y-3">
+              <AppCard surface="surface" bordered padding="md">
+                <AppText variant="labelM" color="tertiary" as="p" className="mb-4">{t('profile.topSpecies')}</AppText>
+                <div className="space-y-3.5">
                   {stats.topSpecies.map(([name, count]) => (
                     <div key={name} className="flex items-center gap-3">
-                      <span className="w-24 shrink-0 truncate text-sm text-text">{name}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-divider overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{
-                            width: `${Math.round((count / topMax) * 100)}%`,
-                            background: 'var(--color-accent)',
-                          }}
-                        />
+                      <AppText variant="bodyM" color="primary" as="span" className="w-24 shrink-0 truncate font-[450]">{name}</AppText>
+                      <div className="flex-1 h-[2px] rounded-full" style={{ background: 'var(--color-divider)' }}>
+                        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.round((count / topMax) * 100)}%`, background: 'var(--color-accent)', opacity: 0.7 }} />
                       </div>
-                      <span className="w-6 shrink-0 text-right text-sm font-semibold text-text">
-                        {count}
-                      </span>
+                      <AppText variant="labelM" color="tertiary" as="span" className="w-5 shrink-0 text-right normal-case tracking-normal text-[0.8rem]">{count}</AppText>
                     </div>
                   ))}
                 </div>
-              </div>
+              </AppCard>
             )}
-          </>
+          </div>
         )}
       </div>
 
       {followSheet && (
         <FollowListSheet
-          uid={user.uid}
-          type={followSheet}
-          isOwn
-          myUid={user.uid}
+          uid={user.uid} type={followSheet} isOwn myUid={user.uid}
           onClose={() => setFollowSheet(null)}
-          onUserClick={(uid) => { setFollowSheet(null); pushProfile(uid); }}
+          onUserClick={uid => { setFollowSheet(null); pushProfile(uid); }}
         />
       )}
     </div>
   );
 }
 
-function StatItem({ value, label }: { value: string; label: string }) {
+function StatPill({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xl font-bold text-text leading-none">{value}</span>
-      <span className="text-[11px] text-text-muted">{label}</span>
+      <AppText variant="numberM" color="primary" as="span">{value}</AppText>
+      <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.68rem]">{label}</AppText>
     </div>
   );
 }

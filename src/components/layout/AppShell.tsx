@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Bell } from 'lucide-react';
+import { Bell, Settings } from 'lucide-react';
 import { type User } from 'firebase/auth';
 import { BottomNav, type AppView } from './BottomNav';
 import { SettingsSheet } from '../settings/SettingsSheet';
@@ -15,6 +15,8 @@ interface AppShellProps {
   children: (view: AppView, navigate: (v: AppView) => void, openSettings: () => void, unreadCount: number) => React.ReactNode;
 }
 
+const SCREENS_WITH_OWN_HEADER = new Set<AppView>(['profil', 'feed', 'varsler']);
+
 export function AppShell({ user, onSignOut, children }: AppShellProps) {
   const { t } = useTranslation();
   const [view, setView] = useState<AppView>('feed');
@@ -25,28 +27,26 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden">
-      {view !== 'profil' && view !== 'feed' && view !== 'varsler' && (
+      {!SCREENS_WITH_OWN_HEADER.has(view) && (
         <header
-          className="bg-surface shrink-0 z-[100]"
+          className="bg-surface/90 backdrop-blur-sm shrink-0 z-[100]"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div className="flex items-center justify-between px-5 h-14">
-            <span className="text-[1.15rem] font-bold tracking-tight text-text font-display">
-              BiteCheck
-            </span>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between px-5 h-13">
+            {/* Screen-specific title handled by page; header stays sparse */}
+            <div />
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setView('varsler')}
                 aria-label={t('notifs.title')}
                 className={cn(
                   'relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
-                  'text-text-muted border border-divider',
-                  'transition-colors duration-150 hover:text-text hover:border-accent',
+                  'text-text-subtle transition-colors duration-150 hover:text-text-muted',
                 )}
               >
-                <Bell size={18} strokeWidth={1.75} />
+                <Bell size={18} strokeWidth={1.5} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 bg-accent text-bg text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -56,15 +56,15 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
                 aria-label={t('settings.title')}
                 className={cn(
                   'w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)]',
-                  'text-text-muted border border-divider',
-                  'transition-colors duration-150 hover:text-text hover:border-accent',
+                  'text-text-subtle transition-colors duration-150 hover:text-text-muted',
                 )}
               >
-                <Settings size={18} strokeWidth={1.75} />
+                <Settings size={18} strokeWidth={1.5} />
               </button>
             </div>
           </div>
-          <div className="h-[3px]" style={{ background: biomeDef.gradient }} />
+          {/* Biome accent line */}
+          <div className="h-[2px] opacity-60" style={{ background: biomeDef.gradient }} />
         </header>
       )}
 
@@ -72,7 +72,7 @@ export function AppShell({ user, onSignOut, children }: AppShellProps) {
         {children(view, setView, () => setSettingsOpen(true), unreadCount)}
       </main>
 
-      <BottomNav active={view} onChange={setView} />
+      <BottomNav active={view} onChange={setView} unreadCount={unreadCount} />
 
       {settingsOpen && (
         <SettingsSheet
