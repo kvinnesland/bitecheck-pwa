@@ -26,6 +26,7 @@ export async function createCatch(params: {
   approximateLocationName?: string | null;
   caption?: string;
   isMoment?: boolean;
+  photoRefs?: string[];
 }): Promise<CatchRecord> {
   const now = new Date();
   const moonIllum = SunCalc.getMoonIllumination(now);
@@ -55,7 +56,7 @@ export async function createCatch(params: {
       tide_phase: null,
       moon_phase: moonIllum.phase,
     },
-    photoRefs: [],
+    photoRefs: params.photoRefs ?? [],
     ...(params.tripId && { tripId: params.tripId }),
     ...(params.locationShare && { locationShare: params.locationShare }),
     ...(params.approximateLocationName !== undefined && { approximateLocationName: params.approximateLocationName }),

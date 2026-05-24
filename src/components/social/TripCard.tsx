@@ -62,7 +62,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       <div className="relative overflow-hidden" style={{ height: 70 }}>
         <div className="absolute inset-0" style={{ background: def.gradient }} />
         <img
-          src={def.image}
+          src={trip.latestPhoto ?? def.image}
           className="absolute inset-0 w-full h-full object-cover"
           alt=""
           onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}

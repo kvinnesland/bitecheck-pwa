@@ -35,6 +35,7 @@ export interface Trip {
   commentCount?: number;
   lastUpdated?: string;
   latestComment?: string;
+  latestPhoto?: string;
 }
 
 export interface TripReaction {

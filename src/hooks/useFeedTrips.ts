@@ -37,6 +37,7 @@ export function tripFromDoc(d: Record<string, unknown>): Trip {
     commentCount: (d.commentCount as number | undefined) ?? undefined,
     lastUpdated: (d.lastUpdated as Timestamp)?.toDate?.()?.toISOString() ?? undefined,
     latestComment: (d.latestComment as string | undefined) ?? undefined,
+    latestPhoto: (d.latestPhoto as string | undefined) ?? undefined,
   };
 }
 

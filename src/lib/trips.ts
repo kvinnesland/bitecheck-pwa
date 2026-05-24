@@ -20,6 +20,7 @@ export function startTrip(params: {
   biome?: Biome;
   isMoment?: boolean;
   caption?: string;
+  photoUrl?: string;
 }): string {
   const tripId = crypto.randomUUID();
   setDoc(doc(db, 'trips', tripId), {
@@ -41,6 +42,7 @@ export function startTrip(params: {
     lastUpdated: serverTimestamp(),
     ...(params.biome && { biome: params.biome }),
     ...(params.caption && { latestComment: params.caption }),
+    ...(params.photoUrl && { latestPhoto: params.photoUrl }),
   }).catch(() => {});
   return tripId;
 }
@@ -53,12 +55,13 @@ export async function setTripVisibility(tripId: string, visibility: TripVisibili
   await updateDoc(doc(db, 'trips', tripId), { visibility });
 }
 
-export function addCatchToTrip(tripId: string, species: string, caption?: string): void {
+export function addCatchToTrip(tripId: string, species: string, caption?: string, photoUrl?: string): void {
   updateDoc(doc(db, 'trips', tripId), {
     catchCount: increment(1),
     lastUpdated: serverTimestamp(),
     ...(species && { species: arrayUnion(species) }),
     ...(caption && { latestComment: caption }),
+    ...(photoUrl && { latestPhoto: photoUrl }),
   }).catch(() => {});
 }
 
@@ -108,5 +111,6 @@ export async function fetchOpenTrip(uid: string): Promise<Trip | null> {
     biome: (d.biome as Biome | undefined) ?? undefined,
     lastUpdated: (d.lastUpdated as Timestamp)?.toDate?.()?.toISOString() ?? undefined,
     latestComment: (d.latestComment as string | undefined) ?? undefined,
+    latestPhoto: (d.latestPhoto as string | undefined) ?? undefined,
   };
 }

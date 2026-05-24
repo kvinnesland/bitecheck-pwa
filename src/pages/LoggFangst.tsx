@@ -6,6 +6,8 @@ import { useReverseGeocode } from '../hooks/useReverseGeocode';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { createCatch } from '../lib/catches';
 import { startTrip, addCatchToTrip, addMomentToTrip, closeTrip, fetchOpenTrip, setTripMultiDay } from '../lib/trips';
+import { compressImage } from '../lib/imageCompression';
+import { uploadPhoto, catchPhotoPath } from '../lib/storage';
 import { getBiomesForWaterType, getBiome, defaultBiomeForWaterType } from '../lib/biomes';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { getFixedSpeciesChoices, getSearchSpeciesResults, type FixedSpeciesChoice } from '../lib/speciesPicker';
@@ -51,6 +53,7 @@ export function LoggFangst({ user }: Props) {
   const { status: geoStatus, position } = useGeolocation();
   const { profile } = useUserProfile(user.uid);
   const weightRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>('trip');
   const [activeTrip, setActiveTrip] = useState<TripState>('loading');
@@ -75,9 +78,10 @@ export function LoggFangst({ user }: Props) {
   const [length,   setLength]   = useState('');
   const [caption,  setCaption]  = useState('');
   const [saving,   setSaving]   = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<TripVisibility>('everyone');
   const [isMultiDay, setIsMultiDay] = useState(false);
-  const [showPhotoMessage, setShowPhotoMessage] = useState(false);
 
   const placeName = useReverseGeocode(position, locationPref, i18n.language);
 
@@ -146,12 +150,19 @@ export function LoggFangst({ user }: Props) {
       let tripId: string;
       const existingTrip = activeTrip;
 
+      // Upload photo first so the URL is available for both trip and catch
+      let photoUrl: string | undefined;
+      if (photoFile) {
+        const blob = await compressImage(photoFile);
+        photoUrl = await uploadPhoto(blob, catchPhotoPath(user.uid, crypto.randomUUID()));
+      }
+
       if (existingTrip) {
         tripId = existingTrip.tripId;
-        addCatchToTrip(tripId, species, caption || undefined);
+        addCatchToTrip(tripId, species, caption || undefined, photoUrl);
         setActiveTrip(prev =>
           typeof prev === 'object' && prev !== null
-            ? { ...prev, catchCount: prev.catchCount + 1, species: prev.species.includes(species) ? prev.species : [...prev.species, species], latestComment: caption || prev.latestComment }
+            ? { ...prev, catchCount: prev.catchCount + 1, species: prev.species.includes(species) ? prev.species : [...prev.species, species], latestComment: caption || prev.latestComment, latestPhoto: photoUrl ?? prev.latestPhoto }
             : prev,
         );
       } else {
@@ -160,6 +171,7 @@ export function LoggFangst({ user }: Props) {
           location: position, locationShare: locationPref,
           approximateLocationName: placeName, firstSpecies: species,
           waterType, visibility, isMultiDay, biome, caption: caption || undefined,
+          photoUrl,
         });
         setActiveTrip({
           tripId, uid: user.uid, status: 'open', visibility, isMultiDay,
@@ -167,7 +179,7 @@ export function LoggFangst({ user }: Props) {
           startedAt: new Date().toISOString(), closedAt: null,
           location: position, locationShare: locationPref,
           approximateLocationName: placeName, catchCount: 1,
-          species: [species], waterType, biome,
+          species: [species], waterType, biome, latestPhoto: photoUrl,
         });
       }
 
@@ -177,7 +189,9 @@ export function LoggFangst({ user }: Props) {
         length_cm: length ? parseLengthToCm(length, prefs.length) : null,
         location: position, tripId, locationShare: locationPref,
         approximateLocationName: placeName, caption: caption || undefined,
+        photoRefs: photoUrl ? [photoUrl] : undefined,
       });
+      setPhotoFile(null); setPhotoPreview(null);
       setCaption('');
       setStep('success');
     } finally {
@@ -190,9 +204,10 @@ export function LoggFangst({ user }: Props) {
     if (trip) await closeTrip(trip.tripId).catch(() => {});
     setActiveTrip(null); setStep('trip'); setSpecies(''); setWeight('');
     setLength(''); setQuery(''); setTripTitle(''); setNotes(''); setCaption('');
+    setPhotoFile(null); setPhotoPreview(null);
     setTitleEdited(false); setBiomeEdited(false);
     setBiome(profile?.biome ?? defaultBiomeForWaterType(waterType));
-    setVisibility('everyone'); setIsMultiDay(false); setShowPhotoMessage(false);
+    setVisibility('everyone'); setIsMultiDay(false);
   }
 
   async function handleSaveMoment() {
@@ -242,6 +257,7 @@ export function LoggFangst({ user }: Props) {
 
   function handleContinueTrip() {
     setStep('trip'); setSpecies(''); setWeight(''); setLength(''); setQuery(''); setCaption('');
+    setPhotoFile(null); setPhotoPreview(null);
   }
 
   // ─── Success ──────────────────────────────────────────────────────────────────
@@ -392,23 +408,44 @@ export function LoggFangst({ user }: Props) {
               />
             </div>
 
-            {/* Photo placeholder */}
-            <div className="flex flex-col gap-1.5">
-              <button
-                className={cn(
-                  'flex items-center gap-2.5 text-text-subtle border border-dashed border-divider',
-                  'rounded-[var(--radius-md)] px-4 py-3.5 transition-colors hover:border-text-subtle hover:text-text-muted',
-                )}
-                onClick={() => setShowPhotoMessage(v => !v)}
-              >
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                <AppText variant="bodyM" color="tertiary" as="span">{t('log.addPhoto')}</AppText>
-              </button>
-              {showPhotoMessage && (
-                <AppText variant="bodyM" color="tertiary" as="p" className="px-1">{t('log.photoBlaze')}</AppText>
+            {/* Photo */}
+            <div className="flex flex-col gap-2">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setPhotoFile(file);
+                  setPhotoPreview(URL.createObjectURL(file));
+                }}
+              />
+              {photoPreview ? (
+                <div className="relative">
+                  <img src={photoPreview} alt="" className="w-full h-40 object-cover rounded-[var(--radius-md)]" />
+                  <button
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-white"
+                    onClick={() => { setPhotoFile(null); setPhotoPreview(null); if (photoInputRef.current) photoInputRef.current.value = ''; }}
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className={cn(
+                    'flex items-center gap-2.5 text-text-subtle border border-dashed border-divider',
+                    'rounded-[var(--radius-md)] px-4 py-3.5 transition-colors hover:border-text-subtle hover:text-text-muted',
+                  )}
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                  <AppText variant="bodyM" color="tertiary" as="span">{t('log.addPhoto')}</AppText>
+                </button>
               )}
             </div>
 
