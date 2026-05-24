@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, getDoc, doc, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { rankTrips } from '../lib/feedRanking';
 import type { Trip, LocationPref, TripVisibility, WaterType, CatchLocation, Biome } from '../types';
 
 export type FeedTrip = Trip & {
@@ -36,6 +35,8 @@ export function tripFromDoc(d: Record<string, unknown>): Trip {
     biome: (d.biome as Biome | undefined) ?? undefined,
     reactionCounts: (d.reactionCounts as Record<string, number> | undefined) ?? undefined,
     commentCount: (d.commentCount as number | undefined) ?? undefined,
+    lastUpdated: (d.lastUpdated as Timestamp)?.toDate?.()?.toISOString() ?? undefined,
+    latestComment: (d.latestComment as string | undefined) ?? undefined,
   };
 }
 
@@ -45,11 +46,20 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+function sortByLastActivity(trips: FeedTrip[]): FeedTrip[] {
+  return [...trips].sort((a, b) => {
+    const aTime = a.lastUpdated ?? a.startedAt;
+    const bTime = b.lastUpdated ?? b.startedAt;
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
+}
+
 export function useFeedTrips(uid: string): {
   trips: FeedTrip[];
   loading: boolean;
   hasMore: boolean;
   loadMore: () => void;
+  patchTrip: (tripId: string, patch: Partial<Trip>) => void;
 } {
   const [allTrips, setAllTrips] = useState<FeedTrip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,10 +157,6 @@ export function useFeedTrips(uid: string): {
         profileEntries.filter((e): e is [string, AuthorInfo] => e[1] !== null),
       );
 
-      const viewedIds = new Set<string>(
-        JSON.parse(localStorage.getItem(`bc_seen_trips_${uid}`) ?? '[]'),
-      );
-
       const feedTrips: FeedTrip[] = merged.map(trip => {
         const author = profileMap.get(trip.uid);
         return {
@@ -161,19 +167,28 @@ export function useFeedTrips(uid: string): {
         };
       });
 
-      const ranked = rankTrips(feedTrips, viewedIds);
+      const sorted = sortByLastActivity(feedTrips);
 
-      if (!cancelled) setAllTrips(ranked);
+      if (!cancelled) setAllTrips(sorted);
     }
 
     load().catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [uid]);
 
+  function patchTrip(tripId: string, patch: Partial<Trip>) {
+    setAllTrips(prev =>
+      sortByLastActivity(
+        prev.map(t => t.tripId === tripId ? { ...t, ...patch } : t),
+      ),
+    );
+  }
+
   return {
     trips: allTrips.slice(0, visibleCount),
     loading,
     hasMore: visibleCount < allTrips.length,
     loadMore: () => setVisibleCount(v => v + 15),
+    patchTrip,
   };
 }

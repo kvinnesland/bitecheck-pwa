@@ -13,6 +13,7 @@ interface Props {
   locale: string;
   onClick: () => void;
   onAvatarClick?: () => void;
+  onEndTrip?: () => void;
 }
 
 function timeAgo(isoString: string, locale: string): string {
@@ -40,11 +41,14 @@ function Avatar({ displayName, photoUrl, size = 'md' }: { displayName: string; p
   );
 }
 
-export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, onAvatarClick }: Props) {
+export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, onAvatarClick, onEndTrip }: Props) {
   const { t } = useTranslation();
   const def = getBiome(trip.biome);
   const isLive = trip.status === 'open';
   const totalReactions = Object.values(trip.reactionCounts ?? {}).reduce((a, b) => a + b, 0);
+
+  const activityTime = trip.lastUpdated ?? trip.startedAt;
+  const wasUpdated = trip.lastUpdated && trip.lastUpdated !== trip.startedAt;
 
   return (
     <article
@@ -63,7 +67,6 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
           alt=""
           onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
         />
-        {/* Gradient scrim — strong at bottom for metadata */}
         <div
           className="absolute inset-0"
           style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 80%)' }}
@@ -75,6 +78,16 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             <span className="text-[10px] font-semibold uppercase tracking-wider text-white">{t('feed.live')}</span>
           </div>
+        )}
+
+        {/* End trip button — own live trips only */}
+        {isOwn && isLive && onEndTrip && (
+          <button
+            onClick={e => { e.stopPropagation(); onEndTrip(); }}
+            className="absolute top-3.5 right-4 text-[10px] font-semibold uppercase tracking-wider text-white/80 bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-1 hover:bg-black/50 transition-colors"
+          >
+            {t('feed.endTrip')}
+          </button>
         )}
 
         {/* Author row — bottom of image */}
@@ -99,7 +112,9 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
               )}
             </div>
           </div>
-          <span className="text-[0.68rem] text-white/60 shrink-0 pb-0.5">{timeAgo(trip.startedAt, locale)}</span>
+          <span className="text-[0.68rem] text-white/60 shrink-0 pb-0.5">
+            {wasUpdated ? t('feed.updatedAgo', { time: timeAgo(activityTime, locale) }) : timeAgo(activityTime, locale)}
+          </span>
         </div>
       </div>
 
@@ -110,11 +125,15 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
           <AppText variant="titleM" color="primary" as="p" className="leading-snug">
             {trip.title || t('log.tripTitlePlaceholder')}
           </AppText>
-          {trip.note && (
+          {trip.latestComment ? (
+            <AppText variant="bodyM" color="secondary" as="p" className="mt-1.5 line-clamp-2">
+              {trip.latestComment}
+            </AppText>
+          ) : trip.note ? (
             <AppText variant="bodyM" color="secondary" as="p" className="mt-1.5 line-clamp-2">
               {trip.note}
             </AppText>
-          )}
+          ) : null}
         </div>
 
         {/* Species chips */}
@@ -137,7 +156,9 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
         {/* Quiet footer row */}
         <div className="flex items-center gap-3 pt-0.5">
           <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.7rem]">
-            {t('feed.catchCount', { count: trip.catchCount })}
+            {trip.catchCount > 0
+              ? t('feed.catchCount', { count: trip.catchCount })
+              : t('feed.noCatchYet')}
           </AppText>
           <span className="w-px h-3 bg-divider" />
           <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.7rem]">

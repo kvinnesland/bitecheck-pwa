@@ -5,7 +5,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useReverseGeocode } from '../hooks/useReverseGeocode';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { createCatch } from '../lib/catches';
-import { startTrip, addCatchToTrip, closeTrip, fetchOpenTrip, setTripMultiDay } from '../lib/trips';
+import { startTrip, addCatchToTrip, addMomentToTrip, closeTrip, fetchOpenTrip, setTripMultiDay } from '../lib/trips';
 import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { getFixedSpeciesChoices, getSearchSpeciesResults, type FixedSpeciesChoice } from '../lib/speciesPicker';
@@ -146,10 +146,10 @@ export function LoggFangst({ user }: Props) {
 
       if (existingTrip) {
         tripId = existingTrip.tripId;
-        addCatchToTrip(tripId, species);
+        addCatchToTrip(tripId, species, caption || undefined);
         setActiveTrip(prev =>
           typeof prev === 'object' && prev !== null
-            ? { ...prev, catchCount: prev.catchCount + 1, species: prev.species.includes(species) ? prev.species : [...prev.species, species] }
+            ? { ...prev, catchCount: prev.catchCount + 1, species: prev.species.includes(species) ? prev.species : [...prev.species, species], latestComment: caption || prev.latestComment }
             : prev,
         );
       } else {
@@ -157,7 +157,7 @@ export function LoggFangst({ user }: Props) {
           uid: user.uid, title: tripTitle || null, note: notes || null,
           location: position, locationShare: locationPref,
           approximateLocationName: placeName, firstSpecies: species,
-          waterType, visibility, isMultiDay, biome,
+          waterType, visibility, isMultiDay, biome, caption: caption || undefined,
         });
         setActiveTrip({
           tripId, uid: user.uid, status: 'open', visibility, isMultiDay,
@@ -202,10 +202,10 @@ export function LoggFangst({ user }: Props) {
 
       if (existingTrip) {
         tripId = existingTrip.tripId;
-        addCatchToTrip(tripId, '');
+        addMomentToTrip(tripId, caption.trim());
         setActiveTrip(prev =>
           typeof prev === 'object' && prev !== null
-            ? { ...prev, catchCount: prev.catchCount + 1 }
+            ? { ...prev, latestComment: caption.trim() }
             : prev,
         );
       } else {
@@ -214,14 +214,15 @@ export function LoggFangst({ user }: Props) {
           location: position, locationShare: locationPref,
           approximateLocationName: placeName, firstSpecies: '',
           waterType, visibility, isMultiDay, biome,
+          isMoment: true, caption: caption.trim(),
         });
         setActiveTrip({
           tripId, uid: user.uid, status: 'open', visibility, isMultiDay,
           title: tripTitle || null, note: notes || null,
           startedAt: new Date().toISOString(), closedAt: null,
           location: position, locationShare: locationPref,
-          approximateLocationName: placeName, catchCount: 1,
-          species: [], waterType, biome,
+          approximateLocationName: placeName, catchCount: 0,
+          species: [], waterType, biome, latestComment: caption.trim(),
         });
       }
 

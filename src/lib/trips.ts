@@ -18,6 +18,8 @@ export function startTrip(params: {
   visibility: TripVisibility;
   isMultiDay?: boolean;
   biome?: Biome;
+  isMoment?: boolean;
+  caption?: string;
 }): string {
   const tripId = crypto.randomUUID();
   setDoc(doc(db, 'trips', tripId), {
@@ -33,10 +35,12 @@ export function startTrip(params: {
     location: params.location ? { lat: params.location.lat, lng: params.location.lng } : null,
     locationShare: params.locationShare,
     approximateLocationName: params.approximateLocationName,
-    catchCount: 1,
-    species: params.firstSpecies ? [params.firstSpecies] : [],
+    catchCount: params.isMoment ? 0 : 1,
+    species: params.firstSpecies && !params.isMoment ? [params.firstSpecies] : [],
     waterType: params.waterType,
+    lastUpdated: serverTimestamp(),
     ...(params.biome && { biome: params.biome }),
+    ...(params.caption && { latestComment: params.caption }),
   }).catch(() => {});
   return tripId;
 }
@@ -49,10 +53,19 @@ export async function setTripVisibility(tripId: string, visibility: TripVisibili
   await updateDoc(doc(db, 'trips', tripId), { visibility });
 }
 
-export function addCatchToTrip(tripId: string, species: string): void {
+export function addCatchToTrip(tripId: string, species: string, caption?: string): void {
   updateDoc(doc(db, 'trips', tripId), {
     catchCount: increment(1),
-    species: arrayUnion(species),
+    lastUpdated: serverTimestamp(),
+    ...(species && { species: arrayUnion(species) }),
+    ...(caption && { latestComment: caption }),
+  }).catch(() => {});
+}
+
+export function addMomentToTrip(tripId: string, caption: string): void {
+  updateDoc(doc(db, 'trips', tripId), {
+    lastUpdated: serverTimestamp(),
+    latestComment: caption,
   }).catch(() => {});
 }
 
@@ -93,5 +106,7 @@ export async function fetchOpenTrip(uid: string): Promise<Trip | null> {
     species: (d.species as string[]) ?? [],
     waterType: (d.waterType as WaterType) ?? 'salt',
     biome: (d.biome as Biome | undefined) ?? undefined,
+    lastUpdated: (d.lastUpdated as Timestamp)?.toDate?.()?.toISOString() ?? undefined,
+    latestComment: (d.latestComment as string | undefined) ?? undefined,
   };
 }

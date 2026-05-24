@@ -17,6 +17,7 @@ import { useUnits } from '../contexts/UnitsContext';
 import { celsiusToDisplay, tempUnitLabel } from '../lib/units';
 import { getBiome } from '../lib/biomes';
 import { cn } from '@/lib/utils';
+import { closeTrip } from '../lib/trips';
 import type { Trip } from '../types';
 
 type NavEntry =
@@ -57,7 +58,7 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
   const lat = position ? Math.round(position.lat * 100) / 100 : null;
   const lng = position ? Math.round(position.lng * 100) / 100 : null;
   const weather = useFeedWeather(lat, lng);
-  const { trips, loading, hasMore, loadMore } = useFeedTrips(user.uid);
+  const { trips, loading, hasMore, loadMore, patchTrip } = useFeedTrips(user.uid);
 
   function markSeen(tripId: string) {
     const key = `bc_seen_trips_${user.uid}`;
@@ -220,6 +221,10 @@ export function Feed({ user, onSettingsOpen, onNavigate, unreadCount }: Props) {
                 locale={i18n.language}
                 onClick={() => { markSeen(trip.tripId); push({ type: 'trip', trip }); }}
                 onAvatarClick={() => push({ type: 'profile', uid: trip.uid })}
+                onEndTrip={trip.uid === user.uid && trip.status === 'open' ? async () => {
+                  await closeTrip(trip.tripId).catch(() => {});
+                  patchTrip(trip.tripId, { status: 'closed', closedAt: new Date().toISOString() });
+                } : undefined}
               />
             ))}
             {hasMore && (
