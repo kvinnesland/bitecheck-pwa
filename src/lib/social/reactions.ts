@@ -2,8 +2,8 @@ import { setDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { writeNotification } from './notifications';
 
-export const REACTION_EMOJIS = ['👍', '✋', '😁', '😭', '😯'] as const;
-export type ReactionEmoji = typeof REACTION_EMOJIS[number];
+export const REACTION_EMOJI = '❤️' as const;
+export type ReactionEmoji = typeof REACTION_EMOJI;
 
 export async function addReaction(params: {
   tripId: string;
