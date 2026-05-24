@@ -59,7 +59,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       className="w-full bg-elevated rounded-[var(--radius-lg)] overflow-hidden text-left cursor-pointer transition-opacity duration-150 active:opacity-75"
     >
       {/* ── Large atmospheric image panel ── */}
-      <div className="relative h-20 overflow-hidden">
+      <div className="relative overflow-hidden" style={{ height: 70 }}>
         <div className="absolute inset-0" style={{ background: def.gradient }} />
         <img
           src={def.image}
