@@ -25,7 +25,7 @@ Ingen CI/CD — alt deployes manuelt. Firebase-prosjekt: `fishing-projects`. URL
 
 ## Viktige valg og begrensninger
 
-**Firebase Storage er ikke satt opp** — prosjektet er på Spark-plan og regionen støtter ikke gratis buckets. Fotofunksjonen ble fjernet fullstendig. Ikke prøv å legge den tilbake uten å oppgradere til Blaze-plan.
+**Firebase Storage er satt opp og aktiv** — prosjektet er oppgradert til Blaze-plan. Storage-bucket: `fishing-projects.firebasestorage.app`, region `europe-west1`. Bilder komprimeres client-side (max 1200px, JPEG 82%) via `src/lib/imageCompression.ts` før opplasting. Opplastingslogikk ligger i `src/lib/storage.ts` (portabelt adapter-mønster — bytt provider ved å endre én fil). Regler i `storage.rules`: autentisert bruker kan skrive til `photos/{userId}/`, alle kan lese.
 
 **Firestore privacy-regler er bevisst svake** — `allow read: if request.auth != null` betyr alle innloggede brukere kan lese alle fangster. Design-beslutning tatt: synlighet styres på trip-nivå (`visibility: 'everyone' | 'followers' | 'only_me'`), ikke per fangst. Posisjonspresisjon (`locationShare`) styres per fangst med profilnivå-default. Se SOCIAL_PRD.md §4.7 og §7. Reglene implementeres som del av Vertical 1/3.
 
@@ -122,7 +122,7 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 
 ### Utsatt (bevisst)
 - **Firestore privacy-regler (tripIsVisible-funksjon)** — data-modellen er klar (visibility-felt på Trip), men server-side enforcement utsettes til V5/feeds.
-- **Bilder på turer** — krever Firebase Blaze-plan + Storage. Bevisst ekskludert fra v1. Se SOCIAL_PRD.md Todo.
+- ~~**Bilder på turer**~~ — implementert. Firebase Storage (Blaze), client-side komprimering, foto vises i TripCard-header på feed.
 
 ### Bugs og designendringer
 - **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
