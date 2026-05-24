@@ -6,7 +6,7 @@ import { useReverseGeocode } from '../hooks/useReverseGeocode';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { createCatch } from '../lib/catches';
 import { startTrip, addCatchToTrip, addMomentToTrip, closeTrip, fetchOpenTrip, setTripMultiDay } from '../lib/trips';
-import { BIOMES, getBiome, DEFAULT_BIOME } from '../lib/biomes';
+import { getBiomesForWaterType, getBiome, defaultBiomeForWaterType } from '../lib/biomes';
 import { consumePendingSpecies } from '../lib/navigationStore';
 import { getFixedSpeciesChoices, getSearchSpeciesResults, type FixedSpeciesChoice } from '../lib/speciesPicker';
 import { useUnits } from '../contexts/UnitsContext';
@@ -54,7 +54,9 @@ export function LoggFangst({ user }: Props) {
 
   const [step, setStep] = useState<Step>('trip');
   const [activeTrip, setActiveTrip] = useState<TripState>('loading');
-  const [biome, setBiome] = useState<Biome>(DEFAULT_BIOME);
+  const [biome, setBiome] = useState<Biome>(() => defaultBiomeForWaterType(
+    (localStorage.getItem('bc_water_type') as WaterType) ?? 'salt',
+  ));
   const [biomeEdited, setBiomeEdited] = useState(false);
 
   const [locationPref, setLocationPref] = useState<LocationPref>(
@@ -189,7 +191,7 @@ export function LoggFangst({ user }: Props) {
     setActiveTrip(null); setStep('trip'); setSpecies(''); setWeight('');
     setLength(''); setQuery(''); setTripTitle(''); setNotes(''); setCaption('');
     setTitleEdited(false); setBiomeEdited(false);
-    setBiome(profile?.biome ?? DEFAULT_BIOME);
+    setBiome(profile?.biome ?? defaultBiomeForWaterType(waterType));
     setVisibility('everyone'); setIsMultiDay(false); setShowPhotoMessage(false);
   }
 
@@ -547,7 +549,15 @@ export function LoggFangst({ user }: Props) {
                 'flex-1 py-2 text-sm font-semibold rounded-[16px] transition-colors duration-150',
                 waterType === wt ? 'bg-elevated text-text shadow-sm' : 'text-text-subtle hover:text-text-muted',
               )}
-              onClick={() => setWaterType(wt)}
+              onClick={() => {
+                setWaterType(wt);
+                if (!biomeEdited) {
+                  setBiome(defaultBiomeForWaterType(wt));
+                } else {
+                  const compatible = getBiomesForWaterType(wt).some(b => b.id === biome);
+                  if (!compatible) { setBiome(defaultBiomeForWaterType(wt)); setBiomeEdited(false); }
+                }
+              }}
             >
               {t(wt === 'salt' ? 'predictions.saltwater' : 'predictions.freshwater')}
             </button>
@@ -574,7 +584,7 @@ export function LoggFangst({ user }: Props) {
 
         {/* Biome picker */}
         <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4">
-          {BIOMES.map(b => {
+          {getBiomesForWaterType(waterType).map(b => {
             const def = getBiome(b.id);
             const selected = biome === b.id;
             return (
