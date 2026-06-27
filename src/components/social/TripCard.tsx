@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MapPin } from 'lucide-react';
+import { MapPin, Camera } from 'lucide-react';
 import { getBiome } from '../../lib/biomes';
 import { AppText } from '../ui/AppText';
 import { cn } from '@/lib/utils';
@@ -58,11 +58,11 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
       className="w-full bg-elevated rounded-[var(--radius-lg)] overflow-hidden text-left cursor-pointer transition-opacity duration-150 active:opacity-75"
     >
-      {/* ── Large atmospheric image panel ── */}
+      {/* ── Atmospheric biome header — always biome image, never moment photo ── */}
       <div className="relative overflow-hidden" style={{ height: 70 }}>
         <div className="absolute inset-0" style={{ background: def.gradient }} />
         <img
-          src={trip.latestPhoto ?? def.image}
+          src={def.image}
           className="absolute inset-0 w-full h-full object-cover"
           alt=""
           onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
@@ -90,7 +90,7 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
           </button>
         )}
 
-        {/* Author row — bottom of image */}
+        {/* Author row — bottom of header */}
         <div className="absolute bottom-0 left-0 right-0 px-4 py-3 flex items-end justify-between">
           <div className="flex items-center gap-2.5">
             {onAvatarClick ? (
@@ -120,26 +120,41 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
 
       {/* ── Content body ── */}
       <div className="px-4 pt-4 pb-4 space-y-3">
-        {/* Title */}
-        <div>
-          <AppText variant="titleM" color="primary" as="p" className="leading-snug">
-            {trip.title || t('log.tripTitlePlaceholder')}
-          </AppText>
-          {trip.latestComment ? (
-            <AppText variant="bodyM" color="secondary" as="p" className="mt-1.5 line-clamp-2">
-              {trip.latestComment}
-            </AppText>
-          ) : trip.note ? (
-            <AppText variant="bodyM" color="secondary" as="p" className="mt-1.5 line-clamp-2">
-              {trip.note}
-            </AppText>
-          ) : null}
+        {/* Trip title */}
+        <AppText variant="titleM" color="primary" as="p" className="leading-snug">
+          {trip.title || t('log.tripTitlePlaceholder')}
+        </AppText>
+
+        {/* Latest moment — photo or placeholder, always same height */}
+        <div className="rounded-xl overflow-hidden" style={{ height: 180 }}>
+          {trip.latestPhoto ? (
+            <img
+              src={trip.latestPhoto}
+              className="w-full h-full object-cover"
+              alt=""
+              onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0'; }}
+            />
+          ) : (
+            <div
+              className="w-full h-full flex flex-col items-center justify-center gap-2"
+              style={{ background: def.gradient, opacity: 0.25 }}
+            >
+              <Camera size={28} className="text-white/60" strokeWidth={1.5} />
+            </div>
+          )}
         </div>
 
-        {/* Species chips */}
-        {trip.species.length > 0 && (
+        {/* Moment caption */}
+        {trip.latestComment && (
+          <AppText variant="bodyM" color="secondary" as="p" className="line-clamp-2 -mt-1">
+            {trip.latestComment}
+          </AppText>
+        )}
+
+        {/* Species chips — all of them, or "no catches yet" */}
+        {trip.species.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
-            {trip.species.slice(0, 4).map(s => (
+            {trip.species.map(s => (
               <span
                 key={s}
                 className="text-[0.72rem] font-medium bg-accent-subtle text-accent px-2.5 py-[3px] rounded-full"
@@ -147,18 +162,17 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
                 {t(`speciesNames.${s}`, { defaultValue: s })}
               </span>
             ))}
-            {trip.species.length > 4 && (
-              <span className="text-[0.72rem] text-text-subtle px-1 py-[3px]">+{trip.species.length - 4}</span>
-            )}
           </div>
+        ) : (
+          <AppText variant="labelM" color="tertiary" as="p" className="normal-case tracking-normal text-[0.7rem] italic">
+            {t('feed.noCatchYet')}
+          </AppText>
         )}
 
-        {/* Quiet footer row */}
+        {/* Footer row */}
         <div className="flex items-center gap-3 pt-0.5">
           <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.7rem]">
-            {trip.catchCount > 0
-              ? t('feed.catchCount', { count: trip.catchCount })
-              : t('feed.noCatchYet')}
+            {t('feed.catchCount', { count: trip.catchCount })}
           </AppText>
           <span className="w-px h-3 bg-divider" />
           <AppText variant="labelM" color="tertiary" as="span" className="normal-case tracking-normal text-[0.7rem]">
@@ -167,13 +181,13 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
           {totalReactions > 0 && (
             <>
               <span className="w-px h-3 bg-divider" />
-              <span className="text-[0.7rem] text-text-subtle">{totalReactions} {totalReactions === 1 ? 'reaction' : 'reactions'}</span>
+              <span className="text-[0.7rem] text-text-subtle">{t('feed.reactionCount', { count: totalReactions })}</span>
             </>
           )}
           {(trip.commentCount ?? 0) > 0 && (
             <>
               <span className="w-px h-3 bg-divider" />
-              <span className="text-[0.7rem] text-text-subtle">{trip.commentCount} {(trip.commentCount ?? 0) === 1 ? 'comment' : 'comments'}</span>
+              <span className="text-[0.7rem] text-text-subtle">{t('feed.commentCount', { count: trip.commentCount ?? 0 })}</span>
             </>
           )}
         </div>
