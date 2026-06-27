@@ -72,22 +72,20 @@ export function TripCard({ trip, displayName, photoUrl, isOwn, locale, onClick, 
           style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 80%)' }}
         />
 
-        {/* Live badge */}
-        {isLive && (
-          <div className="absolute top-3.5 left-4 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-white">{t('feed.live')}</span>
-          </div>
-        )}
-
-        {/* End trip button — own live trips only */}
-        {isOwn && isLive && onEndTrip && (
+        {/* Top-right status slot: "End trip" for own live trips, "LIVE" badge for others' */}
+        {isLive && isOwn && onEndTrip && (
           <button
             onClick={e => { e.stopPropagation(); onEndTrip(); }}
             className="absolute top-3.5 right-4 text-[10px] font-semibold uppercase tracking-wider text-white/80 bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-1 hover:bg-black/50 transition-colors"
           >
             {t('feed.endTrip')}
           </button>
+        )}
+        {isLive && !isOwn && (
+          <div className="absolute top-3.5 right-4 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-white">{t('feed.live')}</span>
+          </div>
         )}
 
         {/* Author row — bottom of header */}
