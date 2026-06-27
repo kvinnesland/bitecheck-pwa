@@ -119,7 +119,11 @@ export function LoggFangst({ user }: Props) {
   }, [tripLoaded]);
 
   useEffect(() => {
-    if (profile?.biome && !biomeEdited) setBiome(profile.biome);
+    if (profile?.biome && !biomeEdited) {
+      const def = getBiome(profile.biome);
+      setBiome(profile.biome);
+      if (def.waterType !== 'both') setWaterType(def.waterType);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.biome]);
 

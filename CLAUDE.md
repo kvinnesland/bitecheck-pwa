@@ -154,7 +154,7 @@ Datanotes:
 
 ### Bugs og designendringer
 - **Språkvalg synkroniseres ikke på tvers av enheter** — språkpreferansen lagres i localStorage og går tapt ved innlogging på ny enhet. Løsning: lagre `language` på brukerprofilen i Firestore (`users/{uid}`) og les den ved innlogging. Skriv lokalt til localStorage for rask respons, og synkroniser til Firestore i bakgrunnen.
-- **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
+- ~~**Biome-liste filtreres ikke på salt/ferskvann**~~ — fikset. Profilbiomet satte biome uten å oppdatere waterType, noe som ga mismatch. Nå oppdateres begge i sync.
 - **"No fish" skal være første valg i artslisten** — legg til "No fish (yet) — log a moment from the trip" som første element i artslisten. Fjern tilsvarende knapp/element fra bunnen der det ligger i dag.
 - **"I don't know" skal være andre valg i artslisten** — legg til "I don't know what kind of fish this is" som andre element, rett etter "No fish (yet)".
 - **"Not listed" skal være tredje valg i artslisten** — legg til "Not listed (add manually)" som tredje element, rett etter "I don't know what kind of fish this is".
