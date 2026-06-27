@@ -124,6 +124,34 @@ Når en feature berører noen av disse, verifiser det eksplisitt:
 - **Firestore privacy-regler (tripIsVisible-funksjon)** — data-modellen er klar (visibility-felt på Trip), men server-side enforcement utsettes til V5/feeds.
 - ~~**Bilder på turer**~~ — implementert. Firebase Storage (Blaze), client-side komprimering, foto vises i TripCard-header på feed.
 
+### TripCard redesign (agreed 2026-06-27, not yet implemented)
+
+**Mental modell:** En Trip inneholder mange **Moments**. Et Moment er det generelle begrepet for det som tidligere het "catch" — det trenger ikke inneholde en fisk, et bilde eller en note. Fangst-spesifikke detaljer (art, vekt, lengde) finnes på et Moment men skjules som default og avsløres elegant i detaljvisningen.
+
+Avtalt kortstruktur:
+```
+┌─────────────────────────────────┐
+│  [biome gradient/image ALLTID]  │  ← aldri latestPhoto i header
+│  avatar · navn · sted · tid     │
+├─────────────────────────────────┤
+│  Trip-tittel                    │
+│                                 │
+│  [siste moment-bilde ELLER      │  ← fast høyde alltid (placeholder)
+│   placeholder med biome-tint]   │
+│  caption/note hvis finnes       │
+│                                 │
+│  [ALLE arts-chips, ingen cap]   │  ← eller "no catches yet..."
+│                                 │
+│  2 fangster · ♥ 4 · 💬 2       │
+└─────────────────────────────────┘
+```
+
+Datanotes:
+- `latestPhoto` på Trip → vises i kortets body (ikke header)
+- `latestComment` på Trip = caption fra siste moment (IKKE en brukerkommentar — misvisende navn, ingen rename planlagt)
+- `CatchRecord` har allerede `isMoment?: boolean`, `photoRefs?: string[]`, `caption?`
+- Feed-sortering: `lastUpdated` på Trip, settes når et moment legges til
+
 ### Bugs og designendringer
 - **Biome-liste filtreres ikke på salt/ferskvann** — når Freshwater er valgt vises fortsatt saltvanns-biomer i listen (og vice versa). Filtrer biome-valgene slik at kun relevante biomer for valgt vanntype vises.
 - **"No fish" skal være første valg i artslisten** — legg til "No fish (yet) — log a moment from the trip" som første element i artslisten. Fjern tilsvarende knapp/element fra bunnen der det ligger i dag.
